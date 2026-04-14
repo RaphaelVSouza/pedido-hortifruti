@@ -335,6 +335,23 @@ button:focus-visible {
     background: #d3f9e2;
 }
 
+.tab[data-category="Promoção"] {
+    background: #fff8dc;
+    border-color: #f2df9a;
+    color: #7a5602;
+}
+
+.tab[data-category="Promoção"]:hover {
+    background: #fff1bf;
+}
+
+.tab[data-category="Promoção"].active,
+.tab[data-category="Promoção"].active:hover {
+    background: #ffd86b;
+    border-color: #f4b400;
+    color: #553a00;
+}
+
 .items-list {
     display: grid;
     gap: 12px;
@@ -361,6 +378,21 @@ button:focus-visible {
     border-color: #74d99a;
     background: #eefdf4;
     box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.item-row.promo-item {
+    border-color: #f2df9a;
+    background: #fffdf3;
+}
+
+.item-row.promo-item:hover {
+    border-color: #eab308;
+    background: #fff8de;
+}
+
+.item-row.promo-item.selected {
+    border-color: #d7b650;
+    box-shadow: inset 3px 0 0 #d8aa00;
 }
 
 .item-check {

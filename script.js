@@ -15,8 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const enderecoSelect = document.getElementById('endereco');
     const pagamentoSelect = document.getElementById('pagamento');
     const promoDateEl = document.getElementById('promo-date');
+    const pixInfo = document.getElementById('pixInfo');
+    const pixKeyValue = document.getElementById('pixKeyValue');
+    const pixQrCode = document.getElementById('pixQrCode');
+    const copyPixKeyBtn = document.getElementById('copyPixKeyBtn');
 
     const DELIVERY_FEE = 5.00;
+    const PIX_KEY = '37223063000117';
+    const PIX_KEY_DISPLAY = '37.223.063/0001-17';
     let allProducts = [];
     let activeCategory = 'Todos';
 
@@ -44,6 +50,40 @@ document.addEventListener('DOMContentLoaded', () => {
             enderecoSelect.value = prefs.endereco || enderecoSelect.options[0].value;
             pagamentoSelect.value = prefs.pagamento || pagamentoSelect.options[0].value;
         }
+    };
+
+    const normalizeText = (value) => (value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
+    const getCategoryIcon = (category) => {
+        const normalized = normalizeText(category);
+
+        if (normalized.includes('todo')) return '🧺';
+        if (normalized.includes('promoc')) return '🏷️';
+        if (normalized.includes('fruta')) return '🍉';
+        if (normalized.includes('legume')) return '🥕';
+        if (normalized.includes('verdura')) return '🥬';
+        if (normalized.includes('mercad')) return '🛒';
+        if (normalized.includes('geladeira')) return '🧊';
+        if (normalized.includes('limpeza')) return '🧼';
+        return '📦';
+    };
+
+    const updatePixInfo = () => {
+        const isPix = pagamentoSelect.value.toUpperCase() === 'PIX';
+
+        if (!isPix) {
+            pixInfo.classList.add('hidden');
+            pixQrCode.removeAttribute('src');
+            return;
+        }
+
+        pixKeyValue.textContent = PIX_KEY_DISPLAY;
+        pixQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(PIX_KEY)}`;
+        pixQrCode.alt = `QR Code da chave PIX ${PIX_KEY_DISPLAY}`;
+        pixInfo.classList.remove('hidden');
     };
 
     // 2. Parser Logic
@@ -121,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.type = 'button';
             tab.dataset.category = cat;
             tab.className = `tab ${activeCategory === cat ? 'active' : ''}`;
-            tab.textContent = cat;
+            tab.textContent = `${getCategoryIcon(cat)} ${cat}`;
             tab.onclick = () => {
                 activeCategory = cat;
                 renderTabs();
@@ -145,12 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach(item => {
             const div = document.createElement('div');
             const itemClasses = ['item-row'];
+            const itemIcon = getCategoryIcon(item.categoria);
             if (item.selecionado) itemClasses.push('selected');
             if (item.promocao) itemClasses.push('promo-item');
             div.className = itemClasses.join(' ');
             div.innerHTML = `
                 <input type="checkbox" class="item-check" ${item.selecionado ? 'checked' : ''}>
-                <span class="item-name">${item.nome}</span>
+                <span class="item-name"><span class="item-icon" aria-hidden="true">${itemIcon}</span>${item.nome}</span>
                 <span class="item-price">R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}</span>
                 <input type="number" class="item-qty" value="${item.quantidade}" min="0.1" step="0.1" ${item.selecionado ? '' : 'disabled'}>
             `;
@@ -216,7 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
         msg += `Taxa de entrega: R$ ${DELIVERY_FEE.toFixed(2).replace('.', ',')}\n`;
         msg += `*Total Geral: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
         msg += `📍 *Endereço:* ${endereco}\n`;
-        msg += `💳 *Pagamento:* ${pagamento}`;
+        if (pagamento.toUpperCase() === 'PIX') {
+            msg += '💳 *Pagamento:* PIX\n';
+            msg += `🔑 *Chave PIX (CNPJ):* ${PIX_KEY}`;
+        } else {
+            msg += `💳 *Pagamento:* ${pagamento}`;
+        }
 
         finalMessage.value = msg;
     }
@@ -245,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderTabs();
         renderItems();
+        updatePixInfo();
         updateTotals();
         return true;
     };
@@ -271,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     enderecoSelect.onchange = () => { updateTotals(); savePrefs(); };
-    pagamentoSelect.onchange = () => { updateTotals(); savePrefs(); };
+    pagamentoSelect.onchange = () => { updatePixInfo(); updateTotals(); savePrefs(); };
 
     copyBtn.onclick = () => {
         if (allProducts.filter(p => p.selecionado).length === 0) return;
@@ -288,8 +335,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     };
 
+    copyPixKeyBtn.onclick = () => {
+        navigator.clipboard.writeText(PIX_KEY)
+            .then(() => {
+                const originalText = copyPixKeyBtn.innerHTML;
+                copyPixKeyBtn.innerHTML = '✅ Chave copiada!';
+                setTimeout(() => {
+                    copyPixKeyBtn.innerHTML = originalText;
+                }, 2000);
+            });
+    };
+
     // 5. Initial Hydration
     loadPrefs();
+    updatePixInfo();
     const savedText = localStorage.getItem('hortifruti_raw_text');
     if (savedText) {
         rawText.value = savedText;

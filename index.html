@@ -31,7 +31,11 @@
                 </div>
                 <label for="rawText">Mensagem original:</label>
                 <textarea id="rawText" placeholder="Ex: 🍉 FRUTAS&#10;Melancia Baby 8,00un.&#10;🎃 LEGUMES&#10;Abóbora moranga R$4,99kg"></textarea>
-                <button id="processBtn">✨ Processar Mensagem</button>
+                <div class="input-actions">
+                    <button id="processBtn">✨ Processar Mensagem</button>
+                    <button id="clipboardBtn" class="secondary-btn">📋 Ler da área de transferência</button>
+                </div>
+                <p id="updateStatus" class="update-status" data-state="idle">Aguardando atualização da lista.</p>
             </section>
 
             <section id="selectionSection" class="panel selection-panel hidden">
@@ -70,6 +74,7 @@
                         <select id="endereco">
                             <option value="Rua Exemplo, 123">Rua Exemplo, 123</option>
                             <option value="Avenida Exemplo, 456">Avenida Exemplo, 456</option>
+                            <option value="Rua Teste, 789">Rua Teste, 789</option>
                         </select>
                     </div>
                     <div class="field-group">

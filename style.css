@@ -213,6 +213,45 @@ textarea {
     resize: vertical;
 }
 
+.input-actions {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.input-actions #processBtn {
+    margin-top: 0;
+}
+
+.update-status {
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 1px solid #d8e0ea;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+}
+
+.update-status[data-state="loading"] {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.update-status[data-state="ok"] {
+    background: #ecfdf3;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+.update-status[data-state="error"] {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #b91c1c;
+}
+
 button {
     border: none;
     border-radius: 12px;
@@ -580,6 +619,10 @@ button:focus-visible {
     .controls {
         width: 100%;
         flex-wrap: wrap;
+    }
+
+    .input-actions {
+        grid-template-columns: 1fr;
     }
 
     .search-box {

@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const rawText = document.getElementById('rawText');
     const processBtn = document.getElementById('processBtn');
+    const clipboardBtn = document.getElementById('clipboardBtn');
+    const updateStatusEl = document.getElementById('updateStatus');
     const selectionSection = document.getElementById('selectionSection');
     const summarySection = document.getElementById('summarySection');
     const itemsList = document.getElementById('itemsList');
@@ -23,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const DELIVERY_FEE = 5.00;
     const PIX_KEY = '37223063000117';
     const PIX_KEY_DISPLAY = '37.223.063/0001-17';
+    const RAW_TEXT_KEY = 'hortifruti_raw_text';
+    const LAST_UPDATE_TS_KEY = 'hortifruti_last_update_ts';
+    const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
     let allProducts = [];
     let activeCategory = 'Todos';
 
@@ -44,11 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('hortifruti_cart', JSON.stringify(cart));
     };
 
+    const setSelectValue = (selectEl, value) => {
+        const fallback = selectEl.options[0]?.value || '';
+        const hasMatchingOption = [...selectEl.options].some(option => option.value === value);
+        selectEl.value = hasMatchingOption ? value : fallback;
+    };
+
     const loadPrefs = () => {
         const prefs = JSON.parse(localStorage.getItem('hortifruti_prefs'));
         if (prefs) {
-            enderecoSelect.value = prefs.endereco || enderecoSelect.options[0].value;
-            pagamentoSelect.value = prefs.pagamento || pagamentoSelect.options[0].value;
+            setSelectValue(enderecoSelect, prefs.endereco);
+            setSelectValue(pagamentoSelect, prefs.pagamento);
         }
     };
 
@@ -69,6 +80,51 @@ document.addEventListener('DOMContentLoaded', () => {
         if (normalized.includes('geladeira')) return '🧊';
         if (normalized.includes('limpeza')) return '🧼';
         return '📦';
+    };
+
+    const getSourceLabel = (source) => {
+        if (source === 'clipboard') return 'área de transferência';
+        if (source === 'manual') return 'colagem manual';
+        return 'dados salvos';
+    };
+
+    const setUpdateStatus = (state, message) => {
+        updateStatusEl.dataset.state = state;
+        updateStatusEl.textContent = message;
+    };
+
+    const formatUpdateTimestamp = (timestamp) => {
+        const parsedDate = new Date(timestamp);
+        if (Number.isNaN(parsedDate.getTime())) return null;
+
+        return parsedDate.toLocaleString('pt-BR', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        });
+    };
+
+    const syncLastUpdateStatus = () => {
+        const timestamp = localStorage.getItem(LAST_UPDATE_TS_KEY);
+        const source = localStorage.getItem(LAST_UPDATE_SOURCE_KEY) || 'manual';
+        if (!timestamp) {
+            setUpdateStatus('idle', 'Aguardando atualização da lista.');
+            return;
+        }
+
+        const formattedTimestamp = formatUpdateTimestamp(timestamp);
+        if (!formattedTimestamp) {
+            setUpdateStatus('idle', 'Aguardando atualização da lista.');
+            return;
+        }
+
+        setUpdateStatus('ok', `Última atualização: ${formattedTimestamp} (${getSourceLabel(source)}).`);
+    };
+
+    const persistRawText = (text, source) => {
+        localStorage.setItem(RAW_TEXT_KEY, text);
+        localStorage.setItem(LAST_UPDATE_TS_KEY, new Date().toISOString());
+        localStorage.setItem(LAST_UPDATE_SOURCE_KEY, source);
+        syncLastUpdateStatus();
     };
 
     const updatePixInfo = () => {
@@ -268,13 +324,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 4. Main Actions
-    const processContent = (text) => {
+    const processContent = (text, { source = 'manual', saveToStorage = true } = {}) => {
         extractDate(text);
         allProducts = parseProducts(text);
         
-        if (allProducts.length === 0) return false;
+        if (allProducts.length === 0) {
+            setUpdateStatus('error', 'Nenhum produto encontrado no texto informado.');
+            return false;
+        }
 
-        localStorage.setItem('hortifruti_raw_text', text);
+        if (saveToStorage) {
+            persistRawText(text, source);
+        }
         
         activeCategory = 'Todos';
         selectionSection.classList.remove('hidden');
@@ -298,10 +359,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     processBtn.onclick = () => {
         const text = rawText.value;
-        if (processContent(text)) {
+        if (processContent(text, { source: 'manual' })) {
             selectionSection.scrollIntoView({ behavior: 'smooth' });
         } else {
             alert('Nenhum produto encontrado. Tente colar a mensagem novamente.');
+        }
+    };
+
+    clipboardBtn.onclick = async () => {
+        if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+            setUpdateStatus('error', 'Seu navegador não permite leitura da área de transferência.');
+            return;
+        }
+
+        setUpdateStatus('loading', 'Lendo a área de transferência...');
+
+        try {
+            const clipboardText = await navigator.clipboard.readText();
+            if (!clipboardText.trim()) {
+                setUpdateStatus('error', 'A área de transferência está vazia.');
+                return;
+            }
+
+            rawText.value = clipboardText;
+
+            if (processContent(clipboardText, { source: 'clipboard' })) {
+                selectionSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('Nenhum produto encontrado na área de transferência.');
+            }
+        } catch (error) {
+            console.error('Falha ao ler área de transferência:', error);
+            setUpdateStatus('error', 'Não foi possível acessar a área de transferência. Permita o acesso no navegador.');
         }
     };
 
@@ -349,9 +438,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Initial Hydration
     loadPrefs();
     updatePixInfo();
-    const savedText = localStorage.getItem('hortifruti_raw_text');
+    syncLastUpdateStatus();
+    const savedText = localStorage.getItem(RAW_TEXT_KEY);
     if (savedText) {
         rawText.value = savedText;
-        processContent(savedText);
+        processContent(savedText, { saveToStorage: false, source: 'manual' });
+
+        if (!localStorage.getItem(LAST_UPDATE_TS_KEY)) {
+            setUpdateStatus('ok', `Lista carregada de ${getSourceLabel('manual')}.`);
+        }
     }
 });

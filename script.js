@@ -82,6 +82,66 @@ document.addEventListener('DOMContentLoaded', () => {
         return '📦';
     };
 
+    const ITEM_ICON_RULES = [
+        { emoji: '🍍', keywords: ['abacaxi'] },
+        { emoji: '🥑', keywords: ['abacate'] },
+        { emoji: '🍌', keywords: ['banana'] },
+        { emoji: '🍎', keywords: ['maca'] },
+        { emoji: '🍊', keywords: ['laranja', 'tangerina'] },
+        { emoji: '🍋', keywords: ['limao'] },
+        { emoji: '🍇', keywords: ['uva'] },
+        { emoji: '🍓', keywords: ['morango'] },
+        { emoji: '🍉', keywords: ['melancia'] },
+        { emoji: '🍈', keywords: ['melao'] },
+        { emoji: '🥭', keywords: ['manga', 'mamao', 'ameixa', 'goiaba', 'caqui', 'maracuja'] },
+        { emoji: '🍐', keywords: ['pera'] },
+        { emoji: '🥝', keywords: ['kiwi'] },
+        { emoji: '🥥', keywords: ['coco'] },
+        { emoji: '🍅', keywords: ['tomate'] },
+        { emoji: '🥒', keywords: ['pepino'] },
+        { emoji: '🍆', keywords: ['berinjela'] },
+        { emoji: '🧄', keywords: ['alho'] },
+        { emoji: '🧅', keywords: ['cebola'] },
+        { emoji: '🥕', keywords: ['cenoura', 'jilo', 'maxixe', 'vagem', 'quiabo'] },
+        { emoji: '🥔', keywords: ['batata', 'aipim', 'mandioca', 'inhame', 'baroa'] },
+        { emoji: '🎃', keywords: ['abobora', 'abobrinha', 'chuchu'] },
+        { emoji: '🫑', keywords: ['pimentao'] },
+        { emoji: '🥦', keywords: ['brocolis', 'couve flor'] },
+        { emoji: '🥬', keywords: ['alface', 'couve', 'espinafre', 'agriao', 'coentro', 'salsa', 'hortela', 'louro', 'cheiro verde', 'repolho'] },
+        { emoji: '🥚', keywords: ['ovo'] },
+        { emoji: '🍯', keywords: ['mel silvestre', 'mel'] },
+        { emoji: '☕', keywords: ['cafe'] },
+        { emoji: '🥛', keywords: ['leite', 'requeijao', 'margarina', 'manteiga', 'creme de leite', 'condensado'] },
+        { emoji: '🍞', keywords: ['pao', 'torrada', 'bisnaguinha'] },
+        { emoji: '🍪', keywords: ['biscoito', 'rosquinha'] },
+        { emoji: '🍿', keywords: ['pipoca'] },
+        { emoji: '🧃', keywords: ['suco', 'agua', 'refresco', 'salada de frutas'] },
+        { emoji: '🍚', keywords: ['arroz', 'feijao', 'farinha', 'espaguete', 'parafuso', 'miojo', 'macarrao', 'flocao'] },
+        { emoji: '🌽', keywords: ['milho', 'ervilha'] },
+        { emoji: '🫒', keywords: ['azeite', 'oleo'] },
+        { emoji: '🧂', keywords: ['sal', 'canela', 'condimentos', 'sazon', 'caldo'] },
+        { emoji: '🔥', keywords: ['carvao', 'churrasco'] },
+        { emoji: '🧼', keywords: ['detergente', 'sabao', 'alcool', 'baygon', 'sabonete', 'desodorante', 'pasta de dente', 'esponja', 'multiuso', 'papel'] }
+    ];
+
+    const emojiToExternalIconUrl = (emoji) => {
+        const codepoints = [...emoji]
+            .map(char => char.codePointAt(0).toString(16))
+            .join('-');
+
+        return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${codepoints}.svg`;
+    };
+
+    const getItemIconEmoji = (itemName, category) => {
+        const normalizedName = normalizeText(itemName);
+        const matchedRule = ITEM_ICON_RULES.find(rule =>
+            rule.keywords.some(keyword => normalizedName.includes(keyword))
+        );
+
+        if (matchedRule) return matchedRule.emoji;
+        return getCategoryIcon(category);
+    };
+
     const getSourceLabel = (source) => {
         if (source === 'clipboard') return 'área de transferência';
         if (source === 'manual') return 'colagem manual';
@@ -241,13 +301,17 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach(item => {
             const div = document.createElement('div');
             const itemClasses = ['item-row'];
-            const itemIcon = getCategoryIcon(item.categoria);
+            const itemEmoji = getItemIconEmoji(item.nome, item.categoria);
+            const itemIconUrl = emojiToExternalIconUrl(itemEmoji);
             if (item.selecionado) itemClasses.push('selected');
             if (item.promocao) itemClasses.push('promo-item');
             div.className = itemClasses.join(' ');
             div.innerHTML = `
                 <input type="checkbox" class="item-check" ${item.selecionado ? 'checked' : ''}>
-                <span class="item-name"><span class="item-icon" aria-hidden="true">${itemIcon}</span>${item.nome}</span>
+                <span class="item-name">
+                    <img class="item-icon" src="${itemIconUrl}" alt="${itemEmoji}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+                    <span class="item-name-text">${item.nome}</span>
+                </span>
                 <span class="item-price">R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}</span>
                 <input type="number" class="item-qty" value="${item.quantidade}" min="0.1" step="0.1" ${item.selecionado ? '' : 'disabled'}>
             `;

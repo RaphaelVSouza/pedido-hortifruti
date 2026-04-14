@@ -450,8 +450,14 @@ button:focus-visible {
 }
 
 .item-icon {
-    font-size: 1.05rem;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
     flex-shrink: 0;
+}
+
+.item-name-text {
+    min-width: 0;
 }
 
 .item-price {

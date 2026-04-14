@@ -153,6 +153,45 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatusEl.textContent = message;
     };
 
+    const fallbackCopyText = (text) => {
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = text;
+        tempTextArea.setAttribute('readonly', '');
+        tempTextArea.style.position = 'fixed';
+        tempTextArea.style.opacity = '0';
+        tempTextArea.style.left = '-9999px';
+        tempTextArea.style.top = '0';
+
+        document.body.appendChild(tempTextArea);
+        tempTextArea.focus();
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, tempTextArea.value.length);
+
+        let copied = false;
+        try {
+            copied = document.execCommand('copy');
+        } catch (error) {
+            console.error('Fallback de cópia falhou:', error);
+            copied = false;
+        }
+
+        document.body.removeChild(tempTextArea);
+        return copied;
+    };
+
+    const copyTextToClipboard = async (text) => {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (error) {
+                console.error('Clipboard API falhou, usando fallback:', error);
+            }
+        }
+
+        return fallbackCopyText(text);
+    };
+
     const formatUpdateTimestamp = (timestamp) => {
         const parsedDate = new Date(timestamp);
         if (Number.isNaN(parsedDate.getTime())) return null;
@@ -473,30 +512,36 @@ document.addEventListener('DOMContentLoaded', () => {
     enderecoSelect.onchange = () => { updateTotals(); savePrefs(); };
     pagamentoSelect.onchange = () => { updatePixInfo(); updateTotals(); savePrefs(); };
 
-    copyBtn.onclick = () => {
+    copyBtn.onclick = async () => {
         if (allProducts.filter(p => p.selecionado).length === 0) return;
-        
-        navigator.clipboard.writeText(finalMessage.value)
-            .then(() => {
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '✅ Copiado!';
-                copyBtn.style.background = '#27ae60';
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.background = 'var(--accent)';
-                }, 2000);
-            });
+
+        const copied = await copyTextToClipboard(finalMessage.value);
+        if (!copied) {
+            alert('Não foi possível copiar automaticamente. Tente pressionar e segurar na mensagem para copiar.');
+            return;
+        }
+
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = '✅ Copiado!';
+        copyBtn.style.background = '#27ae60';
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.style.background = 'var(--accent)';
+        }, 2000);
     };
 
-    copyPixKeyBtn.onclick = () => {
-        navigator.clipboard.writeText(PIX_KEY)
-            .then(() => {
-                const originalText = copyPixKeyBtn.innerHTML;
-                copyPixKeyBtn.innerHTML = '✅ Chave copiada!';
-                setTimeout(() => {
-                    copyPixKeyBtn.innerHTML = originalText;
-                }, 2000);
-            });
+    copyPixKeyBtn.onclick = async () => {
+        const copied = await copyTextToClipboard(PIX_KEY);
+        if (!copied) {
+            alert('Não foi possível copiar a chave PIX automaticamente.');
+            return;
+        }
+
+        const originalText = copyPixKeyBtn.innerHTML;
+        copyPixKeyBtn.innerHTML = '✅ Chave copiada!';
+        setTimeout(() => {
+            copyPixKeyBtn.innerHTML = originalText;
+        }, 2000);
     };
 
     // 5. Initial Hydration

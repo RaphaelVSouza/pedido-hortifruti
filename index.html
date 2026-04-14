@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hortifruti - Automatizador de Pedidos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="app">
+        <header class="app-header">
+            <div class="brand-block">
+                <span class="brand-icon" aria-hidden="true">🥬</span>
+                <div>
+                    <h1>Hortifruti Digital</h1>
+                    <p>Transforme mensagens de promoção em pedidos prontos para enviar no WhatsApp.</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge">Fluxo em 3 passos</span>
+                <p id="promo-date" class="promo-date hidden"></p>
+            </div>
+        </header>
+
+        <div class="layout">
+            <section class="panel input-panel">
+                <div class="panel-heading">
+                    <span class="step-badge">Passo 1</span>
+                    <h2>Importar mensagem</h2>
+                    <p>Cole abaixo o texto recebido do hortifruti para organizar os itens automaticamente.</p>
+                </div>
+                <label for="rawText">Mensagem original:</label>
+                <textarea id="rawText" placeholder="Ex: 🍉 FRUTAS&#10;Melancia Baby 8,00un.&#10;🎃 LEGUMES&#10;Abóbora moranga R$4,99kg"></textarea>
+                <button id="processBtn">✨ Processar Mensagem</button>
+            </section>
+
+            <section id="selectionSection" class="panel selection-panel hidden">
+                <div class="panel-heading panel-heading-inline">
+                    <div>
+                        <span class="step-badge">Passo 2</span>
+                        <h2>Selecionar itens</h2>
+                    </div>
+                    <div class="controls">
+                        <div class="search-box">
+                            <span class="search-icon" aria-hidden="true">🔍</span>
+                            <input type="text" id="search" placeholder="Buscar produto...">
+                        </div>
+                        <button id="deselectAllBtn" class="secondary-btn">🗑️ Desmarcar Tudo</button>
+                    </div>
+                </div>
+
+                <div id="tabsContainer" class="tabs-container">
+                    <!-- Abas serão injetadas aqui -->
+                </div>
+
+                <div id="itemsList" class="items-list">
+                    <!-- Itens serão injetados aqui -->
+                </div>
+            </section>
+
+            <aside id="summarySection" class="panel summary-panel hidden">
+                <div class="panel-heading">
+                    <span class="step-badge">Passo 3</span>
+                    <h2>Resumo e envio</h2>
+                </div>
+
+                <div class="delivery-payment-grid">
+                    <div class="field-group">
+                        <label for="endereco">📍 Endereço de Entrega</label>
+                        <select id="endereco">
+                            <option value="Rua Nelson Mattos, 34">Rua Nelson Mattos, 34</option>
+                            <option value="Rua Amarante do Maranhão, 120">Rua Amarante do Maranhão, 120</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="pagamento">💳 Forma de Pagamento</label>
+                        <select id="pagamento">
+                            <option value="PIX">PIX</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="summary-details">
+                    <p><span>Subtotal</span><strong id="subtotalValue">R$ 0,00</strong></p>
+                    <p><span>Taxa de Entrega</span><strong id="deliveryFee">R$ 5,00</strong></p>
+                    <div class="total-row">
+                        <span>Total</span>
+                        <strong id="totalValue">R$ 5,00</strong>
+                    </div>
+                </div>
+
+                <div class="output-preview">
+                    <label for="finalMessage">Mensagem para WhatsApp</label>
+                    <textarea id="finalMessage" readonly></textarea>
+                    <button id="copyBtn">🛒 Copiar Pedido</button>
+                </div>
+            </aside>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const categoryRegex = /[#*_]{1,3}\s*([A-ZÀ-Ú ]+)\s*[#*_]{1,3}/i;
         const productRegex = /([^*_\r\n]+?)\s*R?\$?\s*(\d+[,.]\d+)\s*(kg|un|bdj|unit|kgg|g)?/i;
+        const promoRegex = /\*[^*\n]*\d+[,.]\d+[^*\n]*\*/;
 
         lines.forEach(line => {
             const cleanLine = line.trim();
@@ -81,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let nomeLimpo = prodMatch[1].trim().replace(/^[^\wÀ-ú]+/, '').trim();
                 const preco = parseFloat(prodMatch[2].replace(',', '.'));
                 let unidade = (prodMatch[3] || 'un').toLowerCase();
+                const isPromocao = promoRegex.test(cleanLine);
 
                 if (unidade === 'kgg') unidade = 'kg';
                 if (unidade === 'unit') unidade = 'un';
@@ -91,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         nome: nomeLimpo,
                         preco: preco,
                         unidade: unidade,
+                        promocao: isPromocao,
                         categoria: currentCategory,
                         quantidade: 1,
                         selecionado: false
@@ -104,12 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Rendering & UI Management
     function renderTabs() {
-        const categories = ['Todos', ...new Set(allProducts.map(p => p.categoria))];
+        const categories = ['Todos'];
+        const hasPromotions = allProducts.some(p => p.promocao);
+        const baseCategories = [...new Set(allProducts.map(p => p.categoria).filter(cat => cat !== 'Promoção'))];
+
+        if (hasPromotions) categories.push('Promoção');
+        categories.push(...baseCategories);
+
         tabsContainer.innerHTML = '';
         
         categories.forEach(cat => {
             const tab = document.createElement('button');
             tab.type = 'button';
+            tab.dataset.category = cat;
             tab.className = `tab ${activeCategory === cat ? 'active' : ''}`;
             tab.textContent = cat;
             tab.onclick = () => {
@@ -127,13 +137,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const filtered = allProducts.filter(p => {
             const matchesSearch = p.nome.toLowerCase().includes(searchTerm);
-            const matchesTab = activeCategory === 'Todos' || p.categoria === activeCategory;
+            const matchesTab = activeCategory === 'Todos'
+                || (activeCategory === 'Promoção' ? p.promocao : p.categoria === activeCategory);
             return matchesSearch && matchesTab;
         });
 
         filtered.forEach(item => {
             const div = document.createElement('div');
-            div.className = `item-row ${item.selecionado ? 'selected' : ''}`;
+            const itemClasses = ['item-row'];
+            if (item.selecionado) itemClasses.push('selected');
+            if (item.promocao) itemClasses.push('promo-item');
+            div.className = itemClasses.join(' ');
             div.innerHTML = `
                 <input type="checkbox" class="item-check" ${item.selecionado ? 'checked' : ''}>
                 <span class="item-name">${item.nome}</span>

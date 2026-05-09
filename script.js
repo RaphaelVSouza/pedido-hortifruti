@@ -14,8 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search');
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const tabsContainer = document.getElementById('tabsContainer');
-    const enderecoSelect = document.getElementById('endereco');
+    const enderecoInput = document.getElementById('endereco');
     const pagamentoSelect = document.getElementById('pagamento');
+    const filterSelectedBtn = document.getElementById('filterSelectedBtn');
     const promoDateEl = document.getElementById('promo-date');
     const pixInfo = document.getElementById('pixInfo');
     const pixKeyValue = document.getElementById('pixKeyValue');
@@ -30,11 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
     let allProducts = [];
     let activeCategory = 'Todos';
+    let showOnlySelected = false;
 
     // 1. Storage Helpers
     const savePrefs = () => {
         localStorage.setItem('hortifruti_prefs', JSON.stringify({
-            endereco: enderecoSelect.value,
+            endereco: enderecoInput.value,
             pagamento: pagamentoSelect.value
         }));
     };
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadPrefs = () => {
         const prefs = JSON.parse(localStorage.getItem('hortifruti_prefs'));
         if (prefs) {
-            setSelectValue(enderecoSelect, prefs.endereco);
+            enderecoInput.value = prefs.endereco || '';
             setSelectValue(pagamentoSelect, prefs.pagamento);
         }
     };
@@ -226,6 +228,14 @@ document.addEventListener('DOMContentLoaded', () => {
         syncLastUpdateStatus();
     };
 
+    const updateFilterBtn = () => {
+        filterSelectedBtn.classList.toggle('filter-active', showOnlySelected);
+        const count = allProducts.filter(p => p.selecionado).length;
+        filterSelectedBtn.textContent = showOnlySelected
+            ? `🛒 Selecionados (${count})`
+            : `🛒 Selecionados${count > 0 ? ' (' + count + ')' : ''}`;
+    };
+
     const updatePixInfo = () => {
         const isPix = pagamentoSelect.value.toUpperCase() === 'PIX';
 
@@ -253,18 +263,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const UNIT_PATTERN = /(?:kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i;
+
+    const normalizeUnit = (raw) => {
+        if (!raw) return 'un';
+        const u = raw.toLowerCase().replace(/\.$/, '');
+        if (['kgg'].includes(u)) return 'kg';
+        if (['unit', 'unid', 'unidade', 'unidades'].includes(u)) return 'un';
+        if (['bdj', 'bandeja', 'bandejas'].includes(u)) return 'bdj';
+        if (['pacote', 'pacotes', 'pct'].includes(u)) return 'pc';
+        if (['duzia', 'duzias'].includes(u)) return 'dz';
+        if (['litro', 'litros', 'lt', 'l'].includes(u)) return 'lt';
+        if (['caixa', 'caixas', 'cx'].includes(u)) return 'cx';
+        if (['maco', 'maço', 'maços', 'macos'].includes(u)) return 'maço';
+        return u;
+    };
+
     function parseProducts(text) {
         const lines = text.split('\n');
         const products = [];
         let currentCategory = 'Geral';
         
         const categoryRegex = /[#*_]{1,3}\s*([A-ZÀ-Ú ]+)\s*[#*_]{1,3}/i;
-        const productRegex = /([^*_\r\n]+?)\s*R?\$?\s*(\d+[,.]\d+)\s*(kg|un|bdj|unit|kgg|g)?/i;
         const promoRegex = /\*[^*\n]*\d+[,.]\d+[^*\n]*\*/;
+
+        const unitSrc = UNIT_PATTERN.source;
+        const productRegex = new RegExp(
+            '([^*_\\r\\n]+?)' +
+            '\\s*R?\\$?\\s*' +
+            '(?:(' + unitSrc + ')\\s+)?' +
+            '(\\d+[,.]\\d+)' +
+            '\\s*\\/?\\s*' +
+            '(' + unitSrc + ')?',
+            'i'
+        );
 
         lines.forEach(line => {
             const cleanLine = line.trim();
             if (!cleanLine) return;
+
+            if (/^https?:\/\//i.test(cleanLine)) return;
 
             const catMatch = cleanLine.match(categoryRegex);
             if (catMatch) {
@@ -275,14 +313,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const prodMatch = cleanLine.match(productRegex);
             if (prodMatch) {
                 let nomeLimpo = prodMatch[1].trim().replace(/^[^\wÀ-ú]+/, '').trim();
-                const preco = parseFloat(prodMatch[2].replace(',', '.'));
-                let unidade = (prodMatch[3] || 'un').toLowerCase();
+                const preco = parseFloat(prodMatch[3].replace(',', '.'));
+                const unitBefore = prodMatch[2];
+                const unitAfter = prodMatch[4];
                 const isPromocao = promoRegex.test(cleanLine);
 
-                if (unidade === 'kgg') unidade = 'kg';
-                if (unidade === 'unit') unidade = 'un';
+                let unidade = normalizeUnit(unitAfter || unitBefore);
 
-                if (nomeLimpo && !isNaN(preco)) {
+                if (unidade === 'un') {
+                    const afterPrice = cleanLine.slice(cleanLine.indexOf(prodMatch[3]) + prodMatch[3].length);
+                    const trailingAfterAll = afterPrice.match(/^[^\w]*\*?\s*(kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i);
+                    if (trailingAfterAll) {
+                        unidade = normalizeUnit(trailingAfterAll[1]);
+                    }
+                }
+
+                const bdjPrefix = nomeLimpo.match(/^Bdj\.?\s+/i);
+                if (bdjPrefix) {
+                    nomeLimpo = nomeLimpo.replace(/^Bdj\.?\s+/i, '').trim();
+                    if (unidade === 'un') unidade = 'bdj';
+                }
+
+                const trailingUnit = nomeLimpo.match(new RegExp('\\s+(' + unitSrc + ')$', 'i'));
+                if (trailingUnit) {
+                    nomeLimpo = nomeLimpo.replace(new RegExp('\\s+' + unitSrc + '$', 'i'), '').trim();
+                    if (unidade === 'un') unidade = normalizeUnit(trailingUnit[1]);
+                }
+
+                nomeLimpo = nomeLimpo
+                    .replace(/\s*R?\$\s*$/i, '')
+                    .replace(/\s*R?\$\s*(kg|g|un|bdj|lt?|ml)\s*$/i, '')
+                    .replace(/\s*R?\$g\s*$/i, '')
+                    .trim();
+
+                if (nomeLimpo && !isNaN(preco) && preco > 0) {
                     products.push({
                         id: 'item-' + Math.random().toString(36).substr(2, 9),
                         nome: nomeLimpo,
@@ -331,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         itemsList.innerHTML = '';
 
         const filtered = allProducts.filter(p => {
+            if (showOnlySelected && !p.selecionado) return false;
             const matchesSearch = p.nome.toLowerCase().includes(searchTerm);
             const matchesTab = activeCategory === 'Todos'
                 || (activeCategory === 'Promoção' ? p.promocao : p.categoria === activeCategory);
@@ -362,6 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.selecionado = e.target.checked;
                 qtyInput.disabled = !item.selecionado;
                 div.classList.toggle('selected', item.selecionado);
+                updateFilterBtn();
                 updateTotals();
                 saveCart();
             };
@@ -398,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const endereco = enderecoSelect.value;
+        const endereco = enderecoInput.value.trim() || 'Não informado';
         const pagamento = pagamentoSelect.value;
 
         let msg = 'Bom dia, tudo bem? Gostaria de fazer um pedido:\n\n';
@@ -456,6 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTabs();
         renderItems();
         updatePixInfo();
+        updateFilterBtn();
         updateTotals();
         return true;
     };
@@ -499,17 +566,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     searchInput.oninput = renderItems;
 
+    filterSelectedBtn.onclick = () => {
+        showOnlySelected = !showOnlySelected;
+        updateFilterBtn();
+        renderItems();
+    };
+
     deselectAllBtn.onclick = () => {
         allProducts.forEach(p => {
             p.selecionado = false;
             p.quantidade = 1;
         });
         localStorage.removeItem('hortifruti_cart');
+        showOnlySelected = false;
+        updateFilterBtn();
         renderItems();
         updateTotals();
     };
 
-    enderecoSelect.onchange = () => { updateTotals(); savePrefs(); };
+    enderecoInput.oninput = () => { updateTotals(); savePrefs(); };
     pagamentoSelect.onchange = () => { updatePixInfo(); updateTotals(); savePrefs(); };
 
     copyBtn.onclick = async () => {

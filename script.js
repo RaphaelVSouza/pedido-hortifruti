@@ -263,18 +263,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const UNIT_PATTERN = /(?:kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i;
+
+    const normalizeUnit = (raw) => {
+        if (!raw) return 'un';
+        const u = raw.toLowerCase().replace(/\.$/, '');
+        if (['kgg'].includes(u)) return 'kg';
+        if (['unit', 'unid', 'unidade', 'unidades'].includes(u)) return 'un';
+        if (['bdj', 'bandeja', 'bandejas'].includes(u)) return 'bdj';
+        if (['pacote', 'pacotes', 'pct'].includes(u)) return 'pc';
+        if (['duzia', 'duzias'].includes(u)) return 'dz';
+        if (['litro', 'litros', 'lt', 'l'].includes(u)) return 'lt';
+        if (['caixa', 'caixas', 'cx'].includes(u)) return 'cx';
+        if (['maco', 'maço', 'maços', 'macos'].includes(u)) return 'maço';
+        return u;
+    };
+
     function parseProducts(text) {
         const lines = text.split('\n');
         const products = [];
         let currentCategory = 'Geral';
         
         const categoryRegex = /[#*_]{1,3}\s*([A-ZÀ-Ú ]+)\s*[#*_]{1,3}/i;
-        const productRegex = /([^*_\r\n]+?)\s*R?\$?\s*(\d+[,.]\d+)\s*\/?\s*(kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|g\.?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)?/i;
         const promoRegex = /\*[^*\n]*\d+[,.]\d+[^*\n]*\*/;
+
+        const unitSrc = UNIT_PATTERN.source;
+        const productRegex = new RegExp(
+            '([^*_\\r\\n]+?)' +
+            '\\s*R?\\$?\\s*' +
+            '(?:(' + unitSrc + ')\\s+)?' +
+            '(\\d+[,.]\\d+)' +
+            '\\s*\\/?\\s*' +
+            '(' + unitSrc + ')?',
+            'i'
+        );
 
         lines.forEach(line => {
             const cleanLine = line.trim();
             if (!cleanLine) return;
+
+            if (/^https?:\/\//i.test(cleanLine)) return;
 
             const catMatch = cleanLine.match(categoryRegex);
             if (catMatch) {
@@ -285,20 +313,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const prodMatch = cleanLine.match(productRegex);
             if (prodMatch) {
                 let nomeLimpo = prodMatch[1].trim().replace(/^[^\wÀ-ú]+/, '').trim();
-                const preco = parseFloat(prodMatch[2].replace(',', '.'));
-                let unidade = (prodMatch[3] || 'un').toLowerCase().replace(/\.$/, '');
+                const preco = parseFloat(prodMatch[3].replace(',', '.'));
+                const unitBefore = prodMatch[2];
+                const unitAfter = prodMatch[4];
                 const isPromocao = promoRegex.test(cleanLine);
 
-                if (['kgg'].includes(unidade)) unidade = 'kg';
-                if (['unit', 'unid', 'unidade', 'unidades'].includes(unidade)) unidade = 'un';
-                if (['bandeja', 'bandejas'].includes(unidade)) unidade = 'bdj';
-                if (['pacote', 'pacotes', 'pct'].includes(unidade)) unidade = 'pc';
-                if (['duzia', 'duzias'].includes(unidade)) unidade = 'dz';
-                if (['litro', 'litros', 'lt', 'l'].includes(unidade)) unidade = 'lt';
-                if (['caixa', 'caixas', 'cx'].includes(unidade)) unidade = 'cx';
-                if (['maco', 'maço', 'maços', 'macos'].includes(unidade)) unidade = 'maço';
+                let unidade = normalizeUnit(unitAfter || unitBefore);
 
-                if (nomeLimpo && !isNaN(preco)) {
+                if (unidade === 'un') {
+                    const afterPrice = cleanLine.slice(cleanLine.indexOf(prodMatch[3]) + prodMatch[3].length);
+                    const trailingAfterAll = afterPrice.match(/^[^\w]*\*?\s*(kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i);
+                    if (trailingAfterAll) {
+                        unidade = normalizeUnit(trailingAfterAll[1]);
+                    }
+                }
+
+                const bdjPrefix = nomeLimpo.match(/^Bdj\.?\s+/i);
+                if (bdjPrefix) {
+                    nomeLimpo = nomeLimpo.replace(/^Bdj\.?\s+/i, '').trim();
+                    if (unidade === 'un') unidade = 'bdj';
+                }
+
+                const trailingUnit = nomeLimpo.match(new RegExp('\\s+(' + unitSrc + ')$', 'i'));
+                if (trailingUnit) {
+                    nomeLimpo = nomeLimpo.replace(new RegExp('\\s+' + unitSrc + '$', 'i'), '').trim();
+                    if (unidade === 'un') unidade = normalizeUnit(trailingUnit[1]);
+                }
+
+                nomeLimpo = nomeLimpo
+                    .replace(/\s*R?\$\s*$/i, '')
+                    .replace(/\s*R?\$\s*(kg|g|un|bdj|lt?|ml)\s*$/i, '')
+                    .replace(/\s*R?\$g\s*$/i, '')
+                    .trim();
+
+                if (nomeLimpo && !isNaN(preco) && preco > 0) {
                     products.push({
                         id: 'item-' + Math.random().toString(36).substr(2, 9),
                         nome: nomeLimpo,

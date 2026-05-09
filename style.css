@@ -344,6 +344,16 @@ button:focus-visible {
     background: #e4ebf3;
 }
 
+.filter-btn.filter-active {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #b8ecc8;
+}
+
+.filter-btn.filter-active:hover {
+    background: #d3f9e2;
+}
+
 .tabs-container {
     display: flex;
     gap: 8px;
@@ -484,9 +494,25 @@ button:focus-visible {
     margin-bottom: 18px;
 }
 
-.field-group select {
+.field-group select,
+.field-group input[type="text"] {
     width: 100%;
     padding: 11px 12px;
+}
+
+.field-group input[type="text"] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+    font: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.field-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    background: #fff;
 }
 
 .pix-info {
@@ -608,42 +634,87 @@ button:focus-visible {
 
 @media (max-width: 760px) {
     .app {
-        padding: 18px 14px 32px;
+        padding: 14px 10px 28px;
+        gap: 16px;
     }
 
     .app-header {
-        padding: 20px;
+        padding: 16px;
         flex-direction: column;
         align-items: flex-start;
+        border-radius: var(--radius-md);
+        gap: 12px;
+    }
+
+    .brand-block {
+        gap: 10px;
+    }
+
+    .brand-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        font-size: 1.3rem;
+    }
+
+    .app-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .app-header p {
+        font-size: 0.85rem;
     }
 
     .header-badges {
         justify-items: start;
     }
 
+    .badge {
+        font-size: 0.78rem;
+        padding: 4px 10px;
+    }
+
     .panel {
-        padding: 18px;
+        padding: 14px;
+        border-radius: var(--radius-md);
+    }
+
+    .panel-heading {
+        margin-bottom: 12px;
     }
 
     .panel-heading-inline {
+        flex-direction: column;
         align-items: flex-start;
+        gap: 10px;
     }
 
     .controls {
         width: 100%;
         flex-wrap: wrap;
+        gap: 8px;
     }
 
     .input-actions {
         grid-template-columns: 1fr;
+        gap: 8px;
     }
 
     .search-box {
-        flex: 1 1 240px;
+        flex: 1 1 100%;
+        order: -1;
     }
 
     .search-box input {
         width: 100%;
+    }
+
+    .filter-btn {
+        flex: 1;
+    }
+
+    #deselectAllBtn {
+        flex: 1;
     }
 
     #finalMessage {
@@ -651,10 +722,12 @@ button:focus-visible {
     }
 
     .item-row {
-        grid-template-columns: 24px minmax(0, 1fr) 90px;
+        grid-template-columns: 24px minmax(0, 1fr) 80px;
         grid-template-areas:
             "check name qty"
             "check price qty";
+        padding: 10px 12px;
+        gap: 8px;
     }
 
     .item-check {
@@ -663,16 +736,21 @@ button:focus-visible {
 
     .item-name {
         grid-area: name;
+        font-size: 0.92rem;
     }
 
     .item-price {
         grid-area: price;
         white-space: normal;
+        font-size: 0.82rem;
     }
 
     .item-qty {
         grid-area: qty;
         justify-self: end;
+        width: 72px;
+        padding: 6px;
+        font-size: 0.9rem;
     }
 
     .delivery-payment-grid {
@@ -692,28 +770,162 @@ button:focus-visible {
         width: 140px;
         height: 140px;
     }
+
+    .tabs-container {
+        gap: 6px;
+        padding: 2px 0 8px;
+        margin-bottom: 10px;
+    }
+
+    .tab {
+        padding: 7px 12px;
+        font-size: 0.82rem;
+    }
+
+    .step-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        margin-bottom: 6px;
+    }
+
+    .summary-details {
+        padding: 12px;
+        margin-bottom: 14px;
+    }
+
+    .summary-details p {
+        font-size: 0.9rem;
+    }
+
+    .total-row {
+        font-size: 1rem;
+    }
+
+    #processBtn,
+    #copyBtn {
+        padding: 12px 16px;
+        font-size: 0.92rem;
+    }
+
+    textarea {
+        min-height: 120px;
+        padding: 12px 14px;
+        font-size: 0.92rem;
+    }
+
+    label {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+    }
+
+    .pix-info {
+        padding: 12px;
+        margin-bottom: 14px;
+    }
+
+    .output-preview {
+        gap: 8px;
+    }
 }
 
 @media (max-width: 480px) {
+    .app {
+        padding: 10px 8px 24px;
+        gap: 12px;
+    }
+
+    .app-header {
+        padding: 14px;
+    }
+
+    .brand-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
+    }
+
+    .app-header h1 {
+        font-size: 1.1rem;
+    }
+
     .controls {
         flex-direction: column;
         align-items: stretch;
+        gap: 6px;
     }
 
     .search-box {
         width: 100%;
     }
 
-    .secondary-btn {
+    .filter-btn,
+    #deselectAllBtn {
         width: 100%;
     }
 
-    .tab {
-        padding: 7px 12px;
+    .secondary-btn {
+        width: 100%;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+
+    .panel {
+        padding: 12px;
+    }
+
+    .item-row {
+        grid-template-columns: 22px minmax(0, 1fr) 68px;
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .item-name {
+        font-size: 0.88rem;
+    }
+
+    .item-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .item-price {
+        font-size: 0.78rem;
+    }
+
+    .item-qty {
+        width: 64px;
+        padding: 5px;
         font-size: 0.85rem;
     }
 
+    .item-check {
+        width: 16px;
+        height: 16px;
+    }
+
+    .tab {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
     #finalMessage {
-        min-height: 180px;
+        min-height: 150px;
+        font-size: 0.85rem;
+    }
+
+    #processBtn,
+    #copyBtn {
+        padding: 11px 14px;
+        font-size: 0.88rem;
+    }
+
+    .delivery-payment-grid {
+        gap: 10px;
+    }
+
+    .field-group select,
+    .field-group input[type="text"] {
+        padding: 10px;
+        font-size: 0.9rem;
     }
 }

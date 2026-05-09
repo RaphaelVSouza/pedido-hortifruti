@@ -50,6 +50,7 @@
                             <span class="search-icon" aria-hidden="true">🔍</span>
                             <input type="text" id="search" placeholder="Buscar produto...">
                         </div>
+                        <button id="filterSelectedBtn" class="secondary-btn filter-btn">🛒 Selecionados</button>
                         <button id="deselectAllBtn" class="secondary-btn">🗑️ Desmarcar Tudo</button>
                     </div>
                 </div>
@@ -72,11 +73,7 @@
                 <div class="delivery-payment-grid">
                     <div class="field-group">
                         <label for="endereco">📍 Endereço de Entrega</label>
-                        <select id="endereco">
-                            <option value="Rua Exemplo, 123">Rua Exemplo, 123</option>
-                            <option value="Avenida Exemplo, 456">Avenida Exemplo, 456</option>
-                            <option value="Rua Teste, 789">Rua Teste, 789</option>
-                        </select>
+                        <input type="text" id="endereco" placeholder="Digite seu endereço completo...">
                     </div>
                     <div class="field-group">
                         <label for="pagamento">💳 Forma de Pagamento</label>

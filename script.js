@@ -88,50 +88,62 @@ document.addEventListener('DOMContentLoaded', () => {
         { emoji: '🍍', keywords: ['abacaxi'] },
         { emoji: '🥑', keywords: ['abacate'] },
         { emoji: '🍌', keywords: ['banana'] },
-        { emoji: '🍎', keywords: ['maca'] },
+        { emoji: '🍎', keywords: ['maca fuji', 'maca gala', 'maca promo', 'maca saquinho'] },
+        { emoji: '🍏', keywords: ['maca verde'] },
         { emoji: '🍊', keywords: ['laranja', 'tangerina'] },
         { emoji: '🍋', keywords: ['limao'] },
         { emoji: '🍇', keywords: ['uva'] },
         { emoji: '🍓', keywords: ['morango'] },
         { emoji: '🍉', keywords: ['melancia'] },
         { emoji: '🍈', keywords: ['melao'] },
-        { emoji: '🥭', keywords: ['manga', 'mamao', 'ameixa', 'goiaba', 'caqui', 'maracuja'] },
+        { emoji: '🥭', keywords: ['manga', 'mamao'] },
+        { emoji: '🍑', keywords: ['ameixa', 'goiaba', 'caqui', 'maracuja', 'pitaia', 'graviola'] },
         { emoji: '🍐', keywords: ['pera'] },
         { emoji: '🥝', keywords: ['kiwi'] },
         { emoji: '🥥', keywords: ['coco'] },
-        { emoji: '🍅', keywords: ['tomate'] },
+        { emoji: '🍅', keywords: ['tomate', 'tomatinho'] },
         { emoji: '🥒', keywords: ['pepino'] },
         { emoji: '🍆', keywords: ['berinjela'] },
-        { emoji: '🧄', keywords: ['alho'] },
+        { emoji: '🧄', keywords: ['alho', 'gengibre'] },
         { emoji: '🧅', keywords: ['cebola'] },
-        { emoji: '🥕', keywords: ['cenoura', 'jilo', 'maxixe', 'vagem', 'quiabo'] },
+        { emoji: '🥕', keywords: ['cenoura', 'jilo', 'maxixe', 'vagem', 'quiabo', 'beterraba'] },
         { emoji: '🥔', keywords: ['batata', 'aipim', 'mandioca', 'inhame', 'baroa'] },
         { emoji: '🎃', keywords: ['abobora', 'abobrinha', 'chuchu'] },
         { emoji: '🫑', keywords: ['pimentao'] },
         { emoji: '🥦', keywords: ['brocolis', 'couve flor'] },
-        { emoji: '🥬', keywords: ['alface', 'couve', 'espinafre', 'agriao', 'coentro', 'salsa', 'hortela', 'louro', 'cheiro verde', 'repolho'] },
+        { emoji: '🥬', keywords: ['alface', 'couve', 'espinafre', 'agriao', 'coentro', 'salsa', 'hortela', 'louro', 'cheiro verde', 'repolho', 'chicoria'] },
+        { emoji: '🌿', keywords: ['ervilha bdj', 'ervilha'] },
         { emoji: '🥚', keywords: ['ovo'] },
         { emoji: '🍯', keywords: ['mel silvestre', 'mel'] },
-        { emoji: '☕', keywords: ['cafe'] },
+        { emoji: '☕', keywords: ['cafe', 'nescau', 'cha leao', 'cha'] },
         { emoji: '🥛', keywords: ['leite', 'requeijao', 'margarina', 'manteiga', 'creme de leite', 'condensado'] },
-        { emoji: '🍞', keywords: ['pao', 'torrada', 'bisnaguinha'] },
+        { emoji: '🍞', keywords: ['pao', 'torrada', 'bisnaguinha', 'tapioca'] },
         { emoji: '🍪', keywords: ['biscoito', 'rosquinha'] },
-        { emoji: '🍿', keywords: ['pipoca'] },
-        { emoji: '🧃', keywords: ['suco', 'agua', 'refresco', 'salada de frutas'] },
+        { emoji: '🍿', keywords: ['pipoca', 'salgadinho'] },
+        { emoji: '🧃', keywords: ['suco', 'agua de coco', 'refresco', 'salada de frutas'] },
         { emoji: '🍚', keywords: ['arroz', 'feijao', 'farinha', 'espaguete', 'parafuso', 'miojo', 'macarrao', 'flocao'] },
-        { emoji: '🌽', keywords: ['milho', 'ervilha'] },
+        { emoji: '🌽', keywords: ['milho'] },
         { emoji: '🫒', keywords: ['azeite', 'oleo'] },
-        { emoji: '🧂', keywords: ['sal', 'canela', 'condimentos', 'sazon', 'caldo'] },
-        { emoji: '🔥', keywords: ['carvao', 'churrasco'] },
-        { emoji: '🧼', keywords: ['detergente', 'sabao', 'alcool', 'baygon', 'sabonete', 'desodorante', 'pasta de dente', 'esponja', 'multiuso', 'papel'] }
+        { emoji: '🧂', keywords: ['sal', 'canela', 'condimentos', 'sazon', 'caldo', 'fermento'] },
+        { emoji: '🍅', keywords: ['ketchup', 'mostarda', 'maionese', 'vinagre'] },
+        { emoji: '🧈', keywords: ['acucar', 'aveia', 'gelatina'] },
+        { emoji: '🌭', keywords: ['salsicha'] },
+        { emoji: '🧀', keywords: ['parmesao', 'queijo'] },
+        { emoji: '🔥', keywords: ['carvao', 'churrasco', 'palito', 'fosforo'] },
+        { emoji: '🧻', keywords: ['papel toalha', 'papel aluminio'] },
+        { emoji: '🧼', keywords: ['detergente', 'sabao', 'alcool', 'baygon', 'sabonete', 'desodorante', 'pasta de dente', 'esponja', 'multiuso'] },
+        { emoji: '🫘', keywords: ['farofa', 'ervilha p'] },
+        { emoji: '🍶', keywords: ['leite de coco', 'coco ralado'] },
+        { emoji: '🥜', keywords: ['tamara'] }
     ];
 
     const emojiToExternalIconUrl = (emoji) => {
         const codepoints = [...emoji]
             .map(char => char.codePointAt(0).toString(16))
+            .filter(cp => cp !== 'fe0f')
             .join('-');
 
-        return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${codepoints}.svg`;
+        return `https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/${codepoints}_3d.png`;
     };
 
     const getItemIconEmoji = (itemName, category) => {

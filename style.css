@@ -33,6 +33,12 @@ body {
         var(--bg);
 }
 
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 .app {
     max-width: 1200px;
     margin: 0 auto;
@@ -57,6 +63,11 @@ body {
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
+}
+
+.brand-block > div {
+    min-width: 0;
 }
 
 .brand-icon {
@@ -79,6 +90,7 @@ body {
 .app-header p {
     color: var(--muted);
     max-width: 56ch;
+    overflow-wrap: anywhere;
 }
 
 .header-badges {
@@ -306,6 +318,7 @@ button:focus-visible {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
 }
 
 .search-box {
@@ -316,6 +329,7 @@ button:focus-visible {
     border-radius: 999px;
     background: var(--surface-soft);
     padding: 7px 12px;
+    min-width: 0;
 }
 
 .search-icon {
@@ -326,6 +340,7 @@ button:focus-visible {
     border: none;
     background: transparent;
     width: 190px;
+    min-width: 0;
 }
 
 .search-box input:focus {
@@ -472,6 +487,7 @@ button:focus-visible {
 
 .item-name-text {
     min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .item-price {
@@ -550,6 +566,7 @@ button:focus-visible {
     border: 1px dashed #b7c9ea;
     color: #0f172a;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 #copyPixKeyBtn {
@@ -629,6 +646,16 @@ button:focus-visible {
         max-height: none;
         overflow: visible;
         overscroll-behavior: auto;
+    }
+}
+
+@media (max-width: 900px) {
+    .controls {
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1 1 240px;
     }
 }
 

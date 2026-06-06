@@ -950,3 +950,186 @@ button:focus-visible {
         font-size: 0.9rem;
     }
 }
+
+@media (max-width: 360px) {
+    /* App container & header */
+    .app {
+        padding: 8px 6px 20px;
+        gap: 10px;
+    }
+
+    .app-header {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .brand-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .app-header h1 {
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+
+    .app-header p {
+        font-size: 0.8rem;
+    }
+
+    .header-badges {
+        width: 100%;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 3px 9px;
+    }
+
+    .promo-date {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+
+    /* Panels & general */
+    .panel {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .pix-info {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+
+    .summary-details {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+
+    /* Forms & inputs */
+    label {
+        font-size: 0.88rem;
+        margin-bottom: 5px;
+    }
+
+    textarea {
+        font-size: 0.88rem;
+        padding: 11px 12px;
+        min-height: 110px;
+    }
+
+    .field-group select,
+    .field-group input[type="text"] {
+        padding: 9px;
+        font-size: 0.88rem;
+    }
+
+    .search-box {
+        width: 100%;
+        padding: 6px 10px;
+    }
+
+    .search-box input {
+        font-size: 0.9rem;
+        padding: 8px 0;
+    }
+
+    .search-icon {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    /* Buttons */
+    .input-actions {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    #processBtn,
+    #clipboardBtn {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        width: 100%;
+    }
+
+    .filter-btn,
+    #deselectAllBtn {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 0.82rem;
+    }
+
+    .secondary-btn {
+        padding: 7px 10px;
+        font-size: 0.82rem;
+    }
+
+    #copyPixKeyBtn {
+        padding: 8px 10px;
+        font-size: 0.82rem;
+    }
+
+    /* Items & tabs */
+    .item-row {
+        grid-template-columns: 20px minmax(0, 1fr) 60px;
+        padding: 8px 8px;
+        gap: 5px;
+    }
+
+    .item-check {
+        width: 16px;
+        height: 16px;
+        margin-top: 2px;
+    }
+
+    .item-name {
+        font-size: 0.85rem;
+    }
+
+    .item-price {
+        font-size: 0.75rem;
+    }
+
+    .item-qty {
+        width: 60px;
+        padding: 4px;
+        font-size: 0.82rem;
+    }
+
+    .tabs-container {
+        gap: 4px;
+        padding: 1px 0 6px;
+        margin-bottom: 8px;
+    }
+
+    .tab {
+        padding: 5px 9px;
+        font-size: 0.77rem;
+    }
+
+    /* Special sections */
+    .pix-qr-code {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+        padding: 6px;
+    }
+
+    .pix-key-row code {
+        padding: 7px 9px;
+        font-size: 0.8rem;
+        word-break: break-all;
+    }
+
+    #finalMessage {
+        min-height: 130px;
+        font-size: 0.82rem;
+    }
+
+    .output-preview {
+        gap: 6px;
+    }
+}

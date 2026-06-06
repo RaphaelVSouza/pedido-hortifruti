@@ -301,11 +301,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const unitSrc = UNIT_PATTERN.source;
         const productRegex = new RegExp(
-            '([^*_\\r\\n]+?)' +
-            '\\s*R?\\$?\\s*' +
-            '(?:(' + unitSrc + ')\\s+)?' +
+            '(.*?)' +
+            '[\\s\\$]*(?:R\\$)?[\\s\\$]*' +
+            '(?:(' + unitSrc + ')[\\s]*)?' +
             '(\\d+[,.]\\d+)' +
-            '\\s*\\/?\\s*' +
+            '[\\s]*\\$?[\\s]*' +
             '(' + unitSrc + ')?',
             'i'
         );

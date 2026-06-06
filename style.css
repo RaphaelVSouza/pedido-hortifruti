@@ -1188,6 +1188,9 @@ button:focus-visible {
     /* Additional 360px specific fixes */
     .controls {
         width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
     }
 
     .panel-heading-inline {
@@ -1197,19 +1200,64 @@ button:focus-visible {
     }
 
     .delivery-payment-grid {
+        grid-template-columns: 1fr;
         gap: 8px;
+        margin-bottom: 12px;
     }
 
-    .pix-title,
-    .pix-subtitle {
+    .field-group {
+        width: 100%;
+    }
+
+    .field-group label {
         font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+
+    .pix-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .pix-subtitle {
+        font-size: 0.75rem;
+        color: #666;
+        margin-bottom: 6px;
+    }
+
+    .summary-details {
+        gap: 6px;
     }
 
     .summary-details p {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .summary-details span {
+        flex: 1;
+    }
+
+    .summary-details strong {
+        text-align: right;
+        font-weight: 700;
     }
 
     .total-row {
         font-size: 0.9rem;
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid #eee;
+    }
+
+    .panel-heading h2 {
+        font-size: 1rem;
+    }
+
+    .items-list {
+        gap: 4px;
     }
 }

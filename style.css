@@ -1186,6 +1186,19 @@ button:focus-visible {
     }
 
     /* Additional 360px specific fixes */
+    .selection-panel {
+        grid-column: auto;
+    }
+
+    .summary-panel {
+        grid-column: auto;
+        position: static;
+        max-height: none;
+        overflow: visible;
+        overscroll-behavior: auto;
+        top: auto;
+    }
+
     .controls {
         width: 100%;
         flex-direction: column;
@@ -1197,6 +1210,7 @@ button:focus-visible {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
+        justify-content: flex-start;
     }
 
     .delivery-payment-grid {

@@ -954,182 +954,262 @@ button:focus-visible {
 @media (max-width: 360px) {
     /* App container & header */
     .app {
-        padding: 8px 6px 20px;
-        gap: 10px;
+        padding: 6px 4px 16px;
+        gap: 8px;
     }
 
     .app-header {
-        padding: 12px;
-        gap: 10px;
+        padding: 10px;
+        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .brand-block {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .brand-block > div {
+        min-width: 0;
+        flex: 1;
     }
 
     .brand-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 1rem;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
         flex-shrink: 0;
     }
 
     .app-header h1 {
-        font-size: 1rem;
-        line-height: 1.3;
+        font-size: 0.95rem;
+        line-height: 1.2;
+        word-break: break-word;
     }
 
     .app-header p {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        line-height: 1.3;
     }
 
     .header-badges {
         width: 100%;
+        justify-items: start;
+        gap: 6px;
     }
 
     .badge {
-        font-size: 0.75rem;
-        padding: 3px 9px;
+        font-size: 0.7rem;
+        padding: 2px 8px;
     }
 
     .promo-date {
-        font-size: 0.85rem;
-        padding: 6px 12px;
+        font-size: 0.8rem;
+        padding: 4px 10px;
     }
 
     /* Panels & general */
     .panel {
-        padding: 10px;
-        gap: 10px;
+        padding: 8px;
+        gap: 8px;
+        border-radius: 10px;
     }
 
     .pix-info {
-        padding: 10px;
-        margin-bottom: 12px;
+        padding: 8px;
+        margin-bottom: 10px;
     }
 
     .summary-details {
-        padding: 10px;
-        margin-bottom: 12px;
+        padding: 8px;
+        margin-bottom: 10px;
     }
 
     /* Forms & inputs */
     label {
-        font-size: 0.88rem;
-        margin-bottom: 5px;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        display: block;
     }
 
     textarea {
-        font-size: 0.88rem;
-        padding: 11px 12px;
-        min-height: 110px;
+        font-size: 0.85rem;
+        padding: 8px 10px;
+        min-height: 100px;
+        width: 100%;
+    }
+
+    .field-group {
+        width: 100%;
     }
 
     .field-group select,
     .field-group input[type="text"] {
-        padding: 9px;
-        font-size: 0.88rem;
+        padding: 8px;
+        font-size: 1rem;
+        width: 100%;
+        min-width: 0;
     }
 
     .search-box {
         width: 100%;
-        padding: 6px 10px;
+        padding: 5px 8px;
+        border-radius: 20px;
+        min-width: 0;
     }
 
     .search-box input {
-        font-size: 0.9rem;
-        padding: 8px 0;
+        font-size: 1rem;
+        padding: 6px 0;
+        min-width: 0;
+        width: 100%;
     }
 
     .search-icon {
-        font-size: 1rem;
+        font-size: 0.9rem;
         flex-shrink: 0;
+        opacity: 0.7;
     }
 
     /* Buttons */
     .input-actions {
         grid-template-columns: 1fr;
         gap: 6px;
+        width: 100%;
+        margin-top: 10px;
     }
 
     #processBtn,
     #clipboardBtn {
-        padding: 10px 12px;
-        font-size: 0.85rem;
+        padding: 10px;
+        font-size: 0.8rem;
         width: 100%;
     }
 
     .filter-btn,
     #deselectAllBtn {
         width: 100%;
-        padding: 8px 10px;
-        font-size: 0.82rem;
+        padding: 8px;
+        font-size: 0.8rem;
     }
 
     .secondary-btn {
-        padding: 7px 10px;
-        font-size: 0.82rem;
+        padding: 8px;
+        font-size: 0.8rem;
+        width: 100%;
     }
 
     #copyPixKeyBtn {
-        padding: 8px 10px;
-        font-size: 0.82rem;
+        padding: 8px;
+        font-size: 0.8rem;
+        width: 100%;
     }
 
     /* Items & tabs */
     .item-row {
-        grid-template-columns: 20px minmax(0, 1fr) 60px;
-        padding: 8px 8px;
-        gap: 5px;
+        grid-template-columns: 18px minmax(0, 1fr) 55px;
+        padding: 6px;
+        gap: 4px;
+        min-width: 0;
     }
 
     .item-check {
         width: 16px;
         height: 16px;
-        margin-top: 2px;
+        margin-top: 1px;
+        flex-shrink: 0;
     }
 
     .item-name {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        min-width: 0;
+        word-break: break-word;
     }
 
     .item-price {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
+        min-width: 0;
     }
 
     .item-qty {
-        width: 60px;
+        width: 55px;
         padding: 4px;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
+        flex-shrink: 0;
     }
 
     .tabs-container {
-        gap: 4px;
-        padding: 1px 0 6px;
-        margin-bottom: 8px;
+        gap: 3px;
+        padding: 0 0 6px;
+        margin-bottom: 6px;
+        scroll-behavior: smooth;
     }
 
     .tab {
-        padding: 5px 9px;
-        font-size: 0.77rem;
+        padding: 5px 8px;
+        font-size: 0.72rem;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     /* Special sections */
     .pix-qr-code {
-        width: 120px;
-        height: 120px;
+        width: 110px;
+        height: 110px;
         margin: 0 auto;
-        padding: 6px;
+        padding: 4px;
+        display: block;
+    }
+
+    .pix-key-row {
+        flex-direction: column;
+        gap: 6px;
     }
 
     .pix-key-row code {
-        padding: 7px 9px;
-        font-size: 0.8rem;
+        padding: 6px 8px;
+        font-size: 0.75rem;
         word-break: break-all;
+        width: 100%;
     }
 
     #finalMessage {
-        min-height: 130px;
-        font-size: 0.82rem;
+        min-height: 100px;
+        font-size: 0.8rem;
+        padding: 8px 10px;
     }
 
     .output-preview {
         gap: 6px;
+        width: 100%;
+    }
+
+    /* Additional 360px specific fixes */
+    .controls {
+        width: 100%;
+    }
+
+    .panel-heading-inline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .delivery-payment-grid {
+        gap: 8px;
+    }
+
+    .pix-title,
+    .pix-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .summary-details p {
+        font-size: 0.8rem;
+    }
+
+    .total-row {
+        font-size: 0.9rem;
     }
 }

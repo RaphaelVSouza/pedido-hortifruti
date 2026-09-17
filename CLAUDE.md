@@ -63,8 +63,7 @@ Products are matched to Fluent Emoji 3D icons fetched from `cdn.jsdelivr.net`. T
 ### Order Message Generation
 
 - Delivery fee hardcoded: **R$5.00**
-- PIX key (display): `00.000.000/0001-00` / (raw): `00000000000000`
-
+- Payment method chosen via UI selector (PIX or Cartão de Crédito)
 - Output is WhatsApp-formatted with `*bold*` markers, organized by category
 
 ## Key Conventions

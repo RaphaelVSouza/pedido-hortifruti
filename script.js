@@ -18,14 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pagamentoSelect = document.getElementById('pagamento');
     const filterSelectedBtn = document.getElementById('filterSelectedBtn');
     const promoDateEl = document.getElementById('promo-date');
-    const pixInfo = document.getElementById('pixInfo');
-    const pixKeyValue = document.getElementById('pixKeyValue');
-    const pixCode = document.getElementById('pixCode');
-    const copyPixKeyBtn = document.getElementById('copyPixKeyBtn');
 
     const DELIVERY_FEE = 5.00;
-    const PIX_KEY = '00000000000000';
-    const PIX_KEY_DISPLAY = '00.000.000/0001-00';
     const RAW_TEXT_KEY = 'hortifruti_raw_text';
     const LAST_UPDATE_TS_KEY = 'hortifruti_last_update_ts';
     const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
@@ -248,20 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
             : `🛒 Selecionados${count > 0 ? ' (' + count + ')' : ''}`;
     };
 
-    const updatePixInfo = () => {
-        const isPix = pagamentoSelect.value.toUpperCase() === 'PIX';
-
-        if (!isPix) {
-            pixInfo.classList.add('hidden');
-            pixCode.removeAttribute('src');
-            return;
-        }
-
-        pixKeyValue.textContent = PIX_KEY_DISPLAY;
-        pixCode.src = ``;
-        pixCode.alt = `Chave PIX ${PIX_KEY_DISPLAY}`;
-        pixInfo.classList.remove('hidden');
-    };
 
     // 2. Parser Logic
     function extractDate(text) {
@@ -494,12 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         msg += `Taxa de entrega: R$ ${DELIVERY_FEE.toFixed(2).replace('.', ',')}\n`;
         msg += `*Total Geral: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
         msg += `📍 *Endereço:* ${endereco}\n`;
-        if (pagamento.toUpperCase() === 'PIX') {
-            msg += '💳 *Pagamento:* PIX\n';
-            msg += `🔑 *Chave PIX (CNPJ):* ${PIX_KEY}`;
-        } else {
-            msg += `💳 *Pagamento:* ${pagamento}`;
-        }
+        msg += `💳 *Pagamento:* ${pagamento}`;
 
         finalMessage.value = msg;
     }
@@ -533,7 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderTabs();
         renderItems();
-        updatePixInfo();
         updateFilterBtn();
         updateTotals();
         return true;
@@ -597,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     enderecoInput.oninput = () => { updateTotals(); savePrefs(); };
-    pagamentoSelect.onchange = () => { updatePixInfo(); updateTotals(); savePrefs(); };
+    pagamentoSelect.onchange = () => { updateTotals(); savePrefs(); };
 
     copyBtn.onclick = async () => {
         if (allProducts.filter(p => p.selecionado).length === 0) return;
@@ -617,23 +591,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2000);
     };
 
-    copyPixKeyBtn.onclick = async () => {
-        const copied = await copyTextToClipboard(PIX_KEY);
-        if (!copied) {
-            alert('Não foi possível copiar a chave PIX automaticamente.');
-            return;
-        }
-
-        const originalText = copyPixKeyBtn.innerHTML;
-        copyPixKeyBtn.innerHTML = '✅ Chave copiada!';
-        setTimeout(() => {
-            copyPixKeyBtn.innerHTML = originalText;
-        }, 2000);
-    };
-
     // 5. Initial Hydration
     loadPrefs();
-    updatePixInfo();
     syncLastUpdateStatus();
     const savedText = localStorage.getItem(RAW_TEXT_KEY);
     if (savedText) {

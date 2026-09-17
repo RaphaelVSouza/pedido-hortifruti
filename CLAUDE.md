@@ -10,12 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Open `index.html` in a browser — no server, npm, or build step required.
 
-For local development with a simple server:
+For local development with hot reload (Vite):
 ```bash
-python3 -m http.server 8080
-# or
-npx serve .
+npm run dev
 ```
+Accessible at `http://localhost:5173/`. CSS changes update instantly via HMR without losing application state.
 
 There are no tests, no linter, and no CI configuration.
 

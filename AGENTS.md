@@ -71,7 +71,7 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 - **Combos** (`3 por R$ 10`): `packQty` preenchido. `toProduct` gera `Nome (combo 3 un)` com unidade `combo` e o preço exato do combo; a mensagem sai `Nome (combo 3 un), 1x (R$ 10,00)`.
 - **Desempenho:** a extração é linear: contexto à esquerda do número em janela fixa (`BEFORE_WINDOW`) e aparo de pontas em `cleanName` sem regex terminada em `$`. Não reintroduza `…+$` em strings longas. Linhas com mais de 500 caracteres vão para `unparsed` como defesa extra. `unparsed` aparece no status como "N linha(s) não reconhecida(s) e ignorada(s)".
 - **Templates aprendidos** (`createTemplateStore`, `induceTemplate`): motor pronto e testado, mas **sem interface** no app. Se ligar, o regex é induzido de texto do usuário; ele já é escapado, e `induceTemplate` valida que reproduz a anotação.
-- Mudou o parser? Rode `node tests/parser.test.js` e acrescente o caso novo ao `CORPUS`.
+- Mudou o parser? Rode `node tests/parser.test.js` e acrescente o caso novo ao `CORPUS`. Comportamento esperado ainda não implementado entra com `pending: 'ADR-0xx'` no caso: aparece como `PEND` e não falha; se passar, o teste falha pedindo a remoção do marcador.
 
 ## Ícones
 

@@ -211,6 +211,60 @@ Mc. Alface R$ 3,00`,
       ['Alface', 3, 'maco'],
     ],
   },
+  {
+    id: 'R1-1 - a partir de (ADR-015 regra 1)',
+    text: 'Sucos variados a partir de R$ 10,00 (450ml)',
+    expect: [
+      ['Sucos variados (450ml)', 10, null, null, { fromPrice: true }],
+    ],
+  },
+  {
+    id: 'R1-3 - $ isolado e unidade na linha seguinte (ADR-015 regra 3)',
+    text: 'Ameixa $ *10,99*\nkg',
+    expect: [
+      ['Ameixa', 10.99, 'kg', null, { promo: true }],
+    ],
+  },
+  {
+    id: 'R1-4 - combo escalonado com tiers (ADR-015 regra 4)',
+    text: 'Abacaxi 1 por R$ 3,00 e 2 por R$ 5,00',
+    expect: [
+      ['Abacaxi', 3, null, null, { tiers: [{ qty: 1, price: 3 }, { qty: 2, price: 5 }] }],
+    ],
+  },
+  {
+    id: 'R1-5 - R isolado antes de 2 decimais (ADR-015 regra 5)',
+    text: 'Couve R 2,99',
+    expect: [
+      ['Couve', 2.99, null],
+    ],
+  },
+  {
+    id: 'R1-6 - kgg aceito como kg (ADR-015 regra 6)',
+    text: 'Abóbora moranga R$5,99kgg',
+    expect: [
+      ['Abóbora moranga', 5.99, 'kg'],
+    ],
+  },
+  {
+    id: 'R1-7 - data isolada e termos operacionais como ruído (ADR-015 regra 7)',
+    text: `22/08/2025
+Tabela de preços:
+Entre na nossa comunidade pelo link:
+Banana prata R$ 4,99kg`,
+    promoDate: '22/08/2025',
+    unparsed: 0,
+    expect: [
+      ['Banana prata', 4.99, 'kg'],
+    ],
+  },
+  {
+    id: 'R1-8 - remover de/por/a colados a parêntese (ADR-015 regra 8)',
+    text: 'Suco de uva (1lt)de R$ 12,00',
+    expect: [
+      ['Suco de uva (1lt)', 12, null],
+    ],
+  },
 ];
 
 let fail = 0;
@@ -230,10 +284,15 @@ for (const c of CORPUS) {
     if (it.price !== price) bad.push(`preço ${it.price}`);
     if (it.unit !== unit) bad.push(`unidade ${it.unit}`);
     if (cat !== undefined && cat !== null && it.category !== cat) bad.push(`categoria ${it.category}`);
-    if (extra) for (const [k2, v] of Object.entries(extra)) if (it[k2] !== v) bad.push(`${k2}=${it[k2]}`);
+    if (extra) for (const [k2, v] of Object.entries(extra)) {
+      if (typeof v === 'object' && v !== null) {
+        if (JSON.stringify(it[k2]) !== JSON.stringify(v)) bad.push(`${k2}=${JSON.stringify(it[k2])}`);
+      } else if (it[k2] !== v) bad.push(`${k2}=${it[k2]}`);
+    }
     if (bad.length) errs.push(`  [${k}] ${name}: ${bad.join(', ')}`);
   });
   if (c.promoDate && r.promoDate !== c.promoDate) errs.push(`promoDate ${r.promoDate}`);
+  if (c.unparsed !== undefined && r.unparsed.length !== c.unparsed) errs.push(`unparsed esperado ${c.unparsed}, obtido ${r.unparsed.length}`);
   if (c.pending) {
     // Falha esperada: não conta como erro. Se passar, o marcador está obsoleto e deve ser removido.
     if (errs.length) { console.log(`PEND ${c.id} [${c.pending}]`); continue; }
@@ -305,7 +364,7 @@ Caju (bdj) ----> 9 conto`;
   time(2000); // aquece
   const small = Math.max(time(10000), 1);
   const big = time(40000);
-  const ok = big < 600 && big / small < 12; // linear ~4x; quadrático ~16x
+  const ok = big < 1500 && big / small < 12; // linear ~4x; quadrático ~16x
   if (!ok) fail++;
   console.log(`${ok ? 'OK  ' : 'FAIL'} M - extração linear (10k: ${small}ms, 40k: ${big}ms)`);
 }

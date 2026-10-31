@@ -20,7 +20,7 @@
   // ---------------------------------------------------------------- vocabulário
 
   const UNIT_ALTS = {
-    kg: 'kgs?|quilos?|kilos?|quilogramas?',
+    kg: 'kgg?s?|quilos?|kilos?|quilogramas?',
     g: 'gramas?|grs?|g',
     un: 'unidades?|unids?|unds?|uni|un|cada|p[cç]s?|pe[cç]as?|p[eé]s?|cabe[cç]as?',
     bandeja: 'bandejas?|bdjs?|bdja|band|bj',
@@ -39,7 +39,7 @@
   const COUNT_UNITS = new Set(['un', 'duzia', 'bandeja', 'maco', 'caixa', 'pacote', 'penca']);
 
   // Número monetário: 8 | 8,0 | 8,00 | 4.99. Sem separador de milhar (preços de FLV < 1000).
-  const CANDIDATE_RE = /(R\s?\$\s?)?(\d+(?:[.,]\d{1,2})?)(?!\d)/gu;
+  const CANDIDATE_RE = /(R\s?\$\s?|\$\s*)?(\d+(?:[.,]\d{1,2})?)(?!\d)/gu;
 
   // Unidade depois do número: "4,99kg", "4,99 /kg", "4,99 o kg", "4,99 por maço", "(kg)"
   const AFTER_UNIT_RE = new RegExp(
@@ -50,6 +50,7 @@
   // Combo: "3 por R$ 10", "2 bandejas por 15", "3x 10,00"
   const COMBO_RE = new RegExp('^\\s*(?:(' + UNIT + ')' + UNIT_END + '\\s*)?(?:por|x|=)\\s*(?:R\\s?\\$\\s?)?\\d', 'iu');
   const OLD_PRICE_BEFORE_RE = /(?:^|\s)(?:de|antes|era)\s*:?\s*$/iu;
+  const FROM_PRICE_RE = /(?:^|\s)a\s+partir\s+de\s*:?\s*$/iu;
   const WEIGHT_CONTEXT_RE = /(?:peso|m[eé]dio|aprox\.?|aproximadamente|cerca de)\s*$/iu;
 
   // Unidade inferida do nome ("Chuchu Unidade", "Alface (pé)", "Banana penca")
@@ -63,7 +64,7 @@
   const PROMO_CATEGORY_RE = /promo|oferta|destaque|imperd/iu;
   const PROMO_WORD_RE = /promo|oferta|imperd[ií]vel|baixou|🔥|‼️|⚡/iu;
 
-  const NOISE_RE = /(?:https?:\/\/|www\.|@\w|\bpix\b|\bchave\b|whats|\bzap\b|telefone|\bfone\b|contato|hor[aá]rio|entregamos|entregas?\b|delivery|pedidos?\b|aceitamos|cart[aã]o|bom dia|boa tarde|boa noite|\bol[aá]\b|obrigad|aten[cç][aã]o|sujeito|estoque|v[aá]lid[ao]s?|endere[cç]o|\brua\b|\bav\.|bairro|\btaxa\b|frete|m[ií]nimo|\blista\b|\bsegue\b|confira)/iu;
+  const NOISE_RE = /(?:https?:\/\/|www\.|@\w|\bpix\b|\bchave\b|whats|\bzap\b|telefone|\bfone\b|contato|hor[aá]rio|entregamos|entregas?\b|delivery|pedidos?\b|aceitamos|cart[aã]o|bom dia|boa tarde|boa noite|\bol[aá]\b|obrigad|aten[cç][aã]o|sujeito|estoque|v[aá]lid[ao]s?|endere[cç]o|\brua\b|\bav\.|bairro|\btaxa\b|frete|m[ií]nimo|\blista\b|\bsegue\b|confira|\btabela\b|\blink\b|\bcomunidade\b)/iu;
 
   const DATE_RE = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/g;
   const PHONE_RE = /(?:\+?55\s?)?\(?\d{2}\)?\s?9?\s?\d{4}[-\s]?\d{4}/g;
@@ -135,13 +136,14 @@
   }
 
   function cleanName(s) {
-    let n = s.replace(EMOJI_RE, ' ').replace(/R\s?\$/g, ' ');
+    let n = s.replace(EMOJI_RE, ' ').replace(/R\s?\$/g, ' ').replace(/\$/g, ' ');
     n = n.replace(/\(\s*\)/g, ' ');
     let prev;
     do {
       prev = n;
       n = trimEdges(n);
       n = dropTrailingWord(n);
+      n = n.replace(/\)(?:de|por|a)$/iu, ')');
       n = n.replace(/^(?:por|apenas|s[oó])\s+/iu, '');
     } while (n !== prev);
     return n.replace(/\s{2,}/g, ' ').trim();
@@ -154,15 +156,28 @@
     CANDIDATE_RE.lastIndex = 0;
     let m;
     while ((m = CANDIDATE_RE.exec(s))) {
-      const start = m.index;
-      if (/[\d.,]/.test(s[start - 1] || '') && /\d/.test(s[start - 2] || '')) continue;
+      let cur = !!m[1];
+      let start = m.index;
       const numEnd = start + m[0].length;
       const raw = m[2];
+      if (/[\d.,]/.test(s[start - 1] || '') && /\d/.test(s[start - 2] || '')) continue;
       const dec = ((raw.match(/[.,](\d+)$/) || [])[1] || '').length;
+
+      // Regra 5: R isolado antes de número com 2 decimais é moeda ("Couve R 2,99")
+      let before = s.slice(Math.max(0, start - BEFORE_WINDOW), start);
+      if (!cur && dec === 2) {
+        const rMatch = before.match(/(^|[^\p{L}])R\s+$/iu);
+        if (rMatch) {
+          cur = true;
+          start -= (rMatch[0].length - rMatch[1].length);
+          before = s.slice(Math.max(0, start - BEFORE_WINDOW), start);
+        }
+      }
+
       const c = {
-        start, numEnd, end: numEnd, raw, value: toNumber(raw), cur: !!m[1], dec,
+        start, numEnd, end: numEnd, raw, value: toNumber(raw), cur, dec,
         reais: false, unit: null, unitFrom: null, attached: false,
-        before: s.slice(Math.max(0, start - BEFORE_WINDOW), start), beforeFrom: Math.max(0, start - BEFORE_WINDOW),
+        before, beforeFrom: Math.max(0, start - BEFORE_WINDOW),
         score: 0, role: 'price',
       };
       let rest = s.slice(c.end);
@@ -202,7 +217,8 @@
 
   function scoreCandidates(cands) {
     const live = cands.filter((c) => c.role === 'price');
-    live.forEach((c, i) => {
+    for (let i = 0; i < live.length; i++) {
+      const c = live[i];
       let sc = 0;
       if (c.cur) sc += 6;
       if (c.reais) sc += 5;
@@ -214,10 +230,20 @@
       }
       if (WEIGHT_CONTEXT_RE.test(c.before.replace(/R\s?\$\s?$/, ''))) sc -= 8;
       if (/\(\s*$/.test(c.before)) sc -= 1;
-      // "de 5,99 por 3,99" / "antes 5,99"
-      if (OLD_PRICE_BEFORE_RE.test(c.before) && i < live.length - 1) c.role = 'old';
+      if (FROM_PRICE_RE.test(c.before)) {
+        c.fromPrice = true;
+      } else if (OLD_PRICE_BEFORE_RE.test(c.before) && i < live.length - 1) {
+        c.role = 'old';
+      }
       c.score = sc + i * 0.01; // desempate: o mais à direita
-    });
+    }
+    // Regra 1: Preço só é antigo se houver preço válido (score >= 0) depois
+    for (let i = 0; i < live.length; i++) {
+      if (live[i].role === 'old') {
+        const hasValidAfter = live.slice(i + 1).some((after) => after.score >= 0);
+        if (!hasValidAfter) live[i].role = 'price';
+      }
+    }
     return cands;
   }
 
@@ -249,16 +275,54 @@
     const old = cands.find((c) => c.role === 'old');
     const combo = cands.find((c) => c.role === 'combo' && c.end <= best.start + 12);
 
-    // Remove do texto os trechos consumidos para sobrar o nome
-    const cuts = [[best.start, best.end]];
-    if (best.unitFrom === 'before') cuts.push([best.unitStart, best.start]);
-    if (old) cuts.push([old.start - (old.before.match(/(?:de|antes|era)\s*:?\s*$/iu) || [''])[0].length, old.end]);
-    if (combo) cuts.push([combo.start, combo.end]);
-    let rest = s;
-    cuts.sort((a, b) => b[0] - a[0]).forEach(([a, b]) => { rest = rest.slice(0, a) + ' ' + rest.slice(b); });
+    // Combos escalonados (ADR-015 regra 4): cada N por se liga ao preço imediatamente seguinte
+    let tiers = null;
+    let selectedPrice = best;
+    let selectedCombo = combo;
+    let firstComboStart = null;
+    const hasAnyCombo = cands.some((c) => c.role === 'combo');
+    if (hasAnyCombo) {
+      const combos = cands.filter((c) => c.role === 'combo');
+      if (combos.length > 1) {
+        const matchedTiers = [];
+        for (const cm of combos) {
+          // Preço imediatamente seguinte: compara pelo fim do número do preço (não pelo início do R$)
+          const np = prices.find((p) => p.numEnd > cm.numEnd && p.end > cm.start);
+          if (np) {
+            matchedTiers.push({ qty: cm.value, price: np.value, unit: cm.unit || null, comboCand: cm, priceCand: np });
+          }
+        }
+        if (matchedTiers.length > 1) {
+          tiers = matchedTiers.map((t) => ({ qty: t.qty, price: t.price }));
+          firstComboStart = combos[0].start;
+          const t1 = matchedTiers.find((t) => t.qty === 1);
+          if (t1) {
+            selectedPrice = t1.priceCand;
+            selectedCombo = null; // preço unitário direto
+          }
+        }
+      }
+    }
 
-    let unit = best.unit || (combo && combo.unit) || null;
-    let unitFrom = unit ? best.unitFrom || 'combo' : null;
+    let rest = s;
+    if (tiers && firstComboStart !== null) {
+      // O nome termina antes do primeiro combo
+      rest = s.slice(0, firstComboStart);
+    } else {
+      // Remove do texto os trechos consumidos para sobrar o nome
+      const cuts = [[selectedPrice.start, selectedPrice.end]];
+      if (selectedPrice.unitFrom === 'before') cuts.push([selectedPrice.unitStart, selectedPrice.start]);
+      if (selectedPrice.fromPrice) {
+        const fpMatch = selectedPrice.before.match(/(?:^|\s)a\s+partir\s+de\s*:?\s*$/iu);
+        if (fpMatch) cuts.push([selectedPrice.start - fpMatch[0].length, selectedPrice.start]);
+      }
+      if (old) cuts.push([old.start - (old.before.match(/(?:de|antes|era)\s*:?\s*$/iu) || [''])[0].length, old.end]);
+      if (selectedCombo) cuts.push([selectedCombo.start, selectedCombo.end]);
+      cuts.sort((a, b) => b[0] - a[0]).forEach(([a, b]) => { rest = rest.slice(0, a) + ' ' + rest.slice(b); });
+    }
+
+    let unit = selectedPrice.unit || (selectedCombo && selectedCombo.unit) || null;
+    let unitFrom = unit ? selectedPrice.unitFrom || 'combo' : null;
     let name = cleanName(rest);
     if (!unit) {
       const lead = name.match(LEAD_UNIT_RE);
@@ -278,15 +342,17 @@
       kind: 'item',
       name,
       residual: rest,
-      price: best.value,
+      price: selectedPrice.value,
       unit,
       unitFrom,
       oldPrice: old ? old.value : null,
-      packQty: combo ? combo.value : null,
-      strong: best.cur || best.reais,
+      packQty: selectedCombo ? selectedCombo.value : null,
+      tiers: tiers || null,
+      fromPrice: !!selectedPrice.fromPrice,
+      strong: selectedPrice.cur || selectedPrice.reais,
       // inteiro sem R$, 'reais' nem unidade: "Alface 3" (ambíguo; ver regra por documento em parse)
-      bare: best.dec === 0 && !best.cur && !best.reais && !best.unit,
-      score: best.score,
+      bare: selectedPrice.dec === 0 && !selectedPrice.cur && !selectedPrice.reais && !selectedPrice.unit,
+      score: selectedPrice.score,
       raw,
     };
   }
@@ -309,6 +375,11 @@
     const promoMarkup = /\*[^*]*\d[^*]*\*/.test(line);
     const promoWord = PROMO_WORD_RE.test(line);
     const dates = [...line.matchAll(DATE_RE)].map((m) => m[0]);
+
+    // Regra 7: Linha só com data é ruído (e alimenta promoDate)
+    if (dates.length && line.replace(DATE_RE, '').replace(/[*_~\s]/g, '') === '') {
+      return [{ kind: 'noise', raw, dates }];
+    }
 
     // Riscado ~R$ 8,99~ => preço antigo explícito
     let struck = null;
@@ -469,7 +540,19 @@
         if (r.kind === 'noise') { flushPending(); continue; }
         if (r.kind === 'long') { flushPending(); unparsed.push({ line: r.raw, reason: 'linha muito longa' }); continue; }
         if (r.kind === 'header') { flushPending(); category = r.name; continue; }
-        if (r.kind === 'text') { flushPending(); pending = r; continue; }
+        if (r.kind === 'text') {
+          // Regra 3: Linha que contém só uma unidade completa a unidade do item anterior
+          const onlyUnit = r.text && canonUnit(r.text.trim().replace(/^[\(\[\/]|[\)\]\.]$/g, '').trim());
+          if (onlyUnit && items.length > 0 && !items[items.length - 1].unit) {
+            items[items.length - 1].unit = onlyUnit;
+            items[items.length - 1].unitFrom = 'nextLine';
+            items[items.length - 1].raw += '\n' + r.raw;
+            continue;
+          }
+          flushPending();
+          pending = r;
+          continue;
+        }
 
         // item
         if (r.inlineCategory) category = r.inlineCategory;
@@ -503,6 +586,8 @@
           unitFrom: item.unitFrom || null,
           oldPrice: item.oldPrice,
           packQty: item.packQty,
+          tiers: item.tiers || null,
+          fromPrice: !!item.fromPrice,
           promo: !!item.promo || (category != null && PROMO_CATEGORY_RE.test(category)),
           category,
           _bare: !!item.bare,

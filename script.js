@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawText = document.getElementById('rawText');
     const processBtn = document.getElementById('processBtn');
     const clipboardBtn = document.getElementById('clipboardBtn');
+    const clearDataBtn = document.getElementById('clearDataBtn');
     const updateStatusEl = document.getElementById('updateStatus');
     const selectionSection = document.getElementById('selectionSection');
     const summarySection = document.getElementById('summarySection');
@@ -51,8 +52,19 @@ document.addEventListener('DOMContentLoaded', () => {
         selectEl.value = hasMatchingOption ? value : fallback;
     };
 
+    // Lê um objeto JSON do localStorage; valor ausente, corrompido ou de outro tipo vira `fallback`.
+    const readStoredObject = (key, fallback = null) => {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(key));
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
+        } catch (error) {
+            console.error(`Valor inválido em ${key}, ignorando:`, error);
+            return fallback;
+        }
+    };
+
     const loadPrefs = () => {
-        const prefs = JSON.parse(localStorage.getItem('hortifruti_prefs'));
+        const prefs = readStoredObject('hortifruti_prefs');
         if (prefs) {
             enderecoInput.value = prefs.endereco || '';
             setSelectValue(pagamentoSelect, prefs.pagamento);
@@ -140,10 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return `https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/${codepoints}_3d.png`;
     };
 
+    // Casa por palavra inteira (com plural simples "s"/"es"), para que "sal" não case em "salada".
+    const matchesKeyword = (paddedName, keyword) =>
+        paddedName.includes(` ${keyword} `)
+        || paddedName.includes(` ${keyword}s `)
+        || paddedName.includes(` ${keyword}es `);
+
     const getItemIconEmoji = (itemName, category) => {
-        const normalizedName = normalizeText(itemName);
+        const paddedName = ` ${normalizeText(itemName).replace(/[^a-z0-9]+/g, ' ').trim()} `;
         const matchedRule = ITEM_ICON_RULES.find(rule =>
-            rule.keywords.some(keyword => normalizedName.includes(keyword))
+            rule.keywords.some(keyword => matchesKeyword(paddedName, keyword))
         );
 
         if (matchedRule) return matchedRule.emoji;
@@ -244,116 +262,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // 2. Parser Logic
-    function extractDate(text) {
-        const dateRegex = /(\d{2}\/\d{2}\/\d{4})/;
-        const match = text.match(dateRegex);
-        if (match) {
-            promoDateEl.textContent = `📅 Promoção de: ${match[1]}`;
+    // O parser vive em parser.js (window.HortiParser) e é testável em Node: tests/parser.test.js.
+    const { parse: parseList } = window.HortiParser;
+
+    // Unidades do parser -> códigos exibidos no app e na mensagem.
+    const UNIT_LABELS = {
+        kg: 'kg', g: 'g', un: 'un', bandeja: 'bdj', maco: 'maço', duzia: 'dz',
+        caixa: 'cx', pacote: 'pc', penca: 'penca', litro: 'lt', ml: 'ml'
+    };
+
+    const showPromoDate = (promoDate) => {
+        if (promoDate) {
+            promoDateEl.textContent = `📅 Promoção de: ${promoDate}`;
             promoDateEl.classList.remove('hidden');
         } else {
             promoDateEl.classList.add('hidden');
         }
-    }
+    };
 
-    const UNIT_PATTERN = /(?:kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i;
-
-    const normalizeUnit = (raw) => {
-        if (!raw) return 'un';
-        const u = raw.toLowerCase().replace(/\.$/, '');
-        if (['kgg'].includes(u)) return 'kg';
-        if (['unit', 'unid', 'unidade', 'unidades'].includes(u)) return 'un';
-        if (['bdj', 'bandeja', 'bandejas'].includes(u)) return 'bdj';
-        if (['pacote', 'pacotes', 'pct'].includes(u)) return 'pc';
-        if (['duzia', 'duzias'].includes(u)) return 'dz';
-        if (['litro', 'litros', 'lt', 'l'].includes(u)) return 'lt';
-        if (['caixa', 'caixas', 'cx'].includes(u)) return 'cx';
-        if (['maco', 'maço', 'maços', 'macos'].includes(u)) return 'maço';
-        return u;
+    // Converte a saída do parser no modelo do app. Combos ("3 por R$ 10") viram
+    // um item com o preço exato do combo, para o total não perder centavos.
+    const toProduct = (it) => {
+        let nome = it.name;
+        let unidade = UNIT_LABELS[it.unit] || 'un';
+        if (it.packQty) {
+            nome = `${nome} (combo ${it.packQty} ${unidade})`;
+            unidade = 'combo';
+        }
+        return {
+            id: 'item-' + Math.random().toString(36).substr(2, 9),
+            nome,
+            preco: it.price,
+            unidade,
+            promocao: !!it.promo,
+            precoAnterior: it.oldPrice,
+            conferir: it.confidence < 0.5,
+            categoria: it.category || 'Geral',
+            quantidade: 1,
+            selecionado: false
+        };
     };
 
     function parseProducts(text) {
-        const lines = text.split('\n');
-        const products = [];
-        let currentCategory = 'Geral';
-        
-        const categoryRegex = /[#*_]{1,3}\s*([A-ZÀ-Ú ]+)\s*[#*_]{1,3}/i;
-        const promoRegex = /\*[^*\n]*\d+[,.]\d+[^*\n]*\*/;
-
-        const unitSrc = UNIT_PATTERN.source;
-        const productRegex = new RegExp(
-            '(.*?)' +
-            '[\\s\\$]*(?:R\\$)?[\\s\\$]*' +
-            '(?:(' + unitSrc + ')[\\s]*)?' +
-            '(\\d+[,.]\\d+)' +
-            '[\\s]*\\$?[\\s]*' +
-            '(' + unitSrc + ')?',
-            'i'
-        );
-
-        lines.forEach(line => {
-            const cleanLine = line.trim();
-            if (!cleanLine) return;
-
-            if (/^https?:\/\//i.test(cleanLine)) return;
-
-            const catMatch = cleanLine.match(categoryRegex);
-            if (catMatch) {
-                currentCategory = catMatch[1].trim();
-                return;
-            }
-
-            const prodMatch = cleanLine.match(productRegex);
-            if (prodMatch) {
-                let nomeLimpo = prodMatch[1].trim().replace(/^[^\wÀ-ú]+/, '').trim();
-                const preco = parseFloat(prodMatch[3].replace(',', '.'));
-                const unitBefore = prodMatch[2];
-                const unitAfter = prodMatch[4];
-                const isPromocao = promoRegex.test(cleanLine);
-
-                let unidade = normalizeUnit(unitAfter || unitBefore);
-
-                if (unidade === 'un') {
-                    const afterPrice = cleanLine.slice(cleanLine.indexOf(prodMatch[3]) + prodMatch[3].length);
-                    const trailingAfterAll = afterPrice.match(/^[^\w]*\*?\s*(kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i);
-                    if (trailingAfterAll) {
-                        unidade = normalizeUnit(trailingAfterAll[1]);
-                    }
-                }
-
-                const bdjPrefix = nomeLimpo.match(/^Bdj\.?\s+/i);
-                if (bdjPrefix) {
-                    nomeLimpo = nomeLimpo.replace(/^Bdj\.?\s+/i, '').trim();
-                    if (unidade === 'un') unidade = 'bdj';
-                }
-
-                const trailingUnit = nomeLimpo.match(new RegExp('\\s+(' + unitSrc + ')$', 'i'));
-                if (trailingUnit) {
-                    nomeLimpo = nomeLimpo.replace(new RegExp('\\s+' + unitSrc + '$', 'i'), '').trim();
-                    if (unidade === 'un') unidade = normalizeUnit(trailingUnit[1]);
-                }
-
-                nomeLimpo = nomeLimpo
-                    .replace(/\s*R?\$\s*$/i, '')
-                    .replace(/\s*R?\$\s*(kg|g|un|bdj|lt?|ml)\s*$/i, '')
-                    .replace(/\s*R?\$g\s*$/i, '')
-                    .trim();
-
-                if (nomeLimpo && !isNaN(preco) && preco > 0) {
-                    products.push({
-                        id: 'item-' + Math.random().toString(36).substr(2, 9),
-                        nome: nomeLimpo,
-                        preco: preco,
-                        unidade: unidade,
-                        promocao: isPromocao,
-                        categoria: currentCategory,
-                        quantidade: 1,
-                        selecionado: false
-                    });
-                }
-            }
-        });
-        
-        return products;
+        const result = parseList(text);
+        return {
+            products: result.items.map(toProduct).filter(p => p.nome && p.preco > 0),
+            unparsed: result.unparsed.length,
+            promoDate: result.promoDate
+        };
     }
 
     // 3. Rendering & UI Management
@@ -383,12 +339,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderItems() {
-        const searchTerm = searchInput.value.toLowerCase();
+        const searchTerm = normalizeText(searchInput.value).trim();
         itemsList.innerHTML = '';
 
         const filtered = allProducts.filter(p => {
             if (showOnlySelected && !p.selecionado) return false;
-            const matchesSearch = p.nome.toLowerCase().includes(searchTerm);
+            const matchesSearch = normalizeText(p.nome).includes(searchTerm);
             const matchesTab = activeCategory === 'Todos'
                 || (activeCategory === 'Promoção' ? p.promocao : p.categoria === activeCategory);
             return matchesSearch && matchesTab;
@@ -402,18 +358,50 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item.selecionado) itemClasses.push('selected');
             if (item.promocao) itemClasses.push('promo-item');
             div.className = itemClasses.join(' ');
-            div.innerHTML = `
-                <input type="checkbox" class="item-check" ${item.selecionado ? 'checked' : ''}>
-                <span class="item-name">
-                    <img class="item-icon" src="${itemIconUrl}" alt="${itemEmoji}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
-                    <span class="item-name-text">${item.nome}</span>
-                </span>
-                <span class="item-price">R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}</span>
-                <input type="number" class="item-qty" value="${item.quantidade}" min="0.1" step="0.1" ${item.selecionado ? '' : 'disabled'}>
-            `;
 
-            const check = div.querySelector('.item-check');
-            const qtyInput = div.querySelector('.item-qty');
+            // DOM montado sem innerHTML: nome e unidade vêm de texto externo (não confiável).
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.className = 'item-check';
+            check.checked = item.selecionado;
+
+            const nameWrap = document.createElement('span');
+            nameWrap.className = 'item-name';
+
+            const icon = document.createElement('img');
+            icon.className = 'item-icon';
+            icon.src = itemIconUrl;
+            icon.alt = itemEmoji;
+            icon.loading = 'lazy';
+            icon.decoding = 'async';
+            icon.referrerPolicy = 'no-referrer';
+
+            const nameText = document.createElement('span');
+            nameText.className = 'item-name-text';
+            nameText.textContent = item.nome;
+
+            nameWrap.append(icon, nameText);
+            if (item.conferir) {
+                const warn = document.createElement('span');
+                warn.className = 'check-badge';
+                warn.textContent = '⚠ conferir';
+                warn.title = 'Preço lido com pouca certeza (sem R$). Confira com o fornecedor.';
+                nameWrap.append(warn);
+            }
+
+            const price = document.createElement('span');
+            price.className = 'item-price';
+            price.textContent = `R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}`;
+
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.className = 'item-qty';
+            qtyInput.value = item.quantidade;
+            qtyInput.min = isDecimalUnit(item.unidade) ? '0.1' : '1';
+            qtyInput.step = isDecimalUnit(item.unidade) ? '0.1' : '1';
+            qtyInput.disabled = !item.selecionado;
+
+            div.append(check, nameWrap, price, qtyInput);
 
             check.onchange = (e) => {
                 item.selecionado = e.target.checked;
@@ -430,13 +418,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveCart();
             };
 
+            // Ao sair do campo: quantidade inválida ou menor que o mínimo da unidade desmarca o item
+            // (durante a digitação não, para permitir apagar e digitar outro número).
+            qtyInput.onchange = (e) => {
+                let qty = parseFloat(e.target.value);
+                if (Number.isFinite(qty) && !isDecimalUnit(item.unidade)) qty = Math.round(qty);
+                const min = isDecimalUnit(item.unidade) ? 0.1 : 1;
+                if (!item.selecionado || (Number.isFinite(qty) && qty >= min)) {
+                    if (Number.isFinite(qty)) {
+                        item.quantidade = qty;
+                        qtyInput.value = qty;
+                    }
+                    updateTotals();
+                    saveCart();
+                    return;
+                }
+                item.selecionado = false;
+                item.quantidade = 1;
+                check.checked = false;
+                qtyInput.value = 1;
+                qtyInput.disabled = true;
+                div.classList.remove('selected');
+                updateFilterBtn();
+                updateTotals();
+                saveCart();
+            };
+
             itemsList.appendChild(div);
         });
     }
 
+    // Só kg aceita quantidade decimal; as demais unidades (un, bdj, maço, combo...) são inteiras.
+    const isDecimalUnit = (unidade) => unidade === 'kg';
+
+    // Itens que entram no pedido: marcados e com quantidade maior que zero.
+    const getCartItems = () => allProducts.filter(p => p.selecionado && p.quantidade > 0);
+
+    // Mensagem de uma linha só: remove quebras e caracteres de controle de texto externo.
+    const toSingleLine = (value) => String(value)
+        .replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Bom dia';
+        if (hour < 18) return 'Boa tarde';
+        return 'Boa noite';
+    };
+
     function updateTotals() {
         let subtotal = 0;
-        const selected = allProducts.filter(p => p.selecionado);
+        const selected = getCartItems();
 
         selected.forEach(p => {
             subtotal += p.preco * p.quantidade;
@@ -456,17 +489,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const endereco = enderecoInput.value.trim() || 'Não informado';
+        const endereco = toSingleLine(enderecoInput.value) || 'Não informado';
         const pagamento = pagamentoSelect.value;
 
-        let msg = 'Bom dia, tudo bem? Gostaria de fazer um pedido:\n\n';
+        let msg = `${getGreeting()}, tudo bem? Gostaria de fazer um pedido:\n\n`;
         
         const categories = [...new Set(items.map(i => i.categoria))];
         categories.forEach(cat => {
-            msg += `*${cat.toUpperCase()}*\n`;
+            msg += `*${toSingleLine(cat).toUpperCase()}*\n`;
             items.filter(i => i.categoria === cat).forEach(item => {
                 const itemTotal = item.preco * item.quantidade;
-                msg += `- ${item.nome}, ${item.quantidade}${item.unidade} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+                // Combo: "2x" do pacote inteiro, para o fornecedor não ler como 2 unidades.
+                const qty = item.unidade === 'combo' ? `${item.quantidade}x` : `${item.quantidade}${item.unidade}`;
+                msg += `- ${toSingleLine(item.nome)}, ${qty} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
             });
             msg += '\n';
         });
@@ -481,16 +516,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Main Actions
     const processContent = (text, { source = 'manual', saveToStorage = true } = {}) => {
-        extractDate(text);
-        allProducts = parseProducts(text);
-        
-        if (allProducts.length === 0) {
-            setUpdateStatus('error', 'Nenhum produto encontrado no texto informado.');
+        const parsed = parseProducts(text);
+
+        // Valida antes de mexer no estado: sem produtos, a lista, o carrinho e o texto salvo ficam como estavam.
+        if (parsed.products.length === 0) {
+            setUpdateStatus('error', allProducts.length > 0
+                ? 'Nenhum produto encontrado no texto informado. A lista anterior foi mantida.'
+                : 'Nenhum produto encontrado no texto informado.');
             return false;
         }
 
+        allProducts = parsed.products;
+        showPromoDate(parsed.promoDate);
+
         if (saveToStorage) {
             persistRawText(text, source);
+        }
+        if (parsed.unparsed > 0) {
+            updateStatusEl.textContent += ` ${parsed.unparsed} linha(s) não reconhecida(s) e ignorada(s).`;
         }
         
         activeCategory = 'Todos';
@@ -498,13 +541,16 @@ document.addEventListener('DOMContentLoaded', () => {
         summarySection.classList.remove('hidden');
         
         // Hydrate cart from storage
-        const cart = JSON.parse(localStorage.getItem('hortifruti_cart')) || {};
+        const cart = readStoredObject('hortifruti_cart', {});
         allProducts.forEach(p => {
-            if (cart[p.nome] !== undefined) {
+            const savedQty = cart[p.nome];
+            if (typeof savedQty === 'number' && Number.isFinite(savedQty) && savedQty >= 0) {
                 p.selecionado = true;
-                p.quantidade = cart[p.nome];
+                p.quantidade = savedQty;
             }
         });
+        // Regrava o carrinho só com itens presentes na lista atual (descarta entradas órfãs).
+        saveCart();
 
         renderTabs();
         renderItems();
@@ -570,11 +616,37 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTotals();
     };
 
+    clearDataBtn.onclick = () => {
+        if (!confirm('Apagar texto, carrinho, endereço e pagamento salvos neste navegador?')) return;
+
+        // Remove toda chave do app por prefixo (`hortifruti_` e `hortifruti.`), inclusive as futuras.
+        Object.keys(localStorage)
+            .filter(key => key.startsWith('hortifruti_') || key.startsWith('hortifruti.'))
+            .forEach(key => localStorage.removeItem(key));
+
+        allProducts = [];
+        activeCategory = 'Todos';
+        showOnlySelected = false;
+
+        rawText.value = '';
+        searchInput.value = '';
+        enderecoInput.value = '';
+        setSelectValue(pagamentoSelect, '');
+        itemsList.innerHTML = '';
+        tabsContainer.innerHTML = '';
+        promoDateEl.classList.add('hidden');
+        selectionSection.classList.add('hidden');
+        summarySection.classList.add('hidden');
+
+        updateFilterBtn();
+        setUpdateStatus('idle', 'Dados apagados. Aguardando atualização da lista.');
+    };
+
     enderecoInput.oninput = () => { updateTotals(); savePrefs(); };
     pagamentoSelect.onchange = () => { updateTotals(); savePrefs(); };
 
     copyBtn.onclick = async () => {
-        if (allProducts.filter(p => p.selecionado).length === 0) return;
+        if (getCartItems().length === 0) return;
 
         const copied = await copyTextToClipboard(finalMessage.value);
         if (!copied) {

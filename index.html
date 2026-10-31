@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://cdn.jsdelivr.net; base-uri 'none'; form-action 'none'">
     <title>Hortifruti - Automatizador de Pedidos</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
@@ -35,6 +36,7 @@
                 <div class="input-actions">
                     <button id="processBtn">✨ Processar Mensagem</button>
                     <button id="clipboardBtn" class="secondary-btn">📋 Ler da área de transferência</button>
+                    <button id="clearDataBtn" class="secondary-btn">🧹 Limpar dados salvos</button>
                 </div>
                 <p id="updateStatus" class="update-status" data-state="idle">Aguardando atualização da lista.</p>
             </section>
@@ -102,6 +104,7 @@
             </aside>
         </div>
     </main>
+    <script src="parser.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

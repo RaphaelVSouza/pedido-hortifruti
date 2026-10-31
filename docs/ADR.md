@@ -25,7 +25,7 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 003 | Inteiro sem moeda: regra por documento, faixa e revisão | Aceito, implementado (`a4fe095`) | 001 |
 | 004 | Extração linear com janela fixa de contexto | Aceito, implementado (`a4fe095`) | 001 |
 | 005 | Correção de bugs de estado | Parcial: bugs 1 e 3 e limpeza por prefixo implementados; bug 2 aguarda o ADR-008 | — |
-| 006 | Testes de navegador versionados e CI | Proposto | — |
+| 006 | Testes de navegador versionados e CI | Aceito, implementado | — |
 | 007 | Tipagem com `// @ts-check` + JSDoc | Proposto | 006 |
 | 008 | Identidade de item e carrinho v1 | Proposto | 005 |
 | 009 | Tela de revisão e templates aprendidos | Proposto | 008, 010 |
@@ -115,7 +115,7 @@ Resolvido estruturalmente no ADR-008. Neste ADR, só adicionar o teste que repro
 
 ## ADR-006 — Testes de navegador versionados e CI
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 ### Contexto
 Não existe CI de testes, só o GitGuardian. Os testes de XSS e CSP citados no PR #8 rodaram por Playwright mas não foram commitados. O bloqueio de `<script>` inline pela CSP não foi verificado.

@@ -83,6 +83,6 @@ Todos os dados ficam no `localStorage` do navegador. Nada é enviado a servidore
 ## Limitações
 
 - Só o parser tem testes (`node tests/parser.test.js`); a interface é validada manualmente.
-- Número solto em linha de texto (ex.: `Caixa 123`) pode ser lido como preço.
+- Preço inteiro sem `R$` (`Alface 3`) só é aceito quando a lista toda é escrita assim; itens lidos com pouca certeza aparecem com o selo "⚠ conferir".
 - O carrinho é associado ao nome do produto: se o fornecedor alterar a grafia, a seleção é perdida.
 - Itens do carrinho ausentes na lista nova são descartados ao processar.

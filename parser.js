@@ -90,6 +90,11 @@
   // Linhas reais de lista têm dezenas de caracteres. O limite evita custo quadrático
   // em entradas hostis (uma linha gigante cheia de números).
   const MAX_LINE = 500;
+  // Contexto à esquerda de cada número: só os últimos caracteres importam (as regexes
+  // de contexto são ancoradas no fim). Janela fixa mantém a extração linear.
+  const BEFORE_WINDOW = 60;
+  // Inteiro sem moeda nem unidade acima disso não é preço plausível de FLV ("Caixa 123").
+  const MAX_BARE_INT = 200;
 
   function normalizeText(text) {
     return String(text || '')
@@ -103,16 +108,37 @@
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   }
 
+  // Aparo das pontas sem regex terminada em `$` (que reescaneia a string a cada posição
+  // e custa O(n²) em linhas longas).
+  const LEAD_TRIM = new Set('-–—•·*>+_=:.,|/~'.split(''));
+  const TRAIL_TRIM = new Set('-–—•·*>+_=:.,|/(~'.split(''));
+  const TRAIL_WORD_RE = /^(?:por|a|apenas|s[oó]|de|o|ao|cada|=)$/iu;
+  const isSpace = (ch) => /\s/.test(ch);
+
+  function trimEdges(n) {
+    let a = 0;
+    let b = n.length;
+    while (a < b && (isSpace(n[a]) || LEAD_TRIM.has(n[a]))) a++;
+    while (b > a && (isSpace(n[b - 1]) || TRAIL_TRIM.has(n[b - 1]))) b--;
+    return n.slice(a, b);
+  }
+
+  function dropTrailingWord(n) {
+    let j = n.length;
+    while (j > 0 && !isSpace(n[j - 1])) j--;
+    if (j > 0 && TRAIL_WORD_RE.test(n.slice(j))) return n.slice(0, j);
+    return n;
+  }
+
   function cleanName(s) {
     let n = s.replace(EMOJI_RE, ' ').replace(/R\s?\$/g, ' ');
     n = n.replace(/\(\s*\)/g, ' ');
     let prev;
     do {
       prev = n;
-      n = n.replace(/^[\s\-–—•·*>+_=:.,|/~]+/u, '')
-           .replace(/[\s\-–—•·*>+_=:.,|/(~]+$/u, '')
-           .replace(/\s+(?:por|a|apenas|s[oó]|de|o|ao|cada|=)$/iu, '')
-           .replace(/^(?:por|apenas|s[oó])\s+/iu, '');
+      n = trimEdges(n);
+      n = dropTrailingWord(n);
+      n = n.replace(/^(?:por|apenas|s[oó])\s+/iu, '');
     } while (n !== prev);
     return n.replace(/\s{2,}/g, ' ').trim();
   }
@@ -132,7 +158,8 @@
       const c = {
         start, numEnd, end: numEnd, raw, value: toNumber(raw), cur: !!m[1], dec,
         reais: false, unit: null, unitFrom: null, attached: false,
-        before: s.slice(0, start), score: 0, role: 'price',
+        before: s.slice(Math.max(0, start - BEFORE_WINDOW), start), beforeFrom: Math.max(0, start - BEFORE_WINDOW),
+        score: 0, role: 'price',
       };
       let rest = s.slice(c.end);
 
@@ -161,7 +188,7 @@
         if (ub && ub[2].length >= 2 && !/\d\s?$/.test(c.before.slice(0, ub.index + ub[1].length))) {
           c.unit = canonUnit(ub[2]);
           c.unitFrom = 'before';
-          c.unitStart = ub.index + ub[1].length;
+          c.unitStart = c.beforeFrom + ub.index + ub[1].length;
         }
       }
       out.push(c);
@@ -243,6 +270,8 @@
       oldPrice: old ? old.value : null,
       packQty: combo ? combo.value : null,
       strong: best.cur || best.reais,
+      // inteiro sem R$, 'reais' nem unidade: "Alface 3" (ambíguo; ver regra por documento em parse)
+      bare: best.dec === 0 && !best.cur && !best.reais && !best.unit,
       score: best.score,
       raw,
     };
@@ -462,6 +491,8 @@
           packQty: item.packQty,
           promo: !!item.promo || (category != null && PROMO_CATEGORY_RE.test(category)),
           category,
+          _bare: !!item.bare,
+          _strong: !!item.strong,
           confidence: item.viaTemplate ? 1 : Math.max(0.1, Math.min(1, (item.score + 2) / 10)),
           source: item.viaTemplate ? 'template' : 'heuristic',
           raw: item.raw,
@@ -469,6 +500,23 @@
       }
     }
     flushPending();
+
+    // Regra por documento: inteiro "pelado" só vale se a maioria dos demais itens também
+    // vem sem R$. Fornecedor que escreve "R$ 4,99" em tudo não escreve "Alface 3".
+    const others = items.filter((i) => !i._bare);
+    const withoutCur = others.filter((i) => !i._strong).length;
+    const bareAllowed = others.length === 0 || withoutCur / others.length >= 0.5;
+    const kept = [];
+    for (const it of items) {
+      if (it._bare && (!bareAllowed || it.price > MAX_BARE_INT)) {
+        unparsed.push({ line: it.raw, reason: 'preço inteiro sem moeda' });
+        continue;
+      }
+      delete it._bare; delete it._strong;
+      kept.push(it);
+    }
+    items.length = 0;
+    items.push(...kept);
 
     const candidateLines = lines.filter((l) => /\d/.test(l) && /\p{L}/u.test(l)).length;
     return {

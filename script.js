@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let nome = it.name;
         let unidade = UNIT_LABELS[it.unit] || 'un';
         if (it.packQty) {
-            nome = `${nome} (combo ${it.packQty}${unidade})`;
+            nome = `${nome} (combo ${it.packQty} ${unidade})`;
             unidade = 'combo';
         }
         return {
@@ -296,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             unidade,
             promocao: !!it.promo,
             precoAnterior: it.oldPrice,
+            conferir: it.confidence < 0.5,
             categoria: it.category || 'Geral',
             quantidade: 1,
             selecionado: false
@@ -380,6 +381,13 @@ document.addEventListener('DOMContentLoaded', () => {
             nameText.textContent = item.nome;
 
             nameWrap.append(icon, nameText);
+            if (item.conferir) {
+                const warn = document.createElement('span');
+                warn.className = 'check-badge';
+                warn.textContent = '⚠ conferir';
+                warn.title = 'Preço lido com pouca certeza (sem R$). Confira com o fornecedor.';
+                nameWrap.append(warn);
+            }
 
             const price = document.createElement('span');
             price.className = 'item-price';
@@ -462,7 +470,9 @@ document.addEventListener('DOMContentLoaded', () => {
             msg += `*${toSingleLine(cat).toUpperCase()}*\n`;
             items.filter(i => i.categoria === cat).forEach(item => {
                 const itemTotal = item.preco * item.quantidade;
-                msg += `- ${toSingleLine(item.nome)},${item.quantidade}${item.unidade} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+                // Combo: "2x" do pacote inteiro, para o fornecedor não ler como 2 unidades.
+                const qty = item.unidade === 'combo' ? `${item.quantidade}x` : `${item.quantidade}${item.unidade}`;
+                msg += `- ${toSingleLine(item.nome)}, ${qty} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
             });
             msg += '\n';
         });
@@ -490,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             persistRawText(text, source);
         }
         if (parsed.unparsed > 0) {
-            updateStatusEl.textContent += ` ${parsed.unparsed} linha(s) ignorada(s) por falta de nome ou preço.`;
+            updateStatusEl.textContent += ` ${parsed.unparsed} linha(s) não reconhecida(s) e ignorada(s).`;
         }
         
         activeCategory = 'Todos';

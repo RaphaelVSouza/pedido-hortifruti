@@ -206,5 +206,38 @@ Caju (bdj) ----> 9 conto`;
   console.log(`${ok ? 'OK  ' : 'FAIL'} K - linha gigante é descartada rápido (${ms}ms)`);
 }
 
-console.log(`\n${CORPUS.length + 2 - fail}/${CORPUS.length + 2} cenários OK, ${total} itens verificados`);
+// ---- Inteiro sem moeda (D1): regra por documento, faixa plausível, baixa confiança
+{
+  const names = (txt) => { const r = P.parse(txt); return [r.items.map((i) => `${i.name}=${i.price}`), r.unparsed.length, r]; };
+  const cases = [
+    ['L1 - lista sem R$ aceita inteiros', 'Alface 3\nCoentro 2\nCouve 4', ['Alface=3', 'Coentro=2', 'Couve=4'], 0],
+    ['L2 - fornecedor com R$ em tudo rejeita inteiro solto', 'Banana R$ 4,99\nMaçã R$ 5,99\nlinha sem nada 123', ['Banana=4.99', 'Maçã=5.99'], 1],
+    ['L3 - inteiro > 200 sem moeda vai para unparsed', 'Alface 250\nCoentro 2', ['Coentro=2'], 1],
+    ['L4 - "reais" e unidade tornam o inteiro válido', 'Banana R$ 4,99\nAbacaxi 5 reais\nCebola 3 un', ['Banana=4.99', 'Abacaxi=5', 'Cebola=3'], 0],
+  ];
+  for (const [id, txt, want, nUnp] of cases) {
+    const [got, unp] = names(txt);
+    const ok = JSON.stringify(got) === JSON.stringify(want) && unp === nUnp;
+    if (!ok) { fail++; console.log('  obtido:', got, 'unparsed', unp); }
+    console.log(`${ok ? 'OK  ' : 'FAIL'} ${id}`);
+  }
+  const lo = P.parse('Alface 3\nCoentro 2').items[0].confidence;
+  const hi = P.parse('Banana R$ 4,99kg').items[0].confidence;
+  const ok = lo < 0.5 && hi >= 0.5;
+  if (!ok) fail++;
+  console.log(`${ok ? 'OK  ' : 'FAIL'} L5 - confiança: inteiro pelado < 0,5 (${lo}); preço com R$ >= 0,5 (${hi})`);
+}
+
+// ---- Linearidade da extração, sem depender do limite de linha
+{
+  const time = (n) => { const l = 'a1,'.repeat(n); const t0 = Date.now(); P.analyzeLine(l); return Date.now() - t0; };
+  time(2000); // aquece
+  const small = Math.max(time(10000), 1);
+  const big = time(40000);
+  const ok = big < 600 && big / small < 12; // linear ~4x; quadrático ~16x
+  if (!ok) fail++;
+  console.log(`${ok ? 'OK  ' : 'FAIL'} M - extração linear (10k: ${small}ms, 40k: ${big}ms)`);
+}
+
+console.log(`\n${CORPUS.length + 2 + 6 - fail}/${CORPUS.length + 2 + 6} cenários OK, ${total} itens verificados`);
 process.exitCode = fail ? 1 : 0;

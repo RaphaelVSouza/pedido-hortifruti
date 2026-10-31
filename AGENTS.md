@@ -65,10 +65,11 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 
 - **Ruído:** `NOISE_RE` descarta linhas operacionais (taxa, pedido mínimo, PIX, telefone, saudação, links). Se um produto legítimo sumir, veja essa regex primeiro.
 - **Categoria:** linha sem preço e sem dígitos que seja `*negrito*`, MAIÚSCULAS ou nome conhecido (`CATEGORY_RE`), ou cabeçalho inline (`FRUTAS: Banana 4,99 | ...`). Itens antes de qualquer cabeçalho ficam em `Geral`.
-- **Preço:** o candidato de maior pontuação; em empate, o mais à direita (pega o preço novo em "de X por Y"). O antigo vai em `oldPrice`. Inteiros sem `R$` valem (`5 reais`, `Morango 2 por 15`), então um número solto em linha de texto pode virar item.
+- **Preço:** o candidato de maior pontuação; em empate, o mais à direita (pega o preço novo em "de X por Y"). O antigo vai em `oldPrice`. Inteiro "pelado" (sem `R$`, `reais` nem unidade, ex.: `Alface 3`) só vale se a maioria dos demais itens do **mesmo texto** também vier sem `R$` (fornecedor que usa `R$` em tudo não escreve `Alface 3`), e nunca acima de 200. Rejeitados vão para `unparsed`.
 - **Unidades do parser:** `kg g un bandeja maco duzia caixa pacote penca litro ml`. `script.js` as converte em `UNIT_LABELS` (`bdj`, `maço`, `dz`, `cx`, `pc`, `lt`...). Unidade ausente vira `un`. Ao adicionar uma unidade, mexa em `UNIT_ALTS` (parser) e em `UNIT_LABELS` (app).
-- **Combos** (`3 por R$ 10`): `packQty` preenchido. `toProduct` gera `Nome (combo 3un)` com unidade `combo` e o preço exato do combo.
-- **Linhas com mais de 500 caracteres** vão para `unparsed` (evita custo quadrático). `unparsed` aparece no status como "N linha(s) ignorada(s)".
+- **Confiança:** `confidence < 0,5` (inteiro pelado, 1 casa decimal) marca o produto como `conferir`, e a lista mostra o selo "⚠ conferir".
+- **Combos** (`3 por R$ 10`): `packQty` preenchido. `toProduct` gera `Nome (combo 3 un)` com unidade `combo` e o preço exato do combo; a mensagem sai `Nome (combo 3 un), 1x (R$ 10,00)`.
+- **Desempenho:** a extração é linear: contexto à esquerda do número em janela fixa (`BEFORE_WINDOW`) e aparo de pontas em `cleanName` sem regex terminada em `$`. Não reintroduza `…+$` em strings longas. Linhas com mais de 500 caracteres vão para `unparsed` como defesa extra. `unparsed` aparece no status como "N linha(s) ignorada(s)".
 - **Templates aprendidos** (`createTemplateStore`, `induceTemplate`): motor pronto e testado, mas **sem interface** no app. Se ligar, o regex é induzido de texto do usuário; ele já é escapado, e `induceTemplate` valida que reproduz a anotação.
 - Mudou o parser? Rode `node tests/parser.test.js` e acrescente o caso novo ao `CORPUS`.
 

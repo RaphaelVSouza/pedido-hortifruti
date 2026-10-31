@@ -147,6 +147,28 @@ Pedido mínimo R$ 30,00
 Mandioca descascada R$ 7,90 kg`,
     expect: [['Mandioca descascada', 7.9, 'kg']],
   },
+  {
+    id: 'N - bandeja como unidade (grafias, posição e combo)',
+    text: `*FRUTAS*
+Morango bandeja R$ 7,99
+Uva Bdj. 8,50
+Amora 6,00 bdj
+Framboesa R$ 9,90/bandeja
+Mirtilo bj R$ 12,00
+Cereja Band 5,00
+Morango 2 bandejas por R$ 15
+Tomate cereja 250g bandeja R$ 6,99`,
+    expect: [
+      ['Morango', 7.99, 'bandeja', 'FRUTAS'],
+      ['Uva', 8.5, 'bandeja', 'FRUTAS'],
+      ['Amora', 6, 'bandeja', 'FRUTAS'],
+      ['Framboesa', 9.9, 'bandeja', 'FRUTAS'],
+      ['Mirtilo', 12, 'bandeja', 'FRUTAS'],
+      ['Cereja', 5, 'bandeja', 'FRUTAS'],
+      ['Morango', 15, 'bandeja', 'FRUTAS', { packQty: 2 }],
+      ['Tomate cereja 250g', 6.99, 'bandeja', 'FRUTAS'],
+    ],
+  },
 ];
 
 let fail = 0;

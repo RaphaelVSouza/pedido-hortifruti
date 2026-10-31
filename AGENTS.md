@@ -8,7 +8,7 @@ Guia para agentes de IA (e humanos) que trabalham neste repositório.
 
 ## Executar
 
-Abra `index.html` no navegador. Não há npm, bundler nem servidor obrigatório.
+Abra `index.html` no navegador. Não há npm, bundler nem servidor obrigatório para executar o app (o npm é usado apenas para instalar devDependencies e rodar os testes).
 
 Servidor local opcional (necessário para testar a leitura da área de transferência, que exige contexto seguro; `localhost` serve):
 
@@ -16,19 +16,21 @@ Servidor local opcional (necessário para testar a leitura da área de transfer�
 python3 -m http.server 8080
 ```
 
-Testes do parser (sem dependências, só Node):
+Testes automatizados:
+
+```bash
+npm test            # roda parser + e2e
+npm run test:parser # apenas testes do parser
+npm run test:e2e    # apenas testes de navegador Playwright (360px, sem rede)
+```
+
+Testes diretos do parser (sem dependências, só Node):
 
 ```bash
 node tests/parser.test.js
 ```
 
-Testes de estado no navegador (Playwright, 360px, sem rede; requer o módulo `playwright` instalado):
-
-```bash
-node tests/e2e/estado.test.js
-```
-
-Não há linter nem CI. O resto (UI) é validado manualmente no navegador, incluindo em largura de 360px.
+Existe CI de testes no GitHub Actions (`.github/workflows/test.yml`). Continua sem linter. O resto (UI) é validado manualmente no navegador, incluindo em largura de 360px.
 
 ## Estrutura
 
@@ -38,7 +40,9 @@ Não há linter nem CI. O resto (UI) é validado manualmente no navegador, inclu
 | `parser.js` | Parser de listas (UMD: `window.HortiParser` no navegador, `require` no Node). Sem acesso ao DOM |
 | `script.js` | Estado, renderização e mensagem (~680 linhas), dentro de um único `DOMContentLoaded` |
 | `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
-| `tests/e2e/estado.test.js` | Testes de navegador do estado (reimportação, quantidade, limpeza de dados) |
+| `tests/e2e/` | Testes de navegador com Playwright (Chromium, 360px: estado, fluxo, persistência, XSS, CSP) |
+| `playwright.config.js` | Configuração do Playwright para os testes de navegador |
+| `.github/workflows/test.yml` | Workflow de CI do GitHub Actions (testes de parser e e2e) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
 | `docs/ADR.md` | Registro de decisões de arquitetura (ADR-001 a 016) e sequência de implementação |

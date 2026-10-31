@@ -1,4 +1,6 @@
 // Teste de regressão por corpus (golden tests). Rodar: node tests/parser.test.js
+const fs = require('fs');
+const path = require('path');
 const assert = require('assert');
 const P = require('../parser.js');
 
@@ -266,6 +268,38 @@ Banana prata R$ 4,99kg`,
     ],
   },
 ];
+
+// Carregamento automático de fixtures de corpus real (tests/corpus/*.txt + *.expected.json)
+const corpusDir = path.join(__dirname, 'corpus');
+if (fs.existsSync(corpusDir)) {
+  for (const file of fs.readdirSync(corpusDir)) {
+    if (file.endsWith('.txt')) {
+      const base = file.slice(0, -4);
+      const expectedFile = path.join(corpusDir, `${base}.expected.json`);
+      if (fs.existsSync(expectedFile)) {
+        const text = fs.readFileSync(path.join(corpusDir, file), 'utf8');
+        const data = JSON.parse(fs.readFileSync(expectedFile, 'utf8'));
+        const items = data.items || data.expect || (Array.isArray(data) ? data : []);
+        const entry = {
+          id: `Corpus real: ${base}`,
+          text,
+          expect: items.map((it) => {
+            if (Array.isArray(it)) return it;
+            const { name, price, unit, category, ...extra } = it;
+            return Object.keys(extra).length
+              ? [name, price, unit, category, extra]
+              : [name, price, unit, category];
+          }),
+        };
+        if (data.promoDate !== undefined) entry.promoDate = data.promoDate;
+        if (data.unparsedCount !== undefined) entry.unparsed = data.unparsedCount;
+        if (data.unparsed !== undefined) entry.unparsed = data.unparsed;
+        if (data.pending !== undefined) entry.pending = data.pending;
+        CORPUS.push(entry);
+      }
+    }
+  }
+}
 
 let fail = 0;
 let total = 0;

@@ -262,116 +262,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // 2. Parser Logic
-    function extractDate(text) {
-        const dateRegex = /(\d{2}\/\d{2}\/\d{4})/;
-        const match = text.match(dateRegex);
-        if (match) {
-            promoDateEl.textContent = `📅 Promoção de: ${match[1]}`;
+    // O parser vive em parser.js (window.HortiParser) e é testável em Node: tests/parser.test.js.
+    const { parse: parseList } = window.HortiParser;
+
+    // Unidades do parser -> códigos exibidos no app e na mensagem.
+    const UNIT_LABELS = {
+        kg: 'kg', g: 'g', un: 'un', bandeja: 'bdj', maco: 'maço', duzia: 'dz',
+        caixa: 'cx', pacote: 'pc', penca: 'penca', litro: 'lt', ml: 'ml'
+    };
+
+    const showPromoDate = (promoDate) => {
+        if (promoDate) {
+            promoDateEl.textContent = `📅 Promoção de: ${promoDate}`;
             promoDateEl.classList.remove('hidden');
         } else {
             promoDateEl.classList.add('hidden');
         }
-    }
+    };
 
-    const UNIT_PATTERN = /(?:kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i;
-
-    const normalizeUnit = (raw) => {
-        if (!raw) return 'un';
-        const u = raw.toLowerCase().replace(/\.$/, '');
-        if (['kgg'].includes(u)) return 'kg';
-        if (['unit', 'unid', 'unidade', 'unidades'].includes(u)) return 'un';
-        if (['bdj', 'bandeja', 'bandejas'].includes(u)) return 'bdj';
-        if (['pacote', 'pacotes', 'pct'].includes(u)) return 'pc';
-        if (['duzia', 'duzias'].includes(u)) return 'dz';
-        if (['litro', 'litros', 'lt', 'l'].includes(u)) return 'lt';
-        if (['caixa', 'caixas', 'cx'].includes(u)) return 'cx';
-        if (['maco', 'maço', 'maços', 'macos'].includes(u)) return 'maço';
-        return u;
+    // Converte a saída do parser no modelo do app. Combos ("3 por R$ 10") viram
+    // um item com o preço exato do combo, para o total não perder centavos.
+    const toProduct = (it) => {
+        let nome = it.name;
+        let unidade = UNIT_LABELS[it.unit] || 'un';
+        if (it.packQty) {
+            nome = `${nome} (combo ${it.packQty}${unidade})`;
+            unidade = 'combo';
+        }
+        return {
+            id: 'item-' + Math.random().toString(36).substr(2, 9),
+            nome,
+            preco: it.price,
+            unidade,
+            promocao: !!it.promo,
+            precoAnterior: it.oldPrice,
+            categoria: it.category || 'Geral',
+            quantidade: 1,
+            selecionado: false
+        };
     };
 
     function parseProducts(text) {
-        const lines = text.split('\n');
-        const products = [];
-        let currentCategory = 'Geral';
-        
-        const categoryRegex = /[#*_]{1,3}\s*([A-ZÀ-Ú ]+)\s*[#*_]{1,3}/i;
-        const promoRegex = /\*[^*\n]*\d+[,.]\d+[^*\n]*\*/;
-
-        const unitSrc = UNIT_PATTERN.source;
-        const productRegex = new RegExp(
-            '(.*?)' +
-            '[\\s\\$]*(?:R\\$)?[\\s\\$]*' +
-            '(?:(' + unitSrc + ')[\\s]*)?' +
-            '(\\d+[,.]\\d+)' +
-            '[\\s]*\\$?[\\s]*' +
-            '(' + unitSrc + ')?',
-            'i'
-        );
-
-        lines.forEach(line => {
-            const cleanLine = line.trim();
-            if (!cleanLine) return;
-
-            if (/^https?:\/\//i.test(cleanLine)) return;
-
-            const catMatch = cleanLine.match(categoryRegex);
-            if (catMatch) {
-                currentCategory = catMatch[1].trim();
-                return;
-            }
-
-            const prodMatch = cleanLine.match(productRegex);
-            if (prodMatch) {
-                let nomeLimpo = prodMatch[1].trim().replace(/^[^\wÀ-ú]+/, '').trim();
-                const preco = parseFloat(prodMatch[3].replace(',', '.'));
-                const unitBefore = prodMatch[2];
-                const unitAfter = prodMatch[4];
-                const isPromocao = promoRegex.test(cleanLine);
-
-                let unidade = normalizeUnit(unitAfter || unitBefore);
-
-                if (unidade === 'un') {
-                    const afterPrice = cleanLine.slice(cleanLine.indexOf(prodMatch[3]) + prodMatch[3].length);
-                    const trailingAfterAll = afterPrice.match(/^[^\w]*\*?\s*(kg\.?|kgg|un\.?|unid\.?|unidade[s]?|unit\.?|bdj\.?|bandeja[s]?|pc\.?|pct\.?|pacote[s]?|dz\.?|duzia[s]?|ml\.?|lt?\.?|litro[s]?|maco|ma[cç]o[s]?|cx\.?|caixa[s]?)/i);
-                    if (trailingAfterAll) {
-                        unidade = normalizeUnit(trailingAfterAll[1]);
-                    }
-                }
-
-                const bdjPrefix = nomeLimpo.match(/^Bdj\.?\s+/i);
-                if (bdjPrefix) {
-                    nomeLimpo = nomeLimpo.replace(/^Bdj\.?\s+/i, '').trim();
-                    if (unidade === 'un') unidade = 'bdj';
-                }
-
-                const trailingUnit = nomeLimpo.match(new RegExp('\\s+(' + unitSrc + ')$', 'i'));
-                if (trailingUnit) {
-                    nomeLimpo = nomeLimpo.replace(new RegExp('\\s+' + unitSrc + '$', 'i'), '').trim();
-                    if (unidade === 'un') unidade = normalizeUnit(trailingUnit[1]);
-                }
-
-                nomeLimpo = nomeLimpo
-                    .replace(/\s*R?\$\s*$/i, '')
-                    .replace(/\s*R?\$\s*(kg|g|un|bdj|lt?|ml)\s*$/i, '')
-                    .replace(/\s*R?\$g\s*$/i, '')
-                    .trim();
-
-                if (nomeLimpo && !isNaN(preco) && preco > 0) {
-                    products.push({
-                        id: 'item-' + Math.random().toString(36).substr(2, 9),
-                        nome: nomeLimpo,
-                        preco: preco,
-                        unidade: unidade,
-                        promocao: isPromocao,
-                        categoria: currentCategory,
-                        quantidade: 1,
-                        selecionado: false
-                    });
-                }
-            }
-        });
-        
-        return products;
+        const result = parseList(text);
+        return {
+            products: result.items.map(toProduct).filter(p => p.nome && p.preco > 0),
+            unparsed: result.unparsed.length,
+            promoDate: result.promoDate
+        };
     }
 
     // 3. Rendering & UI Management
@@ -540,8 +477,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Main Actions
     const processContent = (text, { source = 'manual', saveToStorage = true } = {}) => {
-        extractDate(text);
-        allProducts = parseProducts(text);
+        const parsed = parseProducts(text);
+        allProducts = parsed.products;
+        showPromoDate(parsed.promoDate);
         
         if (allProducts.length === 0) {
             setUpdateStatus('error', 'Nenhum produto encontrado no texto informado.');
@@ -550,6 +488,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (saveToStorage) {
             persistRawText(text, source);
+        }
+        if (parsed.unparsed > 0) {
+            updateStatusEl.textContent += ` ${parsed.unparsed} linha(s) ignorada(s) por falta de nome ou preço.`;
         }
         
         activeCategory = 'Todos';

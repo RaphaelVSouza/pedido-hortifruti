@@ -16,28 +16,36 @@ Servidor local opcional (necessário para testar a leitura da área de transfer�
 python3 -m http.server 8080
 ```
 
-Não há testes automatizados, linter nem CI. Valide mudanças manualmente no navegador, incluindo em largura de 360px.
+Testes do parser (sem dependências, só Node):
+
+```bash
+node tests/parser.test.js
+```
+
+Não há linter nem CI. O resto (UI) é validado manualmente no navegador, incluindo em largura de 360px.
 
 ## Estrutura
 
 | Arquivo | Conteúdo |
 |---|---|
 | `index.html` | Marcação das 3 etapas (Importar, Selecionar, Resumo) |
-| `script.js` | Toda a lógica (~600 linhas), dentro de um único `DOMContentLoaded` |
+| `parser.js` | Parser de listas (UMD: `window.HortiParser` no navegador, `require` no Node). Sem acesso ao DOM |
+| `script.js` | Estado, renderização e mensagem (~550 linhas), dentro de um único `DOMContentLoaded` |
+| `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
 
 ## Fluxo de dados
 
 ```
-textarea / clipboard → parseProducts() → allProducts[] → renderTabs/renderItems → updateTotals → generateMessage
+textarea / clipboard → parseProducts() (usa HortiParser.parse) → allProducts[] → renderTabs/renderItems → updateTotals → generateMessage
 ```
 
-1. `processContent(text, {source, saveToStorage})` chama `extractDate` e `parseProducts`, persiste o texto bruto e hidrata o carrinho a partir do `localStorage`.
+1. `processContent(text, {source, saveToStorage})` chama `parseProducts` (que devolve produtos, nº de linhas ignoradas e data da promoção), persiste o texto bruto e hidrata o carrinho a partir do `localStorage`.
 2. `renderItems()` recria a lista de itens por completo a cada mudança (sem virtual DOM).
 3. `updateTotals()` calcula subtotal e total e chama `generateMessage()`, que preenche o textarea `#finalMessage`.
 
-Modelo de um produto: `{ id, nome, preco, unidade, promocao, categoria, quantidade, selecionado }`.
+Modelo de um produto: `{ id, nome, preco, precoAnterior, unidade, promocao, categoria, quantidade, selecionado }`.
 
 ## Persistência (`localStorage`)
 
@@ -51,15 +59,18 @@ Modelo de um produto: `{ id, nome, preco, unidade, promocao, categoria, quantida
 
 O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do fornecedor desfaz a seleção, e nomes duplicados colidem.
 
-## Parser (`parseProducts`)
+## Parser (`parser.js`)
 
-- **Categoria:** linha que casa com `categoryRegex` (`*FRUTAS*`, `#LEGUMES#`, `_VERDURAS_`). Itens antes de qualquer cabeçalho ficam em `Geral`.
-- **Produto:** uma regex única, montada a partir de `UNIT_PATTERN`, que aceita a unidade antes ou depois do preço (`8,00un.`, `R$4,99kg`, `kg R$ 4,99`). Fallbacks: unidade após o preço, prefixo `Bdj` no nome, unidade colada no fim do nome.
-- **Promoção:** trecho entre asteriscos contendo preço (`promoRegex`).
-- **Preço:** formato brasileiro (`1,50` → `1.50`). Só entra produto com nome e preço > 0.
-- **Unidades normalizadas** (`normalizeUnit`): `kg`, `un`, `bdj`, `pc`, `dz`, `lt`, `cx`, `maço`, `ml`.
-- Linhas que começam com `http(s)://` são ignoradas.
-- `UNIT_PATTERN` é duplicado como literal em um fallback dentro de `parseProducts`. Ao adicionar uma unidade, atualize os dois lugares e `normalizeUnit`.
+`HortiParser.parse(texto)` devolve `{ items, unparsed, promoDate, stats }`. Cada item: `{ name, price, unit, oldPrice, packQty, promo, category, confidence, source, raw }`. Fluxo por linha: normalizar → classificar (ruído, cabeçalho, texto, item) → extrair números candidatos → pontuar (R$, 2 casas decimais, unidade colada, "de/por") → mesclar nome e preço em linhas separadas.
+
+- **Ruído:** `NOISE_RE` descarta linhas operacionais (taxa, pedido mínimo, PIX, telefone, saudação, links). Se um produto legítimo sumir, veja essa regex primeiro.
+- **Categoria:** linha sem preço e sem dígitos que seja `*negrito*`, MAIÚSCULAS ou nome conhecido (`CATEGORY_RE`), ou cabeçalho inline (`FRUTAS: Banana 4,99 | ...`). Itens antes de qualquer cabeçalho ficam em `Geral`.
+- **Preço:** o candidato de maior pontuação; em empate, o mais à direita (pega o preço novo em "de X por Y"). O antigo vai em `oldPrice`. Inteiros sem `R$` valem (`5 reais`, `Morango 2 por 15`), então um número solto em linha de texto pode virar item.
+- **Unidades do parser:** `kg g un bandeja maco duzia caixa pacote penca litro ml`. `script.js` as converte em `UNIT_LABELS` (`bdj`, `maço`, `dz`, `cx`, `pc`, `lt`...). Unidade ausente vira `un`. Ao adicionar uma unidade, mexa em `UNIT_ALTS` (parser) e em `UNIT_LABELS` (app).
+- **Combos** (`3 por R$ 10`): `packQty` preenchido. `toProduct` gera `Nome (combo 3un)` com unidade `combo` e o preço exato do combo.
+- **Linhas com mais de 500 caracteres** vão para `unparsed` (evita custo quadrático). `unparsed` aparece no status como "N linha(s) ignorada(s)".
+- **Templates aprendidos** (`createTemplateStore`, `induceTemplate`): motor pronto e testado, mas **sem interface** no app. Se ligar, o regex é induzido de texto do usuário; ele já é escapado, e `induceTemplate` valida que reproduz a anotação.
+- Mudou o parser? Rode `node tests/parser.test.js` e acrescente o caso novo ao `CORPUS`.
 
 ## Ícones
 
@@ -76,7 +87,7 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 
 ## Convenções
 
-- Sem módulos e sem imports. Tudo em `script.js`, dentro do `DOMContentLoaded`.
+- Sem módulos ES e sem bundler. A UI fica em `script.js`, dentro do `DOMContentLoaded`; o parser é o único arquivo à parte (`parser.js`, carregado antes por `<script>`) para poder ser testado em Node.
 - Seções delimitadas por comentários numerados (`// 1. Storage Helpers`, `// 2. Parser Logic`, `// 3. Rendering & UI Management`, `// 4. Main Actions`, `// 5. Initial Hydration`).
 - pt-BR em textos de interface, comentários e nomes de domínio (`produto`, `preco`, `quantidade`, `selecionado`, `categoria`).
 - Tema via variáveis CSS em `:root` (`--primary: #16a34a`, `--accent: #2563eb`). Altere cores só ali.

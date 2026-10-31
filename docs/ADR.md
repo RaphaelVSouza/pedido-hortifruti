@@ -34,7 +34,7 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 012 | Ícones próprios no site, emojis nativos na mensagem | Proposto | — |
 | 013 | PWA offline | Proposto | 012 |
 | 014 | Preço anterior e histórico de preços | Proposto | 008, 010 |
-| 015 | Ajustes do parser a partir do fornecedor real | Proposto | — |
+| 015 | Ajustes do parser a partir do fornecedor real | Parcial: regra 2 implementada; demais pendentes | — |
 | 016 | Pedido por unidade em itens vendidos por kg | Proposto | 008, 010 |
 
 ## Sequência
@@ -123,7 +123,7 @@ Não existe CI de testes, só o GitGuardian. Os testes de XSS e CSP citados no P
 ### Decisão
 - `package.json` só com `devDependencies` (`@playwright/test`, `typescript` para o ADR-007) e scripts `test:parser`, `test:e2e`, `test`.
 - `AGENTS.md`: reescrever "Não há npm, bundler nem servidor obrigatório" (o app continua sem npm; npm passa a existir só para testes) e "Não há linter nem CI" (passa a haver CI de testes; continua sem linter). Acrescentar os comandos `npm test`, `npm run test:parser` e `npm run test:e2e`.
-- `tests/e2e/` com Playwright (Chromium), servindo a raiz por servidor estático local, viewport 360×740:
+- `tests/e2e/` com Playwright (Chromium). Já existe `tests/e2e/estado.test.js` (ADR-005), um script Node sem `package.json`; este ADR o migra para `@playwright/test`, servindo a raiz por servidor estático local, viewport 360×740:
   - **XSS:** importar `<img src=x onerror=window.__x=1> Banana R$ 4,99kg` → `window.__x` indefinido e nome renderizado como texto.
   - **CSP:** criar o script com `document.createElement('script')`, `textContent = 'window.__y=1'` e `document.body.appendChild`. **Não** usar `innerHTML`/`insertAdjacentHTML`: `<script>` inserido assim nunca executa, com ou sem CSP, e o teste passaria mesmo sem a política. Esperado: `window.__y` indefinido e um evento `securitypolicyviolation` registrado. Como controle, o mesmo teste numa página sem a meta CSP deve executar o script (`window.__y === 1`), provando que o teste detecta a diferença.
   - **Fluxo principal:** importar o exemplo do README, marcar itens, gerar mensagem e comparar com a saída esperada (incluindo combo). Fixar a hora para a saudação ser determinística.
@@ -324,7 +324,7 @@ Os ícones são PNGs 3D remotos de um espelho comunitário (`cdn.jsdelivr.net/gh
 
 ## ADR-015 — Ajustes do parser a partir do fornecedor real
 
-**Status:** Proposto
+**Status:** Parcial. A regra 2 está implementada (caso P do corpus); as regras 1 e 3 a 8 seguem pendentes.
 
 ### Contexto
 Análise da exportação do WhatsApp de um fornecedor real: 44 listas de preço entre 08/2025 e 08/2026, 8.112 linhas com preço, 344 produtos distintos, categorias LEGUMES, VERDURAS, FRUTAS, MERCADINHO, GELADEIRA e PRODUTO DE LIMPEZA.

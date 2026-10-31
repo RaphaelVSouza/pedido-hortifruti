@@ -36,7 +36,7 @@ Não há linter nem CI. O resto (UI) é validado manualmente no navegador, inclu
 |---|---|
 | `index.html` | Marcação das 3 etapas (Importar, Selecionar, Resumo) |
 | `parser.js` | Parser de listas (UMD: `window.HortiParser` no navegador, `require` no Node). Sem acesso ao DOM |
-| `script.js` | Estado, renderização e mensagem (~650 linhas), dentro de um único `DOMContentLoaded` |
+| `script.js` | Estado, renderização e mensagem (~680 linhas), dentro de um único `DOMContentLoaded` |
 | `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
 | `tests/e2e/estado.test.js` | Testes de navegador do estado (reimportação, quantidade, limpeza de dados) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |

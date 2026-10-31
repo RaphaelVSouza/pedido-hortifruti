@@ -39,7 +39,7 @@ Taxa de entrega: R$ 5,00
 
 ## Recursos
 
-- Parser tolerante a formatos variados de preço e unidade (`8,00un.`, `R$4,99kg`, `kg R$ 4,99`, bandejas, maços, dúzias, caixas, litros).
+- Parser tolerante a formatos variados: `8,00un.`, `R$4,99kg`, `kg R$ 4,99`, pontilhado, bullets, preço antes do nome, `5 reais`, "de X por Y", combos (`3 por R$ 10`), vários itens por linha e cabeçalhos de categoria com ou sem marcação. Ignora linhas operacionais (taxa, PIX, telefone) e avisa quantas linhas não reconheceu.
 - Detecção de promoções (preço entre asteriscos) e da data da promoção (`dd/mm/aaaa`).
 - Ícones por produto (emoji 3D Fluent) com fallback por categoria.
 - Persistência local: texto importado, carrinho, endereço e forma de pagamento sobrevivem ao recarregar a página. O botão "Limpar dados salvos" apaga tudo.
@@ -62,7 +62,9 @@ A leitura da área de transferência exige HTTPS ou `localhost` e permissão do 
 
 ```
 index.html   marcação das 3 etapas
-script.js    parser, estado, renderização e geração da mensagem
+parser.js    parser de listas (testável em Node)
+script.js    estado, renderização e geração da mensagem
+tests/       testes do parser
 style.css    estilos e tema (variáveis CSS em :root)
 favicon.svg  ícone
 AGENTS.md    guia técnico detalhado para contribuidores e agentes de IA
@@ -80,6 +82,7 @@ Todos os dados ficam no `localStorage` do navegador. Nada é enviado a servidore
 
 ## Limitações
 
-- Não há testes automatizados.
+- Só o parser tem testes (`node tests/parser.test.js`); a interface é validada manualmente.
+- Preço inteiro sem `R$` (`Alface 3`) só é aceito quando a lista toda é escrita assim; itens lidos com pouca certeza aparecem com o selo "⚠ conferir".
 - O carrinho é associado ao nome do produto: se o fornecedor alterar a grafia, a seleção é perdida.
 - Itens do carrinho ausentes na lista nova são descartados ao processar.

@@ -169,6 +169,46 @@ Tomate cereja 250g bandeja R$ 6,99`,
       ['Tomate cereja 250g', 6.99, 'bandeja', 'FRUTAS'],
     ],
   },
+  {
+    id: 'O - palavra de unidade solta no nome: infere a unidade e mantém a palavra',
+    text: `Bandeja de morango R$ 8,00
+BANDEJA Rúcula R$ 4,50
+Maço de cheiro verde R$ 2,00
+Caixa de ovos R$ 12,00
+Dúzia de ovos R$ 9,00
+Pacote de cogumelo R$ 8,00
+Morango bandeja R$ 8,00`,
+    expect: [
+      ['Bandeja de morango', 8, 'bandeja'],
+      ['BANDEJA Rúcula', 4.5, 'bandeja'],
+      ['Maço de cheiro verde', 2, 'maco'],
+      ['Caixa de ovos', 12, 'caixa'],
+      ['Dúzia de ovos', 9, 'duzia'],
+      ['Pacote de cogumelo', 8, 'pacote'],
+      ['Morango', 8, 'bandeja'],
+    ],
+  },
+  {
+    // Falha esperada até o ADR-015 (regra 2): hoje o nome fica "Bdj. Quiabo" e a unidade null.
+    id: 'P - abreviação de unidade no início do nome (ADR-015 regra 2)',
+    pending: 'ADR-015 regra 2',
+    text: `Bdj. Quiabo R$ 7,99
+Bdj Quiabo R$ 7,99
+Cx. Morango R$ 20,00
+Mç. Cheiro verde R$ 2,00
+Pct. Cogumelo R$ 8,00
+Kg quiabo R$ 7,99
+Un. Abacaxi R$ 5,00`,
+    expect: [
+      ['Quiabo', 7.99, 'bandeja'],
+      ['Quiabo', 7.99, 'bandeja'],
+      ['Morango', 20, 'caixa'],
+      ['Cheiro verde', 2, 'maco'],
+      ['Cogumelo', 8, 'pacote'],
+      ['Quiabo', 7.99, 'kg'],
+      ['Abacaxi', 5, 'un'],
+    ],
+  },
 ];
 
 let fail = 0;
@@ -192,6 +232,13 @@ for (const c of CORPUS) {
     if (bad.length) errs.push(`  [${k}] ${name}: ${bad.join(', ')}`);
   });
   if (c.promoDate && r.promoDate !== c.promoDate) errs.push(`promoDate ${r.promoDate}`);
+  if (c.pending) {
+    // Falha esperada: não conta como erro. Se passar, o marcador está obsoleto e deve ser removido.
+    if (errs.length) { console.log(`PEND ${c.id} [${c.pending}]`); continue; }
+    fail++;
+    console.log(`FAIL ${c.id} passou: remova "pending" (${c.pending})`);
+    continue;
+  }
   const ok = !errs.length;
   if (!ok) fail++;
   console.log(`${ok ? 'OK  ' : 'FAIL'} ${c.id}`);

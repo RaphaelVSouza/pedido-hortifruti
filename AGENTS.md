@@ -22,6 +22,12 @@ Testes do parser (sem dependências, só Node):
 node tests/parser.test.js
 ```
 
+Testes de estado no navegador (Playwright, 360px, sem rede; requer o módulo `playwright` instalado):
+
+```bash
+node tests/e2e/estado.test.js
+```
+
 Não há linter nem CI. O resto (UI) é validado manualmente no navegador, incluindo em largura de 360px.
 
 ## Estrutura
@@ -32,10 +38,11 @@ Não há linter nem CI. O resto (UI) é validado manualmente no navegador, inclu
 | `parser.js` | Parser de listas (UMD: `window.HortiParser` no navegador, `require` no Node). Sem acesso ao DOM |
 | `script.js` | Estado, renderização e mensagem (~650 linhas), dentro de um único `DOMContentLoaded` |
 | `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
+| `tests/e2e/estado.test.js` | Testes de navegador do estado (reimportação, quantidade, limpeza de dados) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
 | `docs/ADR.md` | Registro de decisões de arquitetura (ADR-001 a 016) e sequência de implementação |
-| `docs/GOVERNANCA.md` | Governança (COBIT 2019 / ITIL 4): papéis, política de mudança, registro de riscos, privacidade e incidentes. Rascunho |
+| `docs/GOVERNANCA.md` | Governança (COBIT 2019 / ITIL 4): papéis, política de mudança, registro de riscos, privacidade e incidentes |
 
 ## Fluxo de dados
 
@@ -43,7 +50,7 @@ Não há linter nem CI. O resto (UI) é validado manualmente no navegador, inclu
 textarea / clipboard → parseProducts() (usa HortiParser.parse) → allProducts[] → renderTabs/renderItems → updateTotals → generateMessage
 ```
 
-1. `processContent(text, {source, saveToStorage})` chama `parseProducts` (que devolve produtos, nº de linhas ignoradas e data da promoção), persiste o texto bruto e hidrata o carrinho a partir do `localStorage`.
+1. `processContent(text, {source, saveToStorage})` chama `parseProducts` (que devolve produtos, nº de linhas ignoradas e data da promoção). Se não houver produtos, devolve `false` sem alterar lista, carrinho nem texto salvo. Senão, persiste o texto bruto e hidrata o carrinho a partir do `localStorage`.
 2. `renderItems()` recria a lista de itens por completo a cada mudança (sem virtual DOM).
 3. `updateTotals()` calcula subtotal e total e chama `generateMessage()`, que preenche o textarea `#finalMessage`.
 
@@ -84,8 +91,8 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 - Taxa de entrega fixa: `DELIVERY_FEE = 5.00` em `script.js`. O valor "R$ 5,00" em `#deliveryFee` no `index.html` é **texto estático separado**; altere os dois juntos.
 - Pagamento: `<select id="pagamento">` com `PIX` e `Cartão de Crédito`.
 - Formato: saudação, blocos `*CATEGORIA*` com `- nome, QTDunidade (R$ total)`, taxa, `*Total Geral*`, endereço e pagamento. A saudação segue a hora local (`getGreeting`: Bom dia < 12h, Boa tarde < 18h, Boa noite).
-- Só entram no pedido itens marcados **e** com quantidade > 0 (`getCartItems`). Nome, categoria e endereço passam por `toSingleLine` (remove quebras e caracteres de controle).
-- O botão "Limpar dados salvos" (`#clearDataBtn`) apaga todas as chaves `hortifruti_*` e reinicia a interface.
+- Só entram no pedido itens marcados **e** com quantidade > 0 (`getCartItems`). Ao sair do campo de quantidade, valor vazio, inválido ou abaixo do mínimo desmarca o item (kg: mínimo 0,1; demais unidades: inteiros ≥ 1, com arredondamento); durante a digitação nada é desmarcado. Nome, categoria e endereço passam por `toSingleLine` (remove quebras e caracteres de controle).
+- O botão "Limpar dados salvos" (`#clearDataBtn`) apaga por prefixo toda chave que começa com `hortifruti_` ou `hortifruti.` (chaves de outros apps ficam) e reinicia a interface.
 - O app não contém chave PIX (removida no commit `8467424`). Não a reintroduza no código.
 
 ## Governança

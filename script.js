@@ -397,8 +397,8 @@ document.addEventListener('DOMContentLoaded', () => {
             qtyInput.type = 'number';
             qtyInput.className = 'item-qty';
             qtyInput.value = item.quantidade;
-            qtyInput.min = '0.1';
-            qtyInput.step = '0.1';
+            qtyInput.min = isDecimalUnit(item.unidade) ? '0.1' : '1';
+            qtyInput.step = isDecimalUnit(item.unidade) ? '0.1' : '1';
             qtyInput.disabled = !item.selecionado;
 
             div.append(check, nameWrap, price, qtyInput);
@@ -418,9 +418,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveCart();
             };
 
+            // Ao sair do campo: quantidade inválida ou menor que o mínimo da unidade desmarca o item
+            // (durante a digitação não, para permitir apagar e digitar outro número).
+            qtyInput.onchange = (e) => {
+                let qty = parseFloat(e.target.value);
+                if (Number.isFinite(qty) && !isDecimalUnit(item.unidade)) qty = Math.round(qty);
+                const min = isDecimalUnit(item.unidade) ? 0.1 : 1;
+                if (!item.selecionado || (Number.isFinite(qty) && qty >= min)) {
+                    if (Number.isFinite(qty)) {
+                        item.quantidade = qty;
+                        qtyInput.value = qty;
+                    }
+                    updateTotals();
+                    saveCart();
+                    return;
+                }
+                item.selecionado = false;
+                item.quantidade = 1;
+                check.checked = false;
+                qtyInput.value = 1;
+                qtyInput.disabled = true;
+                div.classList.remove('selected');
+                updateFilterBtn();
+                updateTotals();
+                saveCart();
+            };
+
             itemsList.appendChild(div);
         });
     }
+
+    // Só kg aceita quantidade decimal; as demais unidades (un, bdj, maço, combo...) são inteiras.
+    const isDecimalUnit = (unidade) => unidade === 'kg';
 
     // Itens que entram no pedido: marcados e com quantidade maior que zero.
     const getCartItems = () => allProducts.filter(p => p.selecionado && p.quantidade > 0);
@@ -488,13 +517,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Main Actions
     const processContent = (text, { source = 'manual', saveToStorage = true } = {}) => {
         const parsed = parseProducts(text);
-        allProducts = parsed.products;
-        showPromoDate(parsed.promoDate);
-        
-        if (allProducts.length === 0) {
-            setUpdateStatus('error', 'Nenhum produto encontrado no texto informado.');
+
+        // Valida antes de mexer no estado: sem produtos, a lista, o carrinho e o texto salvo ficam como estavam.
+        if (parsed.products.length === 0) {
+            setUpdateStatus('error', allProducts.length > 0
+                ? 'Nenhum produto encontrado no texto informado. A lista anterior foi mantida.'
+                : 'Nenhum produto encontrado no texto informado.');
             return false;
         }
+
+        allProducts = parsed.products;
+        showPromoDate(parsed.promoDate);
 
         if (saveToStorage) {
             persistRawText(text, source);
@@ -586,13 +619,10 @@ document.addEventListener('DOMContentLoaded', () => {
     clearDataBtn.onclick = () => {
         if (!confirm('Apagar texto, carrinho, endereço e pagamento salvos neste navegador?')) return;
 
-        [
-            'hortifruti_prefs',
-            'hortifruti_cart',
-            RAW_TEXT_KEY,
-            LAST_UPDATE_TS_KEY,
-            LAST_UPDATE_SOURCE_KEY
-        ].forEach(key => localStorage.removeItem(key));
+        // Remove toda chave do app por prefixo (`hortifruti_` e `hortifruti.`), inclusive as futuras.
+        Object.keys(localStorage)
+            .filter(key => key.startsWith('hortifruti_') || key.startsWith('hortifruti.'))
+            .forEach(key => localStorage.removeItem(key));
 
         allProducts = [];
         activeCategory = 'Todos';

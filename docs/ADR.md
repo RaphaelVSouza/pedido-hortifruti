@@ -24,7 +24,7 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 002 | Não adotar IA remota (Jev/LLM) nesta fase | Aceito | — |
 | 003 | Inteiro sem moeda: regra por documento, faixa e revisão | Aceito, implementado (`a4fe095`) | 001 |
 | 004 | Extração linear com janela fixa de contexto | Aceito, implementado (`a4fe095`) | 001 |
-| 005 | Correção de bugs de estado | Proposto | — |
+| 005 | Correção de bugs de estado | Parcial: bugs 1 e 3 e limpeza por prefixo implementados; bug 2 aguarda o ADR-008 | — |
 | 006 | Testes de navegador versionados e CI | Proposto | — |
 | 007 | Tipagem com `// @ts-check` + JSDoc | Proposto | 006 |
 | 008 | Identidade de item e carrinho v1 | Proposto | 005 |
@@ -85,7 +85,7 @@ Ajuste pendente: o caso M mede tempo absoluto e varia entre execuções (56–94
 
 ## ADR-005 — Correção de bugs de estado
 
-**Status:** Proposto
+**Status:** Parcial. Bugs 1 e 3 e a limpeza por prefixo estão implementados, com testes em `tests/e2e/estado.test.js`. O bug 2 continua como teste `SKIP` até o ADR-008.
 
 ### Contexto
 O inventário encontrou três bugs reproduzíveis.

@@ -87,5 +87,5 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 
 - O texto importado não é confiável. `renderItems` monta o DOM com `createElement`/`textContent`; não volte a usar `innerHTML` com dados do parser. Há também uma CSP via `<meta>` em `index.html` (`script-src 'self'`, `style-src 'self'`, `img-src` só `self` e `cdn.jsdelivr.net`): não adicione `<script>`/`<style>` inline, atributos `on*` nem `style="..."` no HTML. Atribuir `el.style.x` por JS é permitido.
 - O carrinho é indexado pelo nome: nomes duplicados em categorias diferentes colidem.
-- `JSON.parse` de `hortifruti_prefs` e `hortifruti_cart` não tem `try/catch`: valor corrompido no `localStorage` quebra a inicialização.
+- Leia objetos do `localStorage` sempre via `readStoredObject(key, fallback)`: ele tolera valor ausente, corrompido ou de tipo errado. Não use `JSON.parse(localStorage.getItem(...))` direto. A quantidade restaurada do carrinho só é aceita se for número finito >= 0.
 - Mexer no CSS exige conferir 360px; houve vários commits de correção de overflow nessa largura.

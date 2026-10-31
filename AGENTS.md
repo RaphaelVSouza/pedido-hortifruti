@@ -35,6 +35,7 @@ Não há linter nem CI. O resto (UI) é validado manualmente no navegador, inclu
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
 | `docs/ADR.md` | Registro de decisões de arquitetura (ADR-001 a 016) e sequência de implementação |
+| `docs/GOVERNANCA.md` | Governança (COBIT 2019 / ITIL 4): papéis, política de mudança, registro de riscos, privacidade e incidentes. Rascunho |
 
 ## Fluxo de dados
 
@@ -86,6 +87,10 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 - Só entram no pedido itens marcados **e** com quantidade > 0 (`getCartItems`). Nome, categoria e endereço passam por `toSingleLine` (remove quebras e caracteres de controle).
 - O botão "Limpar dados salvos" (`#clearDataBtn`) apaga todas as chaves `hortifruti_*` e reinicia a interface.
 - O app não contém chave PIX (removida no commit `8467424`). Não a reintroduza no código.
+
+## Governança
+
+Mudança, aprovação, riscos e incidentes seguem `docs/GOVERNANCA.md`. Regra curta: um PR em rascunho por mudança, ADR para decisão de arquitetura, e o merge é do dono do repositório (o agente só faz merge sob instrução explícita).
 
 ## Convenções
 

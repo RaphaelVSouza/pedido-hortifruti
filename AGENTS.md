@@ -30,7 +30,7 @@ Não há linter nem CI. O resto (UI) é validado manualmente no navegador, inclu
 |---|---|
 | `index.html` | Marcação das 3 etapas (Importar, Selecionar, Resumo) |
 | `parser.js` | Parser de listas (UMD: `window.HortiParser` no navegador, `require` no Node). Sem acesso ao DOM |
-| `script.js` | Estado, renderização e mensagem (~550 linhas), dentro de um único `DOMContentLoaded` |
+| `script.js` | Estado, renderização e mensagem (~650 linhas), dentro de um único `DOMContentLoaded` |
 | `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
@@ -45,7 +45,7 @@ textarea / clipboard → parseProducts() (usa HortiParser.parse) → allProducts
 2. `renderItems()` recria a lista de itens por completo a cada mudança (sem virtual DOM).
 3. `updateTotals()` calcula subtotal e total e chama `generateMessage()`, que preenche o textarea `#finalMessage`.
 
-Modelo de um produto: `{ id, nome, preco, precoAnterior, unidade, promocao, categoria, quantidade, selecionado }`.
+Modelo de um produto: `{ id, nome, preco, precoAnterior, unidade, promocao, conferir, categoria, quantidade, selecionado }`.
 
 ## Persistência (`localStorage`)
 
@@ -61,7 +61,7 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 
 ## Parser (`parser.js`)
 
-`HortiParser.parse(texto)` devolve `{ items, unparsed, promoDate, stats }`. Cada item: `{ name, price, unit, oldPrice, packQty, promo, category, confidence, source, raw }`. Fluxo por linha: normalizar → classificar (ruído, cabeçalho, texto, item) → extrair números candidatos → pontuar (R$, 2 casas decimais, unidade colada, "de/por") → mesclar nome e preço em linhas separadas.
+`HortiParser.parse(texto)` devolve `{ items, unparsed, promoDate, stats }`. Cada item: `{ name, price, unit, unitFrom, oldPrice, packQty, promo, category, confidence, source, raw }` (`source`: `heuristic` ou `template`). Fluxo por linha: normalizar → classificar (ruído, cabeçalho, texto, item) → extrair números candidatos → pontuar (R$, 2 casas decimais, unidade colada, "de/por") → mesclar nome e preço em linhas separadas.
 
 - **Ruído:** `NOISE_RE` descarta linhas operacionais (taxa, pedido mínimo, PIX, telefone, saudação, links). Se um produto legítimo sumir, veja essa regex primeiro.
 - **Categoria:** linha sem preço e sem dígitos que seja `*negrito*`, MAIÚSCULAS ou nome conhecido (`CATEGORY_RE`), ou cabeçalho inline (`FRUTAS: Banana 4,99 | ...`). Itens antes de qualquer cabeçalho ficam em `Geral`.
@@ -69,13 +69,13 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 - **Unidades do parser:** `kg g un bandeja maco duzia caixa pacote penca litro ml`. `script.js` as converte em `UNIT_LABELS` (`bdj`, `maço`, `dz`, `cx`, `pc`, `lt`...). Unidade ausente vira `un`. Ao adicionar uma unidade, mexa em `UNIT_ALTS` (parser) e em `UNIT_LABELS` (app).
 - **Confiança:** `confidence < 0,5` (inteiro pelado, 1 casa decimal) marca o produto como `conferir`, e a lista mostra o selo "⚠ conferir".
 - **Combos** (`3 por R$ 10`): `packQty` preenchido. `toProduct` gera `Nome (combo 3 un)` com unidade `combo` e o preço exato do combo; a mensagem sai `Nome (combo 3 un), 1x (R$ 10,00)`.
-- **Desempenho:** a extração é linear: contexto à esquerda do número em janela fixa (`BEFORE_WINDOW`) e aparo de pontas em `cleanName` sem regex terminada em `$`. Não reintroduza `…+$` em strings longas. Linhas com mais de 500 caracteres vão para `unparsed` como defesa extra. `unparsed` aparece no status como "N linha(s) ignorada(s)".
+- **Desempenho:** a extração é linear: contexto à esquerda do número em janela fixa (`BEFORE_WINDOW`) e aparo de pontas em `cleanName` sem regex terminada em `$`. Não reintroduza `…+$` em strings longas. Linhas com mais de 500 caracteres vão para `unparsed` como defesa extra. `unparsed` aparece no status como "N linha(s) não reconhecida(s) e ignorada(s)".
 - **Templates aprendidos** (`createTemplateStore`, `induceTemplate`): motor pronto e testado, mas **sem interface** no app. Se ligar, o regex é induzido de texto do usuário; ele já é escapado, e `induceTemplate` valida que reproduz a anotação.
 - Mudou o parser? Rode `node tests/parser.test.js` e acrescente o caso novo ao `CORPUS`.
 
 ## Ícones
 
-`ITEM_ICON_RULES` mapeia palavras-chave (sem acento, minúsculas) para emoji, com ~50 regras. **A primeira regra que casa vence**, então a ordem importa. O match é por palavra inteira (`matchesKeyword`, aceita plural com `s`/`es`; hífen e pontuação viram espaço), logo `sal` não casa em `salada` nem `cha` em `chantilly`. Variantes que não são plural (`pao` vs `paozinho`) precisam de keyword própria. Sem match, usa `getCategoryIcon`. O emoji vira um PNG 3D de `cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode` (`emojiToExternalIconUrl`), então os ícones exigem internet.
+`ITEM_ICON_RULES` mapeia palavras-chave (sem acento, minúsculas) para emoji, com 50 regras. **A primeira regra que casa vence**, então a ordem importa. O match é por palavra inteira (`matchesKeyword`, aceita plural com `s`/`es`; hífen e pontuação viram espaço), logo `sal` não casa em `salada` nem `cha` em `chantilly`. Variantes que não são plural (`pao` vs `paozinho`) precisam de keyword própria. Sem match, usa `getCategoryIcon`. O emoji vira um PNG 3D de `cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode` (`emojiToExternalIconUrl`), então os ícones exigem internet.
 
 ## Mensagem de pedido
 

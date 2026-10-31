@@ -83,7 +83,7 @@ Todos os dados ficam no `localStorage` do navegador. Nada é enviado a servidore
 
 ## Limitações
 
-- Testes automáticos: o parser (`node tests/parser.test.js`) e o estado do app no navegador (`node tests/e2e/estado.test.js`, requer Playwright). O restante da interface é validado manualmente e não há CI.
+- Testes automáticos: parser e suíte ponta a ponta no navegador (`npm test`, ou `npm run test:parser` e `npm run test:e2e`). Validado continuamente no CI (GitHub Actions). O restante dos refinamentos visuais é conferido manualmente em 360px.
 - Preço inteiro sem `R$` (`Alface 3`) só é aceito quando a lista toda é escrita assim; itens lidos com pouca certeza aparecem com o selo "⚠ conferir".
 - O carrinho é associado ao nome do produto: se o fornecedor alterar a grafia, a seleção é perdida.
 - Itens do carrinho ausentes na lista nova são descartados ao processar.

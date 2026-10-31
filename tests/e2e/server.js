@@ -33,8 +33,9 @@ const server = http.createServer((req, res) => {
   }
 
   const filePath = path.join(ROOT, safePath);
+  const relPath = path.relative(ROOT, filePath);
 
-  if (!filePath.startsWith(ROOT)) {
+  if (relPath.startsWith('..') || path.isAbsolute(relPath)) {
     res.writeHead(403, { 'Content-Type': 'text/plain' });
     res.end('403 Forbidden');
     return;

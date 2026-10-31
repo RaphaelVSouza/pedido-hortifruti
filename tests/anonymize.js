@@ -42,7 +42,7 @@ function validateClean(text) {
 }
 
 function anonymize(text) {
-  let s = String(text || '');
+  let s = String(text || '').replace(/\r\n/g, '\n');
 
   // 1. Links e URLs
   s = s.replace(URL_RE, '');

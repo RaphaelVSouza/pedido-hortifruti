@@ -34,6 +34,7 @@ Não há linter nem CI. O resto (UI) é validado manualmente no navegador, inclu
 | `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
+| `docs/ADR.md` | Registro de decisões de arquitetura (ADR-001 a 016) e sequência de implementação |
 
 ## Fluxo de dados
 

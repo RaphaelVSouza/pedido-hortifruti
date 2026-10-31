@@ -44,7 +44,7 @@ Modelo de um produto: `{ id, nome, preco, unidade, promocao, categoria, quantida
 | Chave | Conteúdo |
 |---|---|
 | `hortifruti_prefs` | `{ endereco, pagamento }` |
-| `hortifruti_cart` | mapa `nome do produto → quantidade` (somente itens selecionados) |
+| `hortifruti_cart` | mapa `nome do produto → quantidade` (somente itens selecionados; regravado a cada `processContent`, descartando nomes que não estão na lista atual) |
 | `hortifruti_raw_text` | último texto colado |
 | `hortifruti_last_update_ts` | ISO timestamp da última importação |
 | `hortifruti_last_update_source` | `manual` ou `clipboard` |
@@ -63,13 +63,15 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 
 ## Ícones
 
-`ITEM_ICON_RULES` mapeia palavras-chave (sem acento, minúsculas) para emoji, com ~50 regras. **A primeira regra que casa vence**, e o match é por `includes`. Por isso a ordem importa e palavras curtas (`sal`, `mel`, `cha`) casam dentro de outras. Sem match, usa `getCategoryIcon`. O emoji vira um PNG 3D de `cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode` (`emojiToExternalIconUrl`), então os ícones exigem internet.
+`ITEM_ICON_RULES` mapeia palavras-chave (sem acento, minúsculas) para emoji, com ~50 regras. **A primeira regra que casa vence**, então a ordem importa. O match é por palavra inteira (`matchesKeyword`, aceita plural com `s`/`es`; hífen e pontuação viram espaço), logo `sal` não casa em `salada` nem `cha` em `chantilly`. Variantes que não são plural (`pao` vs `paozinho`) precisam de keyword própria. Sem match, usa `getCategoryIcon`. O emoji vira um PNG 3D de `cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode` (`emojiToExternalIconUrl`), então os ícones exigem internet.
 
 ## Mensagem de pedido
 
 - Taxa de entrega fixa: `DELIVERY_FEE = 5.00` em `script.js`. O valor "R$ 5,00" em `#deliveryFee` no `index.html` é **texto estático separado**; altere os dois juntos.
 - Pagamento: `<select id="pagamento">` com `PIX` e `Cartão de Crédito`.
-- Formato: saudação, blocos `*CATEGORIA*` com `- nome, QTDunidade (R$ total)`, taxa, `*Total Geral*`, endereço e pagamento. A saudação "Bom dia, tudo bem?" é fixa.
+- Formato: saudação, blocos `*CATEGORIA*` com `- nome, QTDunidade (R$ total)`, taxa, `*Total Geral*`, endereço e pagamento. A saudação segue a hora local (`getGreeting`: Bom dia < 12h, Boa tarde < 18h, Boa noite).
+- Só entram no pedido itens marcados **e** com quantidade > 0 (`getCartItems`). Nome, categoria e endereço passam por `toSingleLine` (remove quebras e caracteres de controle).
+- O botão "Limpar dados salvos" (`#clearDataBtn`) apaga todas as chaves `hortifruti_*` e reinicia a interface.
 - O app não contém chave PIX (removida no commit `8467424`). Não a reintroduza no código.
 
 ## Convenções
@@ -84,7 +86,6 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 ## Armadilhas conhecidas
 
 - O texto importado não é confiável. `renderItems` monta o DOM com `createElement`/`textContent`; não volte a usar `innerHTML` com dados do parser. Há também uma CSP via `<meta>` em `index.html` (`script-src 'self'`, `style-src 'self'`, `img-src` só `self` e `cdn.jsdelivr.net`): não adicione `<script>`/`<style>` inline, atributos `on*` nem `style="..."` no HTML. Atribuir `el.style.x` por JS é permitido.
-- A busca usa `toLowerCase()` sem remover acentos, ao contrário dos ícones (`normalizeText`). Buscar "maca" não acha "Maçã".
-- `qtyInput.oninput` aceita 0 mantendo o item selecionado.
-- Entradas do carrinho que não existem na lista atual permanecem no `localStorage`.
+- O carrinho é indexado pelo nome: nomes duplicados em categorias diferentes colidem.
+- `JSON.parse` de `hortifruti_prefs` e `hortifruti_cart` não tem `try/catch`: valor corrompido no `localStorage` quebra a inicialização.
 - Mexer no CSS exige conferir 360px; houve vários commits de correção de overflow nessa largura.

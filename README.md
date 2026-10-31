@@ -42,7 +42,8 @@ Taxa de entrega: R$ 5,00
 - Parser tolerante a formatos variados de preço e unidade (`8,00un.`, `R$4,99kg`, `kg R$ 4,99`, bandejas, maços, dúzias, caixas, litros).
 - Detecção de promoções (preço entre asteriscos) e da data da promoção (`dd/mm/aaaa`).
 - Ícones por produto (emoji 3D Fluent) com fallback por categoria.
-- Persistência local: texto importado, carrinho, endereço e forma de pagamento sobrevivem ao recarregar a página.
+- Persistência local: texto importado, carrinho, endereço e forma de pagamento sobrevivem ao recarregar a página. O botão "Limpar dados salvos" apaga tudo.
+- Busca sem diferenciar acentos ("maca" acha "Maçã") e saudação pela hora (Bom dia, Boa tarde, Boa noite).
 - Layout responsivo, incluindo telas de 360px.
 
 ## Uso
@@ -75,10 +76,10 @@ AGENTS.md    guia técnico detalhado para contribuidores e agentes de IA
 
 ## Privacidade
 
-Todos os dados ficam no `localStorage` do navegador. Nada é enviado a servidores, exceto o download dos ícones pela CDN.
+Todos os dados ficam no `localStorage` do navegador. Nada é enviado a servidores, exceto o download dos ícones pela CDN. Em computador compartilhado, use "Limpar dados salvos".
 
 ## Limitações
 
 - Não há testes automatizados.
 - O carrinho é associado ao nome do produto: se o fornecedor alterar a grafia, a seleção é perdida.
-- A saudação da mensagem ("Bom dia") é fixa.
+- Itens do carrinho ausentes na lista nova são descartados ao processar.

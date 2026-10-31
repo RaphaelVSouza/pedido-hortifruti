@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawText = document.getElementById('rawText');
     const processBtn = document.getElementById('processBtn');
     const clipboardBtn = document.getElementById('clipboardBtn');
+    const clearDataBtn = document.getElementById('clearDataBtn');
     const updateStatusEl = document.getElementById('updateStatus');
     const selectionSection = document.getElementById('selectionSection');
     const summarySection = document.getElementById('summarySection');
@@ -140,10 +141,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return `https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/${codepoints}_3d.png`;
     };
 
+    // Casa por palavra inteira (com plural simples "s"/"es"), para que "sal" não case em "salada".
+    const matchesKeyword = (paddedName, keyword) =>
+        paddedName.includes(` ${keyword} `)
+        || paddedName.includes(` ${keyword}s `)
+        || paddedName.includes(` ${keyword}es `);
+
     const getItemIconEmoji = (itemName, category) => {
-        const normalizedName = normalizeText(itemName);
+        const paddedName = ` ${normalizeText(itemName).replace(/[^a-z0-9]+/g, ' ').trim()} `;
         const matchedRule = ITEM_ICON_RULES.find(rule =>
-            rule.keywords.some(keyword => normalizedName.includes(keyword))
+            rule.keywords.some(keyword => matchesKeyword(paddedName, keyword))
         );
 
         if (matchedRule) return matchedRule.emoji;
@@ -383,12 +390,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderItems() {
-        const searchTerm = searchInput.value.toLowerCase();
+        const searchTerm = normalizeText(searchInput.value).trim();
         itemsList.innerHTML = '';
 
         const filtered = allProducts.filter(p => {
             if (showOnlySelected && !p.selecionado) return false;
-            const matchesSearch = p.nome.toLowerCase().includes(searchTerm);
+            const matchesSearch = normalizeText(p.nome).includes(searchTerm);
             const matchesTab = activeCategory === 'Todos'
                 || (activeCategory === 'Promoção' ? p.promocao : p.categoria === activeCategory);
             return matchesSearch && matchesTab;
@@ -402,18 +409,43 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item.selecionado) itemClasses.push('selected');
             if (item.promocao) itemClasses.push('promo-item');
             div.className = itemClasses.join(' ');
-            div.innerHTML = `
-                <input type="checkbox" class="item-check" ${item.selecionado ? 'checked' : ''}>
-                <span class="item-name">
-                    <img class="item-icon" src="${itemIconUrl}" alt="${itemEmoji}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
-                    <span class="item-name-text">${item.nome}</span>
-                </span>
-                <span class="item-price">R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}</span>
-                <input type="number" class="item-qty" value="${item.quantidade}" min="0.1" step="0.1" ${item.selecionado ? '' : 'disabled'}>
-            `;
 
-            const check = div.querySelector('.item-check');
-            const qtyInput = div.querySelector('.item-qty');
+            // DOM montado sem innerHTML: nome e unidade vêm de texto externo (não confiável).
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.className = 'item-check';
+            check.checked = item.selecionado;
+
+            const nameWrap = document.createElement('span');
+            nameWrap.className = 'item-name';
+
+            const icon = document.createElement('img');
+            icon.className = 'item-icon';
+            icon.src = itemIconUrl;
+            icon.alt = itemEmoji;
+            icon.loading = 'lazy';
+            icon.decoding = 'async';
+            icon.referrerPolicy = 'no-referrer';
+
+            const nameText = document.createElement('span');
+            nameText.className = 'item-name-text';
+            nameText.textContent = item.nome;
+
+            nameWrap.append(icon, nameText);
+
+            const price = document.createElement('span');
+            price.className = 'item-price';
+            price.textContent = `R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}`;
+
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.className = 'item-qty';
+            qtyInput.value = item.quantidade;
+            qtyInput.min = '0.1';
+            qtyInput.step = '0.1';
+            qtyInput.disabled = !item.selecionado;
+
+            div.append(check, nameWrap, price, qtyInput);
 
             check.onchange = (e) => {
                 item.selecionado = e.target.checked;
@@ -434,9 +466,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Itens que entram no pedido: marcados e com quantidade maior que zero.
+    const getCartItems = () => allProducts.filter(p => p.selecionado && p.quantidade > 0);
+
+    // Mensagem de uma linha só: remove quebras e caracteres de controle de texto externo.
+    const toSingleLine = (value) => String(value)
+        .replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Bom dia';
+        if (hour < 18) return 'Boa tarde';
+        return 'Boa noite';
+    };
+
     function updateTotals() {
         let subtotal = 0;
-        const selected = allProducts.filter(p => p.selecionado);
+        const selected = getCartItems();
 
         selected.forEach(p => {
             subtotal += p.preco * p.quantidade;
@@ -456,17 +504,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const endereco = enderecoInput.value.trim() || 'Não informado';
+        const endereco = toSingleLine(enderecoInput.value) || 'Não informado';
         const pagamento = pagamentoSelect.value;
 
-        let msg = 'Bom dia, tudo bem? Gostaria de fazer um pedido:\n\n';
+        let msg = `${getGreeting()}, tudo bem? Gostaria de fazer um pedido:\n\n`;
         
         const categories = [...new Set(items.map(i => i.categoria))];
         categories.forEach(cat => {
-            msg += `*${cat.toUpperCase()}*\n`;
+            msg += `*${toSingleLine(cat).toUpperCase()}*\n`;
             items.filter(i => i.categoria === cat).forEach(item => {
                 const itemTotal = item.preco * item.quantidade;
-                msg += `- ${item.nome}, ${item.quantidade}${item.unidade} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+                msg += `- ${toSingleLine(item.nome)},${item.quantidade}${item.unidade} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
             });
             msg += '\n';
         });
@@ -505,6 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 p.quantidade = cart[p.nome];
             }
         });
+        // Regrava o carrinho só com itens presentes na lista atual (descarta entradas órfãs).
+        saveCart();
 
         renderTabs();
         renderItems();
@@ -570,11 +620,40 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTotals();
     };
 
+    clearDataBtn.onclick = () => {
+        if (!confirm('Apagar texto, carrinho, endereço e pagamento salvos neste navegador?')) return;
+
+        [
+            'hortifruti_prefs',
+            'hortifruti_cart',
+            RAW_TEXT_KEY,
+            LAST_UPDATE_TS_KEY,
+            LAST_UPDATE_SOURCE_KEY
+        ].forEach(key => localStorage.removeItem(key));
+
+        allProducts = [];
+        activeCategory = 'Todos';
+        showOnlySelected = false;
+
+        rawText.value = '';
+        searchInput.value = '';
+        enderecoInput.value = '';
+        setSelectValue(pagamentoSelect, '');
+        itemsList.innerHTML = '';
+        tabsContainer.innerHTML = '';
+        promoDateEl.classList.add('hidden');
+        selectionSection.classList.add('hidden');
+        summarySection.classList.add('hidden');
+
+        updateFilterBtn();
+        setUpdateStatus('idle', 'Dados apagados. Aguardando atualização da lista.');
+    };
+
     enderecoInput.oninput = () => { updateTotals(); savePrefs(); };
     pagamentoSelect.onchange = () => { updateTotals(); savePrefs(); };
 
     copyBtn.onclick = async () => {
-        if (allProducts.filter(p => p.selecionado).length === 0) return;
+        if (getCartItems().length === 0) return;
 
         const copied = await copyTextToClipboard(finalMessage.value);
         if (!copied) {

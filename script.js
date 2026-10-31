@@ -52,8 +52,19 @@ document.addEventListener('DOMContentLoaded', () => {
         selectEl.value = hasMatchingOption ? value : fallback;
     };
 
+    // Lê um objeto JSON do localStorage; valor ausente, corrompido ou de outro tipo vira `fallback`.
+    const readStoredObject = (key, fallback = null) => {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(key));
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
+        } catch (error) {
+            console.error(`Valor inválido em ${key}, ignorando:`, error);
+            return fallback;
+        }
+    };
+
     const loadPrefs = () => {
-        const prefs = JSON.parse(localStorage.getItem('hortifruti_prefs'));
+        const prefs = readStoredObject('hortifruti_prefs');
         if (prefs) {
             enderecoInput.value = prefs.endereco || '';
             setSelectValue(pagamentoSelect, prefs.pagamento);
@@ -546,11 +557,12 @@ document.addEventListener('DOMContentLoaded', () => {
         summarySection.classList.remove('hidden');
         
         // Hydrate cart from storage
-        const cart = JSON.parse(localStorage.getItem('hortifruti_cart')) || {};
+        const cart = readStoredObject('hortifruti_cart', {});
         allProducts.forEach(p => {
-            if (cart[p.nome] !== undefined) {
+            const savedQty = cart[p.nome];
+            if (typeof savedQty === 'number' && Number.isFinite(savedQty) && savedQty >= 0) {
                 p.selecionado = true;
-                p.quantidade = cart[p.nome];
+                p.quantidade = savedQty;
             }
         });
         // Regrava o carrinho só com itens presentes na lista atual (descarta entradas órfãs).

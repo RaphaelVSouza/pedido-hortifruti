@@ -189,24 +189,26 @@ Morango bandeja R$ 8,00`,
     ],
   },
   {
-    // Falha esperada até o ADR-015 (regra 2): hoje o nome fica "Bdj. Quiabo" e a unidade null.
     id: 'P - abreviação de unidade no início do nome (ADR-015 regra 2)',
-    pending: 'ADR-015 regra 2',
     text: `Bdj. Quiabo R$ 7,99
 Bdj Quiabo R$ 7,99
 Cx. Morango R$ 20,00
 Mç. Cheiro verde R$ 2,00
 Pct. Cogumelo R$ 8,00
 Kg quiabo R$ 7,99
-Un. Abacaxi R$ 5,00`,
+Un. Abacaxi R$ 5,00
+Kg de tomate R$ 5,00
+Mc. Alface R$ 3,00`,
     expect: [
       ['Quiabo', 7.99, 'bandeja'],
       ['Quiabo', 7.99, 'bandeja'],
       ['Morango', 20, 'caixa'],
       ['Cheiro verde', 2, 'maco'],
       ['Cogumelo', 8, 'pacote'],
-      ['Quiabo', 7.99, 'kg'],
+      ['quiabo', 7.99, 'kg'],
       ['Abacaxi', 5, 'un'],
+      ['tomate', 5, 'kg'],
+      ['Alface', 3, 'maco'],
     ],
   },
 ];

@@ -55,6 +55,10 @@
   // Unidade inferida do nome ("Chuchu Unidade", "Alface (pé)", "Banana penca")
   const NAME_UNIT_RE = new RegExp('(?:^|[^\\p{L}])(unidades?|cada|p[eé]|ma[cç]os?|molhos?|bandejas?|d[uú]zias?|caixas?|pacotes?|sacos?|pencas?)' + UNIT_END, 'iu');
 
+  // Código de unidade no INÍCIO do nome: "Bdj. Quiabo", "Cx. Morango", "Kg quiabo".
+  // Só abreviações e códigos (palavra por extenso como "Caixa de ovos" fica no nome: descreve o produto).
+  const LEAD_UNIT_RE = /^(bdjs?|bdja|bj|band|kgs?|und?s?|unids?|cxs?|pcts?|mç|mc(?=\.)|mlh|dz|lts?)\.?(?=\s)\s*/iu;
+
   const CATEGORY_RE = /^(?:frutas?|legumes?|verduras?|folhas?|folhosas|hortali[cç]as|temperos?|ervas|ra[ií]zes|tub[eé]rculos|ovos|granja|mercearia|latic[ií]nios|outros|diversos|org[aâ]nicos|promo[cç](?:[aã]o|[oõ]es)|ofertas?(?:\s+d[oa]\s+\p{L}+)?|destaques?)$/iu;
   const PROMO_CATEGORY_RE = /promo|oferta|destaque|imperd/iu;
   const PROMO_WORD_RE = /promo|oferta|imperd[ií]vel|baixou|🔥|‼️|⚡/iu;
@@ -255,6 +259,16 @@
 
     let unit = best.unit || (combo && combo.unit) || null;
     let unitFrom = unit ? best.unitFrom || 'combo' : null;
+    let name = cleanName(rest);
+    if (!unit) {
+      const lead = name.match(LEAD_UNIT_RE);
+      const leadUnit = lead && canonUnit(lead[1]);
+      if (leadUnit && name.length > lead[0].length) {
+        unit = leadUnit;
+        unitFrom = 'nameStart';
+        name = cleanName(name.slice(lead[0].length).replace(/^de\s+/iu, ''));
+      }
+    }
     if (!unit) {
       const nu = rest.match(NAME_UNIT_RE);
       if (nu) { unit = canonUnit(nu[1]) || (/sacos?/i.test(nu[1]) ? 'pacote' : null); unitFrom = 'name'; }
@@ -262,7 +276,7 @@
 
     return {
       kind: 'item',
-      name: cleanName(rest),
+      name,
       residual: rest,
       price: best.value,
       unit,

@@ -34,7 +34,7 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 012 | Ícones próprios no site, emojis nativos na mensagem | Proposto | — |
 | 013 | PWA offline | Proposto | 012 |
 | 014 | Preço anterior e histórico de preços | Proposto | 008, 010 |
-| 015 | Ajustes do parser a partir do fornecedor real | Parcial: regra 2 implementada; demais pendentes | — |
+| 015 | Ajustes do parser a partir do fornecedor real | Aceito, implementado com casos provisórios | — |
 | 016 | Pedido por unidade em itens vendidos por kg | Proposto | 008, 010 |
 
 ## Sequência
@@ -324,7 +324,7 @@ Os ícones são PNGs 3D remotos de um espelho comunitário (`cdn.jsdelivr.net/gh
 
 ## ADR-015 — Ajustes do parser a partir do fornecedor real
 
-**Status:** Parcial. A regra 2 está implementada (caso P do corpus); as regras 1 e 3 a 8 seguem pendentes.
+**Status:** Aceito, implementado com casos provisórios R1-1 a R1-8 (regras 1 a 8). Casos reais de R1 a integrar quando fornecidos pelo dono.
 
 ### Contexto
 Análise da exportação do WhatsApp de um fornecedor real: 44 listas de preço entre 08/2025 e 08/2026, 8.112 linhas com preço, 344 produtos distintos, categorias LEGUMES, VERDURAS, FRUTAS, MERCADINHO, GELADEIRA e PRODUTO DE LIMPEZA.

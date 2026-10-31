@@ -272,7 +272,7 @@ Banana prata R$ 4,99kg`,
 // Carregamento automático de fixtures de corpus real (tests/corpus/*.txt + *.expected.json)
 const corpusDir = path.join(__dirname, 'corpus');
 if (fs.existsSync(corpusDir)) {
-  for (const file of fs.readdirSync(corpusDir)) {
+  for (const file of fs.readdirSync(corpusDir).sort()) {
     if (file.endsWith('.txt')) {
       const base = file.slice(0, -4);
       const expectedFile = path.join(corpusDir, `${base}.expected.json`);

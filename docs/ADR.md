@@ -1,6 +1,6 @@
 # ADRs — Hortifruti Digital
 
-Registro de decisões de arquitetura para a próxima fase do projeto. Cada ADR é uma unidade de implementação: **um PR draft por ADR**, na ordem da seção "Sequência". O agente não faz merge.
+Registro de decisões de arquitetura para a próxima fase do projeto. Cada ADR é uma unidade de implementação: **um PR draft por ADR**, na ordem da seção "Sequência". O merge segue `docs/GOVERNANCA.md` (4.3): o agente pode fazer merge com testes verdes e comentário no PR.
 
 Revisado em 31/10/2026 com base no inventário técnico da `main` (`d0ec8bb`). Referências `script.js:NNN` apontam para esse commit.
 

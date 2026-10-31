@@ -83,7 +83,7 @@ O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do forn
 
 ## Armadilhas conhecidas
 
-- `renderItems` injeta `item.nome` via `innerHTML` sem escape (risco de XSS com texto colado). Escape ao mexer nessa parte.
+- O texto importado não é confiável. `renderItems` monta o DOM com `createElement`/`textContent`; não volte a usar `innerHTML` com dados do parser. Há também uma CSP via `<meta>` em `index.html` (`script-src 'self'`, `style-src 'self'`, `img-src` só `self` e `cdn.jsdelivr.net`): não adicione `<script>`/`<style>` inline, atributos `on*` nem `style="..."` no HTML. Atribuir `el.style.x` por JS é permitido.
 - A busca usa `toLowerCase()` sem remover acentos, ao contrário dos ícones (`normalizeText`). Buscar "maca" não acha "Maçã".
 - `qtyInput.oninput` aceita 0 mantendo o item selecionado.
 - Entradas do carrinho que não existem na lista atual permanecem no `localStorage`.

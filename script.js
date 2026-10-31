@@ -402,18 +402,43 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item.selecionado) itemClasses.push('selected');
             if (item.promocao) itemClasses.push('promo-item');
             div.className = itemClasses.join(' ');
-            div.innerHTML = `
-                <input type="checkbox" class="item-check" ${item.selecionado ? 'checked' : ''}>
-                <span class="item-name">
-                    <img class="item-icon" src="${itemIconUrl}" alt="${itemEmoji}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
-                    <span class="item-name-text">${item.nome}</span>
-                </span>
-                <span class="item-price">R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}</span>
-                <input type="number" class="item-qty" value="${item.quantidade}" min="0.1" step="0.1" ${item.selecionado ? '' : 'disabled'}>
-            `;
 
-            const check = div.querySelector('.item-check');
-            const qtyInput = div.querySelector('.item-qty');
+            // DOM montado sem innerHTML: nome e unidade vêm de texto externo (não confiável).
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.className = 'item-check';
+            check.checked = item.selecionado;
+
+            const nameWrap = document.createElement('span');
+            nameWrap.className = 'item-name';
+
+            const icon = document.createElement('img');
+            icon.className = 'item-icon';
+            icon.src = itemIconUrl;
+            icon.alt = itemEmoji;
+            icon.loading = 'lazy';
+            icon.decoding = 'async';
+            icon.referrerPolicy = 'no-referrer';
+
+            const nameText = document.createElement('span');
+            nameText.className = 'item-name-text';
+            nameText.textContent = item.nome;
+
+            nameWrap.append(icon, nameText);
+
+            const price = document.createElement('span');
+            price.className = 'item-price';
+            price.textContent = `R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}`;
+
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.className = 'item-qty';
+            qtyInput.value = item.quantidade;
+            qtyInput.min = '0.1';
+            qtyInput.step = '0.1';
+            qtyInput.disabled = !item.selecionado;
+
+            div.append(check, nameWrap, price, qtyInput);
 
             check.onchange = (e) => {
                 item.selecionado = e.target.checked;

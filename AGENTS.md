@@ -1,0 +1,90 @@
+# AGENTS.md
+
+Guia para agentes de IA (e humanos) que trabalham neste repositório.
+
+## Visão geral
+
+**Hortifruti Digital** é uma SPA em JavaScript puro, sem dependências e sem build. Converte o texto promocional de um fornecedor de hortifruti em uma mensagem de pedido formatada para WhatsApp.
+
+## Executar
+
+Abra `index.html` no navegador. Não há npm, bundler nem servidor obrigatório.
+
+Servidor local opcional (necessário para testar a leitura da área de transferência, que exige contexto seguro; `localhost` serve):
+
+```bash
+python3 -m http.server 8080
+```
+
+Não há testes automatizados, linter nem CI. Valide mudanças manualmente no navegador, incluindo em largura de 360px.
+
+## Estrutura
+
+| Arquivo | Conteúdo |
+|---|---|
+| `index.html` | Marcação das 3 etapas (Importar, Selecionar, Resumo) |
+| `script.js` | Toda a lógica (~600 linhas), dentro de um único `DOMContentLoaded` |
+| `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
+| `favicon.svg` | Ícone |
+
+## Fluxo de dados
+
+```
+textarea / clipboard → parseProducts() → allProducts[] → renderTabs/renderItems → updateTotals → generateMessage
+```
+
+1. `processContent(text, {source, saveToStorage})` chama `extractDate` e `parseProducts`, persiste o texto bruto e hidrata o carrinho a partir do `localStorage`.
+2. `renderItems()` recria a lista de itens por completo a cada mudança (sem virtual DOM).
+3. `updateTotals()` calcula subtotal e total e chama `generateMessage()`, que preenche o textarea `#finalMessage`.
+
+Modelo de um produto: `{ id, nome, preco, unidade, promocao, categoria, quantidade, selecionado }`.
+
+## Persistência (`localStorage`)
+
+| Chave | Conteúdo |
+|---|---|
+| `hortifruti_prefs` | `{ endereco, pagamento }` |
+| `hortifruti_cart` | mapa `nome do produto → quantidade` (somente itens selecionados) |
+| `hortifruti_raw_text` | último texto colado |
+| `hortifruti_last_update_ts` | ISO timestamp da última importação |
+| `hortifruti_last_update_source` | `manual` ou `clipboard` |
+
+O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do fornecedor desfaz a seleção, e nomes duplicados colidem.
+
+## Parser (`parseProducts`)
+
+- **Categoria:** linha que casa com `categoryRegex` (`*FRUTAS*`, `#LEGUMES#`, `_VERDURAS_`). Itens antes de qualquer cabeçalho ficam em `Geral`.
+- **Produto:** uma regex única, montada a partir de `UNIT_PATTERN`, que aceita a unidade antes ou depois do preço (`8,00un.`, `R$4,99kg`, `kg R$ 4,99`). Fallbacks: unidade após o preço, prefixo `Bdj` no nome, unidade colada no fim do nome.
+- **Promoção:** trecho entre asteriscos contendo preço (`promoRegex`).
+- **Preço:** formato brasileiro (`1,50` → `1.50`). Só entra produto com nome e preço > 0.
+- **Unidades normalizadas** (`normalizeUnit`): `kg`, `un`, `bdj`, `pc`, `dz`, `lt`, `cx`, `maço`, `ml`.
+- Linhas que começam com `http(s)://` são ignoradas.
+- `UNIT_PATTERN` é duplicado como literal em um fallback dentro de `parseProducts`. Ao adicionar uma unidade, atualize os dois lugares e `normalizeUnit`.
+
+## Ícones
+
+`ITEM_ICON_RULES` mapeia palavras-chave (sem acento, minúsculas) para emoji, com ~50 regras. **A primeira regra que casa vence**, e o match é por `includes`. Por isso a ordem importa e palavras curtas (`sal`, `mel`, `cha`) casam dentro de outras. Sem match, usa `getCategoryIcon`. O emoji vira um PNG 3D de `cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode` (`emojiToExternalIconUrl`), então os ícones exigem internet.
+
+## Mensagem de pedido
+
+- Taxa de entrega fixa: `DELIVERY_FEE = 5.00` em `script.js`. O valor "R$ 5,00" em `#deliveryFee` no `index.html` é **texto estático separado**; altere os dois juntos.
+- Pagamento: `<select id="pagamento">` com `PIX` e `Cartão de Crédito`.
+- Formato: saudação, blocos `*CATEGORIA*` com `- nome, QTDunidade (R$ total)`, taxa, `*Total Geral*`, endereço e pagamento. A saudação "Bom dia, tudo bem?" é fixa.
+- O app não contém chave PIX (removida no commit `8467424`). Não a reintroduza no código.
+
+## Convenções
+
+- Sem módulos e sem imports. Tudo em `script.js`, dentro do `DOMContentLoaded`.
+- Seções delimitadas por comentários numerados (`// 1. Storage Helpers`, `// 2. Parser Logic`, `// 3. Rendering & UI Management`, `// 4. Main Actions`, `// 5. Initial Hydration`).
+- pt-BR em textos de interface, comentários e nomes de domínio (`produto`, `preco`, `quantidade`, `selecionado`, `categoria`).
+- Tema via variáveis CSS em `:root` (`--primary: #16a34a`, `--accent: #2563eb`). Altere cores só ali.
+- Mantenha zero dependências e zero build.
+- Commits em português, no estilo já usado no histórico (`Corrigir ...`, `Adicionar ...`, `refactor: ...`).
+
+## Armadilhas conhecidas
+
+- `renderItems` injeta `item.nome` via `innerHTML` sem escape (risco de XSS com texto colado). Escape ao mexer nessa parte.
+- A busca usa `toLowerCase()` sem remover acentos, ao contrário dos ícones (`normalizeText`). Buscar "maca" não acha "Maçã".
+- `qtyInput.oninput` aceita 0 mantendo o item selecionado.
+- Entradas do carrinho que não existem na lista atual permanecem no `localStorage`.
+- Mexer no CSS exige conferir 360px; houve vários commits de correção de overflow nessa largura.

@@ -309,8 +309,8 @@ test('ADR-016: alho a R$ 24,99/kg, 2 cabeças com 50 g cada (valor fictício de 
   await cenouraRow.locator('.item-qty').press('Tab');
 
   const msg = await page.locator('#finalMessage').inputValue();
-  expect(msg).toContain('- Alho, 2 cabeças (≈ 100 g · ≈ R$ 2,50)');
-  expect(msg).toContain('- Cenoura, 0,5kg (R$ 1,99)');
+  expect(msg).toContain('- 🧄 Alho, 2 cabeças (≈ 100 g · ≈ R$ 2,50)');
+  expect(msg).toContain('- 🥕 Cenoura, 0,5kg (R$ 1,99)');
   expect(msg).toContain('*Total estimado: ≈ R$ 9,49 (itens por unidade são pesados na separação)*');
 });
 

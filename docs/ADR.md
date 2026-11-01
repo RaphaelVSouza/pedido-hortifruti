@@ -31,7 +31,7 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 009 | Tela de revisão e templates aprendidos | Proposto | 008, 010 |
 | 010 | Perfis de fornecedor | Proposto | 008 |
 | 011 | Envio direto pelo WhatsApp (`wa.me`) | Proposto | 010 |
-| 012 | Ícones próprios no site, emojis nativos na mensagem | Proposto | — |
+| 012 | Ícones próprios no site, emojis nativos na mensagem | Aceito, implementado | — |
 | 013 | PWA offline | Proposto | 012 |
 | 014 | Preço anterior e histórico de preços | Proposto | 008, 010 |
 | 015 | Ajustes do parser a partir do fornecedor real | Aceito, implementado com casos provisórios | — |
@@ -254,7 +254,7 @@ Hoje só há cópia (`copyBtn.onclick`, `script.js:619-633`).
 
 ## ADR-012 — Catálogo de ícones próprio no site, emojis nativos na mensagem
 
-**Status:** Proposto (decisão do dono do repositório: no site, só os ícones flat próprios; na mensagem do WhatsApp, só emojis nativos)
+**Status:** Aceito, implementado (decisão do dono do repositório: no site, só os ícones flat próprios locais; na mensagem do WhatsApp, só emojis nativos)
 
 ### Contexto
 Os ícones são PNGs 3D remotos de um espelho comunitário (`cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode`), gerados por `emojiToExternalIconUrl` (`script.js:146-153`), com 50 regras em `ITEM_ICON_RULES` (`script.js:93-143`) e fallback por categoria (`getCategoryIcon`, `script.js:79-90`). Sem rede, os ícones somem. O Unicode não tem emoji para boa parte do hortifruti brasileiro.

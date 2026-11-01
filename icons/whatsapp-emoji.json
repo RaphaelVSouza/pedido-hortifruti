@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "note": "Emojis para a mensagem do WhatsApp. Só emojis até Unicode 14 (2021) para aparecerem em aparelhos antigos. Palavras-chave em minúsculas, sem acento; testar as compostas antes das simples. Item sem correspondência não recebe emoji; o cabeçalho da categoria usa 'categories'.",
+  "items": [
+    [["banana"], "🍌"], [["maca verde"], "🍏"], [["maca"], "🍎"], [["pera"], "🍐"], [["uva"], "🍇"],
+    [["laranja", "mexerica", "tangerina", "ponkan", "bergamota"], "🍊"], [["limao"], "🍋"],
+    [["melancia"], "🍉"], [["melao"], "🍈"], [["abacaxi"], "🍍"], [["morango"], "🍓"], [["manga"], "🥭"],
+    [["abacate", "avocado"], "🥑"], [["kiwi"], "🥝"], [["coco"], "🥥"], [["pessego", "nectarina"], "🍑"],
+    [["cereja"], "🍒"], [["mirtilo", "blueberry"], "🫐"],
+    [["tomatinho", "tomate cereja", "tomate"], "🍅"], [["batata doce"], "🍠"], [["batata"], "🥔"], [["cenoura"], "🥕"],
+    [["cebola"], "🧅"], [["alho"], "🧄"], [["berinjela"], "🍆"], [["pepino"], "🥒"], [["pimentao"], "🫑"],
+    [["pimenta"], "🌶️"], [["milho de pipoca", "pipoca"], "🍿"], [["milho"], "🌽"], [["brocolis"], "🥦"],
+    [["alface", "couve", "repolho", "acelga", "rucula", "agriao", "espinafre", "chicoria"], "🥬"],
+    [["cogumelo", "champignon", "shimeji"], "🍄"], [["salsa", "salsinha", "cebolinha", "cheiro verde", "coentro", "manjericao", "hortela", "alecrim", "louro"], "🌿"],
+    [["ovo", "ovos"], "🥚"], [["mel"], "🍯"],
+    [["cafe"], "☕"], [["arroz"], "🍚"], [["feijao"], "🫘"], [["macarrao", "espaguete", "miojo"], "🍝"],
+    [["biscoito", "bolacha", "cookies"], "🍪"], [["chocolate", "bombom"], "🍫"], [["pao", "bisnaga"], "🍞"],
+    [["leite"], "🥛"], [["queijo", "parmesao"], "🧀"], [["manteiga", "margarina"], "🧈"], [["sal"], "🧂"],
+    [["sardinha", "atum", "lata", "molho"], "🥫"], [["salsicha"], "🌭"], [["azeitona"], "🫒"],
+    [["suco", "sucos"], "🧃"], [["agua de coco"], "🥥"], [["agua"], "💧"], [["refrigerante", "refri", "coca", "guarana"], "🥤"],
+    [["papel higienico", "papel toalha"], "🧻"], [["sabonete"], "🧼"], [["esponja"], "🧽"], [["detergente", "multiuso", "desodorante"], "🧴"],
+    [["pasta de dente"], "🪥"], [["fosforo"], "🔥"]
+  ],
+  "categories": [
+    [["fruta", "frutas"], "🍉"], [["legume", "legumes"], "🥕"], [["verdura", "verduras", "folhas"], "🥬"],
+    [["tempero", "temperos", "ervas"], "🌿"], [["granja", "ovos"], "🥚"], [["mercadinho", "mercearia", "mercado"], "🛒"],
+    [["geladeira", "laticinios", "frios"], "🧊"], [["bebida", "bebidas"], "🥤"], [["padaria"], "🍞"],
+    [["limpeza", "produto de limpeza"], "🧼"], [["promocao", "promocoes", "ofertas"], "🏷️"], [["acougue", "carnes"], "🥩"],
+    [["organicos"], "🌱"], [["outros", "geral"], "📦"]
+  ]
+}

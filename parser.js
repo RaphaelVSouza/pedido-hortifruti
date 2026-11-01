@@ -941,5 +941,96 @@
     return `https://wa.me/${digits}?text=${encodeURIComponent(String(message || ""))}`;
   }
 
-  return { parse, analyzeLine, induceTemplate, matchTemplate, isValidTemplate, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, buildWhatsAppUrl, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
+  // --------------------------------------------------- emojis nativos WhatsApp (ADR-012)
+
+  /** @type {{ items: Array<[string[], string]>, categories: Array<[string[], string]> }} */
+  const WHATSAPP_EMOJI_DATA = {
+    items: [
+      [["banana"], "🍌"], [["maca verde"], "🍏"], [["maca"], "🍎"], [["pera"], "🍐"], [["uva"], "🍇"],
+      [["laranja", "mexerica", "tangerina", "ponkan", "bergamota"], "🍊"], [["limao"], "🍋"],
+      [["melancia"], "🍉"], [["melao"], "🍈"], [["abacaxi"], "🍍"], [["morango"], "🍓"], [["manga"], "🥭"],
+      [["abacate", "avocado"], "🥑"], [["kiwi"], "🥝"], [["coco"], "🥥"], [["pessego", "nectarina"], "🍑"],
+      [["cereja"], "🍒"], [["mirtilo", "blueberry"], "🫐"],
+      [["tomatinho", "tomate cereja", "tomate"], "🍅"], [["batata doce"], "🍠"], [["batata"], "🥔"], [["cenoura"], "🥕"],
+      [["cebola"], "🧅"], [["alho"], "🧄"], [["berinjela"], "🍆"], [["pepino"], "🥒"], [["pimentao"], "🫑"],
+      [["pimenta"], "🌶️"], [["milho de pipoca", "pipoca"], "🍿"], [["milho"], "🌽"], [["brocolis"], "🥦"],
+      [["alface", "couve", "repolho", "acelga", "rucula", "agriao", "espinafre", "chicoria"], "🥬"],
+      [["cogumelo", "champignon", "shimeji"], "🍄"], [["salsa", "salsinha", "cebolinha", "cheiro verde", "coentro", "manjericao", "hortela", "alecrim", "louro"], "🌿"],
+      [["ovo", "ovos"], "🥚"], [["mel"], "🍯"],
+      [["cafe"], "☕"], [["arroz"], "🍚"], [["feijao"], "🫘"], [["macarrao", "espaguete", "miojo"], "🍝"],
+      [["biscoito", "bolacha", "cookies"], "🍪"], [["chocolate", "bombom"], "🍫"], [["pao", "bisnaga"], "🍞"],
+      [["leite"], "🥛"], [["queijo", "parmesao"], "🧀"], [["manteiga", "margarina"], "🧈"], [["sal"], "🧂"],
+      [["sardinha", "atum", "lata", "molho"], "🥫"], [["salsicha"], "🌭"], [["azeitona"], "🫒"],
+      [["suco", "sucos"], "🧃"], [["agua de coco"], "🥥"], [["agua"], "💧"], [["refrigerante", "refri", "coca", "guarana"], "🥤"],
+      [["papel higienico", "papel toalha"], "🧻"], [["sabonete"], "🧼"], [["esponja"], "🧽"], [["detergente", "multiuso", "desodorante"], "🧴"],
+      [["pasta de dente"], "🪥"], [["fosforo"], "🔥"]
+    ],
+    categories: [
+      [["fruta", "frutas"], "🍉"], [["legume", "legumes"], "🥕"], [["verdura", "verduras", "folhas"], "🥬"],
+      [["tempero", "temperos", "ervas"], "🌿"], [["granja", "ovos"], "🥚"], [["mercadinho", "mercearia", "mercado"], "🛒"],
+      [["geladeira", "laticinios", "frios"], "🧊"], [["bebida", "bebidas"], "🥤"], [["padaria"], "🍞"],
+      [["limpeza", "produto de limpeza"], "🧼"], [["promocao", "promocoes", "ofertas"], "🏷️"], [["acougue", "carnes"], "🥩"],
+      [["organicos"], "🌱"], [["outros", "geral"], "📦"]
+    ]
+  };
+
+  /** @type {Array<{ kw: string, emoji: string, len: number }>} */
+  const WA_ITEM_RULES = [];
+  WHATSAPP_EMOJI_DATA.items.forEach(([kws, emoji]) => {
+    kws.forEach(kw => {
+      WA_ITEM_RULES.push({ kw, emoji, len: kw.length });
+    });
+  });
+  WA_ITEM_RULES.sort((a, b) => b.len - a.len || a.kw.localeCompare(b.kw));
+
+  /** @type {Array<{ kw: string, emoji: string, len: number }>} */
+  const WA_CATEGORY_RULES = [];
+  WHATSAPP_EMOJI_DATA.categories.forEach(([kws, emoji]) => {
+    kws.forEach(kw => {
+      WA_CATEGORY_RULES.push({ kw, emoji, len: kw.length });
+    });
+  });
+  WA_CATEGORY_RULES.sort((a, b) => b.len - a.len || a.kw.localeCompare(b.kw));
+
+  /**
+   * Retorna o emoji nativo para o WhatsApp de uma categoria (ADR-012).
+   * @param {string | null | undefined} category
+   * @returns {string}
+   */
+  function getWhatsAppCategoryEmoji(category) {
+    if (!category) return '📦';
+    const norm = foldAccents(normalizeText(String(category)).replace(EMOJI_RE, ' '))
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    const padded = ' ' + norm + ' ';
+    for (let i = 0; i < WA_CATEGORY_RULES.length; i++) {
+      const r = WA_CATEGORY_RULES[i];
+      if (padded.includes(' ' + r.kw + ' ') || padded.includes(' ' + r.kw + 's ') || padded.includes(' ' + r.kw + 'es ')) {
+        return r.emoji;
+      }
+    }
+    return '📦';
+  }
+
+  /**
+   * Retorna o emoji nativo para o WhatsApp de um item (ADR-012).
+   * @param {string | null | undefined} name
+   * @returns {string}
+   */
+  function getWhatsAppItemEmoji(name) {
+    if (!name) return '';
+    const norm = foldAccents(normalizeText(String(name)).replace(EMOJI_RE, ' '))
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    const padded = ' ' + norm + ' ';
+    for (let i = 0; i < WA_ITEM_RULES.length; i++) {
+      const r = WA_ITEM_RULES[i];
+      if (padded.includes(' ' + r.kw + ' ') || padded.includes(' ' + r.kw + 's ') || padded.includes(' ' + r.kw + 'es ')) {
+        return r.emoji;
+      }
+    }
+    return '';
+  }
+
+  return { parse, analyzeLine, induceTemplate, matchTemplate, isValidTemplate, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, buildWhatsAppUrl, getWhatsAppCategoryEmoji, getWhatsAppItemEmoji, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
 });

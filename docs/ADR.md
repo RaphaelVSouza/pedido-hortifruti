@@ -24,18 +24,18 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 002 | Não adotar IA remota (Jev/LLM) nesta fase | Aceito | — |
 | 003 | Inteiro sem moeda: regra por documento, faixa e revisão | Aceito, implementado (`a4fe095`) | 001 |
 | 004 | Extração linear com janela fixa de contexto | Aceito, implementado (`a4fe095`) | 001 |
-| 005 | Correção de bugs de estado | Parcial: bugs 1 e 3 e limpeza por prefixo implementados; bug 2 aguarda o ADR-008 | — |
+| 005 | Correção de bugs de estado | Aceito, implementado | — |
 | 006 | Testes de navegador versionados e CI | Aceito, implementado | — |
 | 007 | Tipagem com `// @ts-check` + JSDoc | Aceito, implementado | 006 |
-| 008 | Identidade de item e carrinho v1 | Proposto | 005 |
-| 009 | Tela de revisão e templates aprendidos | Proposto | 008, 010 |
-| 010 | Perfis de fornecedor | Proposto | 008 |
-| 011 | Envio direto pelo WhatsApp (`wa.me`) | Proposto | 010 |
+| 008 | Identidade de item e carrinho v1 | Aceito, implementado | 005 |
+| 009 | Tela de revisão e templates aprendidos | Aceito, implementado | 008, 010 |
+| 010 | Perfis de fornecedor | Aceito, implementado | 008 |
+| 011 | Envio direto pelo WhatsApp (`wa.me`) | Aceito, implementado | 010 |
 | 012 | Ícones próprios no site, emojis nativos na mensagem | Aceito, implementado | — |
-| 013 | PWA offline | Proposto | 012 |
+| 013 | PWA offline | Aceito, implementado | 012 |
 | 014 | Preço anterior e histórico de preços | Aceito, implementado | 008, 010 |
 | 015 | Ajustes do parser a partir do fornecedor real | Aceito, implementado com casos provisórios | — |
-| 016 | Pedido por unidade em itens vendidos por kg | Proposto | 008, 010 |
+| 016 | Pedido por unidade em itens vendidos por kg | Aceito, implementado | 008, 010 |
 
 ## Sequência
 

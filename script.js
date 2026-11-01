@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * @property {boolean} selecionado
      * @property {'kg' | 'unit'} [modo]
      * @property {UnitWeightEntry | null} [unitWeight]
+     * @property {'template' | 'heuristic' | 'manual'} [source]
+     * @property {string} [raw]
      *
      * @typedef {Object} CartV1Entry
      * @property {number} qty
@@ -49,6 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const pagamentoSelect = document.getElementById('pagamento');
     const filterSelectedBtn = document.getElementById('filterSelectedBtn');
     const promoDateEl = document.getElementById('promo-date');
+
+    const openReviewBtn = document.getElementById('openReviewBtn');
+    const reviewCountBadge = document.getElementById('reviewCountBadge');
+    const reviewPanel = document.getElementById('reviewPanel');
+    const closeReviewBtn = document.getElementById('closeReviewBtn');
+    const reviewFeedback = document.getElementById('reviewFeedback');
+    const unparsedCountEl = document.getElementById('unparsedCount');
+    const reviewUnparsedList = document.getElementById('reviewUnparsedList');
+    const conferirCountEl = document.getElementById('conferirCount');
+    const reviewConferirList = document.getElementById('reviewConferirList');
+    const spellingCountEl = document.getElementById('spellingCount');
+    const reviewSpellingList = document.getElementById('reviewSpellingList');
+    const supplierTemplatesSection = document.getElementById('supplierTemplatesSection');
+    const supplierTemplatesList = document.getElementById('supplierTemplatesList');
 
     const deliveryFeeEl = document.getElementById('deliveryFee');
     const supplierSelect = document.getElementById('supplierSelect');
@@ -109,6 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let allProducts = [];
     /** @type {CartV1} */
     let unavailableCart = {};
+    /** @type {UnparsedLine[]} */
+    let currentUnparsedLines = [];
     /** @type {Array<{ oldId: string, oldEntry: CartV1Entry, newProductId: string, newName: string }>} */
     let pendingSpellingSuggestions = [];
     let activeCategory = 'Todos';
@@ -436,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Parser Logic
     // O parser vive em parser.js (window.HortiParser) e é testável em Node: tests/parser.test.js.
-    const { parse: parseList, createTemplateStore, itemKey, categoryKey, productId, levenshtein } = window.HortiParser;
+    const { parse: parseList, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein } = window.HortiParser;
 
     // Unidades do parser -> códigos exibidos no app e na mensagem.
     /** @type {Record<string, string>} */
@@ -1453,7 +1471,9 @@ document.addEventListener('DOMContentLoaded', () => {
             quantidade: 1,
             selecionado: false,
             modo: 'kg',
-            unitWeight: uw
+            unitWeight: uw,
+            source: it.source,
+            raw: it.raw
         };
     };
 
@@ -1529,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * @param {string} text
-     * @returns {{ products: Product[], unparsed: number, promoDate: string | null }}
+     * @returns {{ products: Product[], unparsed: number, unparsedItems: UnparsedLine[], promoDate: string | null }}
      */
     function parseProducts(text) {
         const activeProfile = getActiveProfile();
@@ -1538,6 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             products: result.items.map(toProduct).filter(p => p.nome && p.preco > 0),
             unparsed: result.unparsed.length,
+            unparsedItems: result.unparsed,
             promoDate: result.promoDate
         };
     }
@@ -1958,12 +1979,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allProducts = parsed.products;
         showPromoDate(parsed.promoDate);
+        currentUnparsedLines = parsed.unparsedItems ? [...parsed.unparsedItems] : [];
 
         if (saveToStorage) {
             persistRawText(text, source);
         }
         if (parsed.unparsed > 0) {
-            updateStatusEl.textContent += ` ${parsed.unparsed} linha(s) não reconhecida(s) e ignorada(s).`;
+            updateStatusEl.appendChild(document.createTextNode(` ${parsed.unparsed} linha(s) não reconhecida(s) e ignorada(s). `));
+            const revBtn = document.createElement('button');
+            revBtn.type = 'button';
+            revBtn.className = 'status-review-btn';
+            revBtn.textContent = 'Revisar';
+            revBtn.onclick = () => openReviewPanel();
+            updateStatusEl.appendChild(revBtn);
         }
         
         activeCategory = 'Todos';
@@ -2067,7 +2095,535 @@ document.addEventListener('DOMContentLoaded', () => {
         renderItems();
         updateFilterBtn();
         updateTotals();
+        updateReviewCountBadge();
+        if (reviewPanel && !reviewPanel.classList.contains('hidden')) {
+            renderReviewPanel();
+        }
         return true;
+    };
+
+    const updateReviewCountBadge = () => {
+        const total = currentUnparsedLines.length
+            + allProducts.filter(p => p.conferir).length
+            + pendingSpellingSuggestions.length;
+        if (reviewCountBadge) {
+            reviewCountBadge.textContent = String(total);
+        }
+        if (openReviewBtn) {
+            if (total > 0) {
+                openReviewBtn.classList.remove('hidden');
+            } else {
+                openReviewBtn.classList.add('hidden');
+            }
+        }
+    };
+
+    /**
+     * @param {'ok' | 'error'} type
+     * @param {string} msg
+     */
+    const showReviewFeedback = (type, msg) => {
+        if (!reviewFeedback) return;
+        reviewFeedback.className = `review-feedback feedback-${type}`;
+        reviewFeedback.textContent = msg;
+        reviewFeedback.classList.remove('hidden');
+    };
+
+    const openReviewPanel = () => {
+        if (!reviewPanel) return;
+        reviewPanel.classList.remove('hidden');
+        renderReviewPanel();
+        reviewPanel.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const closeReviewPanel = () => {
+        if (!reviewPanel) return;
+        reviewPanel.classList.add('hidden');
+        if (reviewFeedback) {
+            reviewFeedback.classList.add('hidden');
+            reviewFeedback.textContent = '';
+        }
+    };
+
+    const renderReviewPanel = () => {
+        if (unparsedCountEl) unparsedCountEl.textContent = String(currentUnparsedLines.length);
+        const conferirItems = allProducts.filter(p => p.conferir);
+        if (conferirCountEl) conferirCountEl.textContent = String(conferirItems.length);
+        if (spellingCountEl) spellingCountEl.textContent = String(pendingSpellingSuggestions.length);
+        updateReviewCountBadge();
+
+        // 1. Unparsed list
+        if (reviewUnparsedList) {
+            reviewUnparsedList.innerHTML = '';
+            if (currentUnparsedLines.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'empty-review-text';
+                empty.textContent = 'Nenhuma linha não reconhecida.';
+                reviewUnparsedList.appendChild(empty);
+            } else {
+                currentUnparsedLines.forEach(unp => {
+                    const card = document.createElement('div');
+                    card.className = 'review-card';
+
+                    const topRow = document.createElement('div');
+                    topRow.className = 'review-card-top';
+                    const code = document.createElement('code');
+                    code.className = 'review-line-text';
+                    code.textContent = unp.line;
+                    const reason = document.createElement('span');
+                    reason.className = 'review-reason';
+                    reason.textContent = unp.reason;
+                    topRow.appendChild(code);
+                    topRow.appendChild(reason);
+                    card.appendChild(topRow);
+
+                    // Form grid
+                    const formGrid = document.createElement('div');
+                    formGrid.className = 'review-form-grid';
+
+                    const nameInput = document.createElement('input');
+                    nameInput.type = 'text';
+                    nameInput.className = 'review-input-name';
+                    nameInput.placeholder = 'Nome do item';
+                    const nonDigits = unp.line.replace(/[\d.,]+/g, ' ').replace(/[->=~*_#]+/g, ' ').trim();
+                    nameInput.value = nonDigits.split(/\s+/).slice(0, 3).join(' ');
+
+                    const priceInput = document.createElement('input');
+                    priceInput.type = 'number';
+                    priceInput.step = '0.01';
+                    priceInput.min = '0';
+                    priceInput.className = 'review-input-price';
+                    priceInput.placeholder = 'Preço (R$)';
+                    const numMatch = unp.line.match(/\d+(?:[.,]\d{1,2})?/);
+                    if (numMatch) {
+                        priceInput.value = numMatch[0].replace(',', '.');
+                    }
+
+                    const unitSelect = document.createElement('select');
+                    unitSelect.className = 'review-input-unit';
+                    const unitOptions = [
+                        { val: 'un', label: 'un (unidade)' },
+                        { val: 'kg', label: 'kg (quilo)' },
+                        { val: 'g', label: 'g (grama)' },
+                        { val: 'bdj', label: 'bdj (bandeja)' },
+                        { val: 'maço', label: 'maço' },
+                        { val: 'dz', label: 'dz (dúzia)' },
+                        { val: 'cx', label: 'cx (caixa)' },
+                        { val: 'pc', label: 'pc (pacote)' },
+                        { val: 'penca', label: 'penca' },
+                        { val: 'lt', label: 'lt (litro)' },
+                        { val: 'ml', label: 'ml' }
+                    ];
+                    unitOptions.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u.val;
+                        opt.textContent = u.label;
+                        unitSelect.appendChild(opt);
+                    });
+                    unitSelect.value = 'un';
+
+                    const catInput = document.createElement('input');
+                    catInput.type = 'text';
+                    catInput.className = 'review-input-category';
+                    catInput.placeholder = 'Categoria';
+                    catInput.value = 'Geral';
+
+                    formGrid.appendChild(nameInput);
+                    formGrid.appendChild(priceInput);
+                    formGrid.appendChild(unitSelect);
+                    formGrid.appendChild(catInput);
+                    card.appendChild(formGrid);
+
+                    // Token chips
+                    const tokens = unp.line.split(/\s+/).filter(Boolean);
+                    if (tokens.length > 0) {
+                        const tokensWrap = document.createElement('div');
+                        tokensWrap.className = 'review-tokens';
+                        const tLabel = document.createElement('span');
+                        tLabel.className = 'review-tokens-label';
+                        tLabel.textContent = 'Palavras:';
+                        tokensWrap.appendChild(tLabel);
+                        tokens.forEach(tok => {
+                            const chip = document.createElement('button');
+                            chip.type = 'button';
+                            chip.className = 'review-token-chip';
+                            chip.textContent = tok;
+                            chip.onclick = () => {
+                                const pureNum = tok.replace(/^[^\d]+/, '').replace(/[^\d.,]+$/, '');
+                                if (/^\d+(?:[.,]\d+)?$/.test(pureNum)) {
+                                    priceInput.value = pureNum.replace(',', '.');
+                                } else {
+                                    const cur = String(nameInput.value).trim();
+                                    nameInput.value = cur ? `${cur} ${tok}` : tok;
+                                }
+                            };
+                            tokensWrap.appendChild(chip);
+                        });
+                        card.appendChild(tokensWrap);
+                    }
+
+                    // Actions
+                    const actions = document.createElement('div');
+                    actions.className = 'review-card-actions';
+
+                    const addItemBtn = document.createElement('button');
+                    addItemBtn.type = 'button';
+                    addItemBtn.className = 'primary-btn small-btn btn-add-item';
+                    addItemBtn.textContent = '+ Adicionar item';
+                    addItemBtn.onclick = () => {
+                        const name = toSingleLine(String(nameInput.value));
+                        const price = Number(priceInput.value);
+                        if (!name) {
+                            showReviewFeedback('error', 'Informe o nome do item.');
+                            return;
+                        }
+                        if (!Number.isFinite(price) || price <= 0) {
+                            showReviewFeedback('error', 'Informe um preço válido maior que zero.');
+                            return;
+                        }
+                        const rawCat = toSingleLine(String(catInput.value)) || 'Geral';
+                        const canonU = canonUnit(unitSelect.value) || 'un';
+                        const key = itemKey(name);
+                        const pId = productId(rawCat, name);
+                        /** @type {Product} */
+                        const manualProduct = {
+                            id: pId,
+                            itemKey: key,
+                            nome: name,
+                            preco: price,
+                            unidade: canonU,
+                            promocao: false,
+                            precoAnterior: null,
+                            conferir: false,
+                            categoria: rawCat,
+                            quantidade: 1,
+                            selecionado: false,
+                            modo: canonU === 'kg' ? 'kg' : 'unit',
+                            unitWeight: canonU === 'kg' ? findUnitWeight(key) : null,
+                            source: 'manual'
+                        };
+                        allProducts.push(manualProduct);
+                        currentUnparsedLines = currentUnparsedLines.filter(u => u !== unp);
+                        renderTabs();
+                        renderItems();
+                        updateTotals();
+                        showReviewFeedback('ok', `Item "${name}" adicionado.`);
+                        renderReviewPanel();
+                    };
+
+                    const learnBtn = document.createElement('button');
+                    learnBtn.type = 'button';
+                    learnBtn.className = 'secondary-btn small-btn btn-learn-template';
+                    learnBtn.textContent = '🧠 Aprender formato';
+                    learnBtn.onclick = () => {
+                        const name = toSingleLine(String(nameInput.value));
+                        const rawPrice = String(priceInput.value).trim();
+                        if (!name || !rawPrice) {
+                            showReviewFeedback('error', 'Preencha o nome e o preço da linha para aprender o formato.');
+                            return;
+                        }
+                        try {
+                            const store = createTemplateStore(localStorage, getTemplatesKey());
+                            store.learn(unp.line, {
+                                name,
+                                price: rawPrice,
+                                unit: unitSelect.value || 'un'
+                            });
+                            const prevUnparsedCount = currentUnparsedLines.length;
+                            processContent(rawText.value, { source: 'manual', saveToStorage: true });
+                            const newlyRecognized = Math.max(0, prevUnparsedCount - currentUnparsedLines.length);
+                            showReviewFeedback('ok', `Formato aprendido! ${newlyRecognized} linha(s) nova(s) reconhecida(s).`);
+                            renderReviewPanel();
+                        } catch (err) {
+                            showReviewFeedback('error', err instanceof Error ? err.message : 'Erro ao aprender formato.');
+                        }
+                    };
+
+                    const discardBtn = document.createElement('button');
+                    discardBtn.type = 'button';
+                    discardBtn.className = 'secondary-btn small-btn btn-discard-unparsed';
+                    discardBtn.textContent = '✕ Descartar';
+                    discardBtn.onclick = () => {
+                        currentUnparsedLines = currentUnparsedLines.filter(u => u !== unp);
+                        renderReviewPanel();
+                        showReviewFeedback('ok', 'Linha descartada da revisão.');
+                    };
+
+                    actions.appendChild(addItemBtn);
+                    actions.appendChild(learnBtn);
+                    actions.appendChild(discardBtn);
+                    card.appendChild(actions);
+
+                    reviewUnparsedList.appendChild(card);
+                });
+            }
+        }
+
+        // 2. Conferir list
+        if (reviewConferirList) {
+            reviewConferirList.innerHTML = '';
+            if (conferirItems.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'empty-review-text';
+                empty.textContent = 'Nenhum item a conferir.';
+                reviewConferirList.appendChild(empty);
+            } else {
+                conferirItems.forEach(prod => {
+                    const card = document.createElement('div');
+                    card.className = 'review-card';
+
+                    const topRow = document.createElement('div');
+                    topRow.className = 'review-card-top';
+                    const nameSpan = document.createElement('strong');
+                    nameSpan.textContent = prod.nome;
+                    const badge = document.createElement('span');
+                    badge.className = 'badge-conferir';
+                    badge.textContent = '⚠ conferir';
+                    topRow.appendChild(nameSpan);
+                    topRow.appendChild(badge);
+                    card.appendChild(topRow);
+
+                    const formGrid = document.createElement('div');
+                    formGrid.className = 'review-form-grid';
+
+                    const nameInput = document.createElement('input');
+                    nameInput.type = 'text';
+                    nameInput.className = 'review-input-name';
+                    nameInput.value = prod.nome;
+
+                    const priceInput = document.createElement('input');
+                    priceInput.type = 'number';
+                    priceInput.step = '0.01';
+                    priceInput.min = '0';
+                    priceInput.className = 'review-input-price';
+                    priceInput.value = String(prod.preco);
+
+                    const unitSelect = document.createElement('select');
+                    unitSelect.className = 'review-input-unit';
+                    const unitOptions = ['un', 'kg', 'g', 'bdj', 'maço', 'dz', 'cx', 'pc', 'penca', 'lt', 'ml'];
+                    unitOptions.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u;
+                        opt.textContent = u;
+                        unitSelect.appendChild(opt);
+                    });
+                    unitSelect.value = prod.unidade || 'un';
+
+                    const catInput = document.createElement('input');
+                    catInput.type = 'text';
+                    catInput.className = 'review-input-category';
+                    catInput.value = prod.categoria || 'Geral';
+
+                    formGrid.appendChild(nameInput);
+                    formGrid.appendChild(priceInput);
+                    formGrid.appendChild(unitSelect);
+                    formGrid.appendChild(catInput);
+                    card.appendChild(formGrid);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'review-card-actions';
+
+                    const confirmBtn = document.createElement('button');
+                    confirmBtn.type = 'button';
+                    confirmBtn.className = 'primary-btn small-btn btn-confirm-conferir';
+                    confirmBtn.textContent = '✓ Confirmar';
+                    confirmBtn.onclick = () => {
+                        const newName = toSingleLine(String(nameInput.value));
+                        const newPrice = Number(priceInput.value);
+                        if (!newName || !Number.isFinite(newPrice) || newPrice <= 0) {
+                            showReviewFeedback('error', 'Nome e preço válido são obrigatórios.');
+                            return;
+                        }
+                        const newCat = toSingleLine(String(catInput.value)) || 'Geral';
+                        const newUnit = canonUnit(unitSelect.value) || 'un';
+
+                        prod.nome = newName;
+                        prod.preco = newPrice;
+                        prod.unidade = newUnit;
+                        prod.categoria = newCat;
+                        prod.conferir = false;
+                        prod.itemKey = itemKey(newName);
+                        prod.id = productId(newCat, newName);
+                        if (prod.unidade === 'kg') {
+                            prod.unitWeight = findUnitWeight(prod.itemKey);
+                        } else {
+                            prod.unitWeight = null;
+                            prod.modo = 'unit';
+                        }
+                        saveCart();
+                        renderTabs();
+                        renderItems();
+                        updateTotals();
+                        showReviewFeedback('ok', `Item "${newName}" confirmado!`);
+                        renderReviewPanel();
+                    };
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'danger-outline-btn small-btn btn-remove-conferir';
+                    removeBtn.textContent = '🗑️ Remover';
+                    removeBtn.onclick = () => {
+                        const removedName = prod.nome;
+                        allProducts = allProducts.filter(p => p !== prod);
+                        delete unavailableCart[prod.id];
+                        saveCart();
+                        renderTabs();
+                        renderItems();
+                        updateTotals();
+                        showReviewFeedback('ok', `Item "${removedName}" removido.`);
+                        renderReviewPanel();
+                    };
+
+                    const learnBtn = document.createElement('button');
+                    learnBtn.type = 'button';
+                    learnBtn.className = 'secondary-btn small-btn btn-learn-template';
+                    learnBtn.textContent = '🧠 Aprender formato';
+                    learnBtn.onclick = () => {
+                        const newName = toSingleLine(String(nameInput.value));
+                        const rawPrice = String(priceInput.value).trim();
+                        if (!newName || !rawPrice) {
+                            showReviewFeedback('error', 'Nome e preço são obrigatórios para aprender o formato.');
+                            return;
+                        }
+                        try {
+                            const store = createTemplateStore(localStorage, getTemplatesKey());
+                            store.learn(prod.raw || `${newName} ${rawPrice}`, {
+                                name: newName,
+                                price: rawPrice,
+                                unit: unitSelect.value || 'un'
+                            });
+                            processContent(rawText.value, { source: 'manual', saveToStorage: true });
+                            showReviewFeedback('ok', 'Formato aprendido com sucesso!');
+                            renderReviewPanel();
+                        } catch (err) {
+                            showReviewFeedback('error', err instanceof Error ? err.message : 'Erro ao aprender formato.');
+                        }
+                    };
+
+                    actions.appendChild(confirmBtn);
+                    actions.appendChild(learnBtn);
+                    actions.appendChild(removeBtn);
+                    card.appendChild(actions);
+
+                    reviewConferirList.appendChild(card);
+                });
+            }
+        }
+
+        // 3. Spelling suggestions list
+        if (reviewSpellingList) {
+            reviewSpellingList.innerHTML = '';
+            if (pendingSpellingSuggestions.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'empty-review-text';
+                empty.textContent = 'Nenhuma sugestão de grafia pendente.';
+                reviewSpellingList.appendChild(empty);
+            } else {
+                pendingSpellingSuggestions.forEach(sugg => {
+                    const card = document.createElement('div');
+                    card.className = 'review-card';
+
+                    const desc = document.createElement('p');
+                    desc.textContent = `Era "${sugg.oldEntry.name}" no pedido anterior. Corresponde a "${sugg.newName}" nesta lista?`;
+                    card.appendChild(desc);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'review-card-actions';
+
+                    const acceptBtn = document.createElement('button');
+                    acceptBtn.type = 'button';
+                    acceptBtn.className = 'primary-btn small-btn btn-accept-spelling';
+                    acceptBtn.textContent = '✓ Confirmar e aplicar seleção';
+                    acceptBtn.onclick = () => {
+                        const target = allProducts.find(p => p.id === sugg.newProductId);
+                        if (target) {
+                            target.selecionado = true;
+                            target.quantidade = sugg.oldEntry.qty;
+                            if (sugg.oldEntry.mode === 'unit' && target.unitWeight) {
+                                target.modo = 'unit';
+                            }
+                        }
+                        delete unavailableCart[sugg.oldId];
+                        pendingSpellingSuggestions = pendingSpellingSuggestions.filter(s => s !== sugg);
+                        saveCart();
+                        renderItems();
+                        updateTotals();
+                        showReviewFeedback('ok', `Sugestão aceita: "${sugg.newName}" selecionado.`);
+                        renderReviewPanel();
+                    };
+
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.type = 'button';
+                    rejectBtn.className = 'secondary-btn small-btn btn-reject-spelling';
+                    rejectBtn.textContent = '✕ Recusar (manter indisponível)';
+                    rejectBtn.onclick = () => {
+                        pendingSpellingSuggestions = pendingSpellingSuggestions.filter(s => s !== sugg);
+                        saveCart();
+                        showReviewFeedback('ok', `Sugestão recusada. "${sugg.oldEntry.name}" mantido como indisponível.`);
+                        renderReviewPanel();
+                    };
+
+                    actions.appendChild(acceptBtn);
+                    actions.appendChild(rejectBtn);
+                    card.appendChild(actions);
+
+                    reviewSpellingList.appendChild(card);
+                });
+            }
+        }
+    };
+
+    /**
+     * @param {string} supId
+     */
+    const renderSupplierTemplatesList = (supId) => {
+        if (!supplierTemplatesList) return;
+        supplierTemplatesList.innerHTML = '';
+        const store = createTemplateStore(localStorage, getTemplatesKey(supId));
+        const templates = store.list();
+
+        if (templates.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'empty-review-text';
+            empty.textContent = 'Nenhum formato aprendido para este fornecedor.';
+            supplierTemplatesList.appendChild(empty);
+            return;
+        }
+
+        templates.forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'supplier-template-card';
+
+            const info = document.createElement('div');
+            info.className = 'supplier-template-info';
+
+            const sourceCode = document.createElement('code');
+            sourceCode.className = 'supplier-template-source';
+            sourceCode.textContent = t.source;
+
+            const meta = document.createElement('span');
+            meta.className = 'supplier-template-meta';
+            meta.textContent = `Usos: ${t.hits || 0}${t.fixedUnit ? ' · Unidade fixa: ' + t.fixedUnit : ''}`;
+
+            info.appendChild(sourceCode);
+            info.appendChild(meta);
+            card.appendChild(info);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'danger-outline-btn small-btn delete-template-btn';
+            deleteBtn.textContent = 'Excluir';
+            deleteBtn.onclick = () => {
+                store.remove(t.source);
+                renderSupplierTemplatesList(supId);
+                if (supId === getActiveSupplierId() && rawText.value.trim()) {
+                    processContent(rawText.value, { source: 'manual', saveToStorage: false });
+                }
+            };
+            card.appendChild(deleteBtn);
+
+            supplierTemplatesList.appendChild(card);
+        });
     };
 
     processBtn.onclick = () => {
@@ -2143,6 +2699,9 @@ document.addEventListener('DOMContentLoaded', () => {
         allProducts = [];
         unavailableCart = {};
         pendingSpellingSuggestions = [];
+        currentUnparsedLines = [];
+        closeReviewPanel();
+        updateReviewCountBadge();
         activeCategory = 'Todos';
         showOnlySelected = false;
 
@@ -2322,6 +2881,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allProducts = [];
             unavailableCart = {};
             pendingSpellingSuggestions = [];
+            currentUnparsedLines = [];
+            closeReviewPanel();
             activeCategory = 'Todos';
             showOnlySelected = false;
             rawText.value = '';
@@ -2333,6 +2894,7 @@ document.addEventListener('DOMContentLoaded', () => {
             summarySection.classList.add('hidden');
             updateFilterBtn();
             updateTotals();
+            updateReviewCountBadge();
         }
     };
 
@@ -2354,6 +2916,8 @@ document.addEventListener('DOMContentLoaded', () => {
             supplierBoldIsPromoInput.checked = prof.boldIsPromo !== false;
             deleteSupplierBtn.disabled = Object.keys(suppliersState.profiles).length <= 1;
             deleteSupplierBtn.classList.remove('hidden');
+            renderSupplierTemplatesList(supplierId);
+            if (supplierTemplatesSection) supplierTemplatesSection.classList.remove('hidden');
         } else {
             supplierFormTitle.textContent = 'Novo fornecedor';
             supplierNameInput.value = '';
@@ -2363,6 +2927,7 @@ document.addEventListener('DOMContentLoaded', () => {
             supplierBoldIsPromoInput.checked = true;
             deleteSupplierBtn.disabled = true;
             deleteSupplierBtn.classList.add('hidden');
+            if (supplierTemplatesSection) supplierTemplatesSection.classList.add('hidden');
         }
         supplierConfigPanel.classList.remove('hidden');
     };
@@ -2496,6 +3061,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     enderecoInput.oninput = () => { updateTotals(); savePrefs(); };
     pagamentoSelect.onchange = () => { updateTotals(); savePrefs(); };
+
+    if (openReviewBtn) {
+        openReviewBtn.onclick = () => openReviewPanel();
+    }
+    if (closeReviewBtn) {
+        closeReviewBtn.onclick = () => closeReviewPanel();
+    }
 
     copyBtn.onclick = async () => {
         if (getCartItems().length === 0) return;

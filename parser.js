@@ -576,6 +576,23 @@
   }
 
   /**
+   * Valida se um objeto possui a estrutura e flags de regex válidos para um Template.
+   * @param {any} t
+   * @returns {t is Template}
+   */
+  function isValidTemplate(t) {
+    if (!t || typeof t !== 'object' || Array.isArray(t)) return false;
+    if (typeof t.source !== 'string' || !t.source.trim()) return false;
+    if (typeof t.flags !== 'string') return false;
+    try {
+      new RegExp(t.source, t.flags);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Induz uma regex a partir de UMA linha anotada pelo usuário.
    * ann = { name: 'Jaca inteira', price: '15', unit?: 'kg' } — substrings da linha.
    * @param {string} line
@@ -586,11 +603,21 @@
     const norm = normalizeText(line).trim();
     const spans = [];
     let cursor = 0;
+    /** @type {string | null} */
+    let fixedUnit = ann.fixedUnit || null;
+    let hasUnitSpan = false;
     for (const key of ['name', 'price', 'unit']) {
       if (!ann[key]) continue;
-      const needle = key === 'price' ? String(ann.price).replace(/^R\s?\$\s?/, '') : ann[key];
+      const needle = key === 'price' ? String(ann.price).replace(/^R\s?\$\s?/, '') : String(ann[key]);
       const idx = norm.indexOf(needle);
-      if (idx < 0) throw new Error(`"${needle}" não encontrado na linha`);
+      if (idx < 0) {
+        if (key === 'unit') {
+          fixedUnit = canonUnit(needle) || needle;
+          continue;
+        }
+        throw new Error(`"${needle}" não encontrado na linha`);
+      }
+      if (key === 'unit') hasUnitSpan = true;
       spans.push({ key, start: idx, end: idx + needle.length });
     }
     spans.sort((a, b) => a.start - b.start);
@@ -608,7 +635,13 @@
     src = src.replace(/(?:\\s\*)+/g, '\\s*');
 
     /** @type {Template} */
-    const tpl = { source: src, flags: 'iu', fixedUnit: ann.unit ? null : (ann.fixedUnit || null), createdAt: Date.now(), hits: 0 };
+    const tpl = {
+      source: src,
+      flags: 'iu',
+      fixedUnit: hasUnitSpan ? null : (fixedUnit || (ann.unit ? (canonUnit(ann.unit) || ann.unit) : null)),
+      createdAt: Date.now(),
+      hits: 0
+    };
     const check = matchTemplate(tpl, norm);
     if (!check || check.name !== cleanName(ann.name) || check.price !== toNumber(String(ann.price).replace(/^R\s?\$\s?/, ''))) {
       throw new Error('template induzido não reproduz a anotação');
@@ -622,18 +655,23 @@
    * @returns {AnalyzedSegment | null}
    */
   function matchTemplate(tpl, line) {
-    const re = tpl._re || (tpl._re = new RegExp(tpl.source, tpl.flags));
-    const m = re.exec(normalizeText(line).trim());
-    if (!m || !m.groups) return null;
-    return {
-      kind: 'item',
-      name: cleanName(m.groups.name || ''),
-      price: toNumber(m.groups.price),
-      unit: m.groups.unit ? canonUnit(m.groups.unit) : tpl.fixedUnit,
-      unitFrom: 'template',
-      oldPrice: null, packQty: null, strong: true, score: 99, promo: false,
-      raw: line, viaTemplate: true,
-    };
+    if (!isValidTemplate(tpl)) return null;
+    try {
+      const re = tpl._re || (tpl._re = new RegExp(tpl.source, tpl.flags));
+      const m = re.exec(normalizeText(line).trim());
+      if (!m || !m.groups) return null;
+      return {
+        kind: 'item',
+        name: cleanName(m.groups.name || ''),
+        price: toNumber(m.groups.price),
+        unit: m.groups.unit ? canonUnit(m.groups.unit) : (tpl.fixedUnit || null),
+        unitFrom: 'template',
+        oldPrice: null, packQty: null, strong: true, score: 99, promo: false,
+        raw: line, viaTemplate: true,
+      };
+    } catch {
+      return null;
+    }
   }
 
   // ------------------------------------------------------------------ parse geral
@@ -644,7 +682,8 @@
    * @returns {ParseResult}
    */
   function parse(text, opts = {}) {
-    const templates = opts.templates || [];
+    const rawTemplates = opts.templates || [];
+    const templates = Array.isArray(rawTemplates) ? rawTemplates.filter(isValidTemplate) : [];
     const boldIsPromo = opts.boldIsPromo !== false;
     const lines = normalizeText(text).split('\n');
     /** @type {AnalyzedSegment[][]} */
@@ -779,11 +818,18 @@
     let mem = [];
     /** @returns {Template[]} */
     const load = () => {
-      try { return storage ? JSON.parse(storage.getItem(key) || '[]') : mem; } catch { return []; }
+      try {
+        const raw = storage ? JSON.parse(storage.getItem(key) || '[]') : mem;
+        if (!Array.isArray(raw)) return [];
+        return raw.filter(isValidTemplate);
+      } catch {
+        return [];
+      }
     };
     /** @param {Template[]} list */
     const save = (list) => {
-      const plain = list.map(({ _re, ...t }) => t);
+      const valid = Array.isArray(list) ? list.filter(isValidTemplate) : [];
+      const plain = valid.map(({ _re, ...t }) => t);
       try { if (storage) storage.setItem(key, JSON.stringify(plain)); else mem = plain; } catch { mem = plain; }
     };
     return {
@@ -883,5 +929,5 @@
     return dp[m];
   }
 
-  return { parse, analyzeLine, induceTemplate, matchTemplate, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
+  return { parse, analyzeLine, induceTemplate, matchTemplate, isValidTemplate, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
 });

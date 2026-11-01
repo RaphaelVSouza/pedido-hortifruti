@@ -362,7 +362,7 @@ Portar para o `parser.js` do repositório as regras abaixo. O arquivo `parser-fo
 
 ## ADR-016 — Pedido por unidade em itens vendidos por kg
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 ### Contexto
 No Brasil é comum pedir por unidade um item tabelado por kg: "1 cabeça de alho", "6 bananas", "2 tomates", "1 abacaxi". Os pedidos reais do dono do repositório misturam os dois (`2 cabeças de alho`, `0,5kg de cenoura`, `Mamão Papaia 6un`). Hoje o app só aceita a unidade do preço.

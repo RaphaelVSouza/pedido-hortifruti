@@ -428,5 +428,51 @@ Caju (bdj) ----> 9 conto`;
   console.log(`${!bad.length ? 'OK  ' : 'FAIL'} Q - itemKey, categoryKey, productId e levenshtein (ADR-008)`);
 }
 
-console.log(`\n${CORPUS.length + 3 + 6 - fail}/${CORPUS.length + 3 + 6} cenários OK, ${total} itens verificados`);
+// ---- Tabela de pesos por unidade (ADR-016)
+{
+  const fs = require('fs');
+  const path = require('path');
+  const uwPath = path.join(__dirname, '..', 'data', 'unit-weights.json');
+  const scriptPath = path.join(__dirname, '..', 'script.js');
+  const uw = JSON.parse(fs.readFileSync(uwPath, 'utf8'));
+  const scriptContent = fs.readFileSync(scriptPath, 'utf8');
+  const errs = [];
+
+  if (uw.version !== 1) errs.push(`version esperado 1, obtido ${uw.version}`);
+  if (!Array.isArray(uw.items) || uw.items.length < 40) {
+    errs.push(`items.length esperado >= 40, obtido ${uw.items ? uw.items.length : 0}`);
+  } else {
+    uw.items.forEach((it, idx) => {
+      if (!Array.isArray(it.keywords) || it.keywords.length === 0 || it.keywords.some((k) => typeof k !== 'string' || !k.trim())) {
+        errs.push(`item[${idx}]: keywords inválidas`);
+      }
+      if (typeof it.unitLabel !== 'string' || !it.unitLabel.trim()) errs.push(`item[${idx}]: unitLabel vazio`);
+      if (typeof it.unitPlural !== 'string' || !it.unitPlural.trim()) errs.push(`item[${idx}]: unitPlural vazio`);
+      if (typeof it.grams !== 'number' || !(it.grams > 0)) errs.push(`item[${idx}]: grams inválido (${it.grams})`);
+      if (typeof it.min !== 'number' || !(it.min > 0)) errs.push(`item[${idx}]: min inválido (${it.min})`);
+      if (typeof it.max !== 'number' || !(it.max >= it.min)) errs.push(`item[${idx}]: max < min (${it.max} < ${it.min})`);
+      if (typeof it.source !== 'string' || !it.source.includes('IBGE POF 2008-2009')) {
+        errs.push(`item[${idx}]: source sem referência IBGE POF 2008-2009`);
+      }
+    });
+  }
+
+  const m = scriptContent.match(/const DEFAULT_UNIT_WEIGHTS = (\[[\s\S]*?\n    \]);/);
+  if (!m) {
+    errs.push('DEFAULT_UNIT_WEIGHTS não encontrado em script.js');
+  } else {
+    const embedded = JSON.parse(m[1]);
+    if (JSON.stringify(embedded) !== JSON.stringify(uw.items)) {
+      errs.push('DEFAULT_UNIT_WEIGHTS em script.js diverge de data/unit-weights.json');
+    }
+  }
+
+  if (errs.length) {
+    fail++;
+    console.log('  FAIL R:', errs.join('; '));
+  }
+  console.log(`${!errs.length ? 'OK  ' : 'FAIL'} R - data/unit-weights.json com >= 40 itens e fonte IBGE POF 2008-2009 (ADR-016)`);
+}
+
+console.log(`\n${CORPUS.length + 3 + 7 - fail}/${CORPUS.length + 3 + 7} cenários OK, ${total} itens verificados`);
 process.exitCode = fail ? 1 : 0;

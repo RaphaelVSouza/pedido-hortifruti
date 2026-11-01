@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * @property {string} categoria
      * @property {number} quantidade
      * @property {boolean} selecionado
+     * @property {'kg' | 'unit'} [modo]
+     * @property {UnitWeightEntry | null} [unitWeight]
      *
      * @typedef {Object} CartV1Entry
      * @property {number} qty
@@ -20,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @property {string} unit
      * @property {number} price
      * @property {string} category
+     * @property {'kg' | 'unit'} [mode]
      *
      * @typedef {Record<string, CartV1Entry>} CartV1
      */
@@ -32,8 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectionSection = document.getElementById('selectionSection');
     const summarySection = document.getElementById('summarySection');
     const itemsList = document.getElementById('itemsList');
+    const subtotalLabel = document.getElementById('subtotalLabel');
     const subtotalValue = document.getElementById('subtotalValue');
+    const totalLabel = document.getElementById('totalLabel');
     const totalValue = document.getElementById('totalValue');
+    const estimatedNote = document.getElementById('estimatedNote');
     const finalMessage = document.getElementById('finalMessage');
     const copyBtn = document.getElementById('copyBtn');
     const searchInput = document.getElementById('search');
@@ -91,11 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const getLastUpdateTsKey = (id = getActiveSupplierId()) => `${LAST_UPDATE_TS_KEY}_${id}`;
     const getLastUpdateSourceKey = (id = getActiveSupplierId()) => `${LAST_UPDATE_SOURCE_KEY}_${id}`;
     const getCartKey = (id = getActiveSupplierId()) => `${CART_V1_KEY}_${id}`;
+    const getUnitModesKey = (id = getActiveSupplierId()) => `${UNIT_MODES_KEY}_${id}`;
     const getTemplatesKey = (id = getActiveSupplierId()) => `${LEGACY_TEMPLATES_KEY}_${id}`;
     const RAW_TEXT_KEY = 'hortifruti_raw_text';
     const LAST_UPDATE_TS_KEY = 'hortifruti_last_update_ts';
     const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
     const CART_V1_KEY = 'hortifruti_cart_v1';
+    const UNIT_MODES_KEY = 'hortifruti_unit_modes_v1';
     const LEGACY_CART_KEY = 'hortifruti_cart';
     /** @type {Product[]} */
     let allProducts = [];
@@ -117,15 +125,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveCart = () => {
         /** @type {CartV1} */
         const cart = {};
+        /** @type {Record<string, 'kg' | 'unit'>} */
+        const unitModes = readStoredObject(getUnitModesKey(), {});
         allProducts.forEach(p => {
+            const key = p.itemKey || p.id;
+            if (p.unitWeight) {
+                if (p.modo === 'unit') {
+                    unitModes[key] = 'unit';
+                } else {
+                    delete unitModes[key];
+                }
+            }
             if (p.selecionado) {
-                cart[p.id] = {
+                /** @type {CartV1Entry} */
+                const entry = {
                     qty: p.quantidade,
                     name: p.nome,
                     unit: p.unidade,
                     price: p.preco,
                     category: p.categoria
                 };
+                if (p.modo === 'unit' && p.unitWeight) {
+                    entry.mode = 'unit';
+                }
+                cart[p.id] = entry;
             }
         });
         Object.entries(unavailableCart).forEach(([id, entry]) => {
@@ -134,6 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         localStorage.setItem(getCartKey(), JSON.stringify(cart));
+        if (Object.keys(unitModes).length > 0) {
+            localStorage.setItem(getUnitModesKey(), JSON.stringify(unitModes));
+        } else {
+            localStorage.removeItem(getUnitModesKey());
+        }
     };
 
     /**
@@ -417,6 +445,972 @@ document.addEventListener('DOMContentLoaded', () => {
         caixa: 'cx', pacote: 'pc', penca: 'penca', litro: 'lt', ml: 'ml'
     };
 
+    /** @type {UnitWeightEntry[]} */
+    const DEFAULT_UNIT_WEIGHTS = [
+        {
+                "keywords": [
+                        "banana da terra",
+                        "banana pacova",
+                        "pacova"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 100,
+                "min": 100,
+                "max": 100,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6801017 (PACOVA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "batata doce"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 355,
+                "min": 355,
+                "max": 355,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6400401 (BATATA DOCE, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "batata baroa",
+                        "cenoura amarela",
+                        "mandioquinha"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 45,
+                "min": 45,
+                "max": 45,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6400304 (CENOURA AMARELA (BATATA BAROA), UNIDADE PEQUENA)"
+        },
+        {
+                "keywords": [
+                        "batata inglesa",
+                        "batata",
+                        "batata lavada",
+                        "batata asterix",
+                        "batatinha"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 140,
+                "min": 70,
+                "max": 140,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6400101 (BATATA INGLESA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "couve flor"
+                ],
+                "unitLabel": "ramo",
+                "unitPlural": "ramos",
+                "grams": 60,
+                "min": 60,
+                "max": 60,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6700601 (COUVE FLOR, RAMO)"
+        },
+        {
+                "keywords": [
+                        "laranjinha japonesa",
+                        "kinkan"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 18,
+                "min": 18,
+                "max": 18,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6802407 (LARANJINHA JAPONESA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "erva doce",
+                        "funcho"
+                ],
+                "unitLabel": "ramo",
+                "unitPlural": "ramos",
+                "grams": 28.6,
+                "min": 28.6,
+                "max": 28.6,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6702801 (ERVA DOCE, RAMO)"
+        },
+        {
+                "keywords": [
+                        "fruta de conde",
+                        "pinha",
+                        "ata"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 60,
+                "min": 45,
+                "max": 60,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803802 (PINHA (FRUTA DE CONDE), UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "caja manga",
+                        "cajarana"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 55,
+                "min": 40,
+                "max": 55,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804601 (CAJA MANGA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "coco da bahia",
+                        "coco"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 40,
+                "min": 40,
+                "max": 40,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6600101 (COCO DA BAHIA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "castanha portuguesa"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 4,
+                "min": 4,
+                "max": 4,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6600301 (CASTANHA PORTUGUESA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "castanha do para"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 4,
+                "min": 4,
+                "max": 4,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6600701 (CASTANHA DO PARA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "castanha de caju"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 2.5,
+                "min": 2.5,
+                "max": 2.5,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6600801 (CASTANHA DE CAJU, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "milho verde",
+                        "milho"
+                ],
+                "unitLabel": "espiga",
+                "unitPlural": "espigas",
+                "grams": 100,
+                "min": 50,
+                "max": 100,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 8501402 (MILHO COZIDO, ESPIGA)"
+        },
+        {
+                "keywords": [
+                        "banana",
+                        "banana prata",
+                        "banana nanica",
+                        "banana dagua",
+                        "banana ouro",
+                        "banana maca",
+                        "banana caturra"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 75,
+                "min": 56.3,
+                "max": 75,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6801101 (BANANA (OURO, PRATA, D´AGUA, DA TERRA, ETC), UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "cenoura"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 120,
+                "min": 55,
+                "max": 120,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6401201 (CENOURA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "beterraba"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 140,
+                "min": 140,
+                "max": 140,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6401101 (BETERRABA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "inhame",
+                        "cara"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 125,
+                "min": 125,
+                "max": 125,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6400501 (INHAME, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "rabanete"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 25,
+                "min": 25,
+                "max": 25,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6401001 (RABANETE, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "alface"
+                ],
+                "unitLabel": "pé",
+                "unitPlural": "pés",
+                "grams": 200,
+                "min": 130,
+                "max": 200,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6700101 (ALFACE, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "cebolinha"
+                ],
+                "unitLabel": "ramo",
+                "unitPlural": "ramos",
+                "grams": 6.2,
+                "min": 6.2,
+                "max": 6.2,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6701101 (CEBOLINHA, RAMO)"
+        },
+        {
+                "keywords": [
+                        "agriao"
+                ],
+                "unitLabel": "maço",
+                "unitPlural": "maços",
+                "grams": 5,
+                "min": 5,
+                "max": 5,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6701301 (AGRIAO, MACO)"
+        },
+        {
+                "keywords": [
+                        "rucula"
+                ],
+                "unitLabel": "ramo",
+                "unitPlural": "ramos",
+                "grams": 6,
+                "min": 6,
+                "max": 6,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6702001 (RUCULA, RAMO)"
+        },
+        {
+                "keywords": [
+                        "alcachofra"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 140,
+                "min": 140,
+                "max": 140,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6702301 (ALCACHOFRA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pepino"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 100,
+                "min": 75,
+                "max": 100,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6704001 (PEPINO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "chuchu"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 230,
+                "min": 230,
+                "max": 230,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6704101 (CHUCHU, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "jilo"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 26,
+                "min": 26,
+                "max": 26,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6704201 (JILO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pimentao"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 55,
+                "min": 38,
+                "max": 55,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6704501 (PIMENTAO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "quiabo"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 18,
+                "min": 18,
+                "max": 18,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6705001 (QUIABO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "tomate",
+                        "tomatinho"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 100,
+                "min": 50,
+                "max": 100,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6705101 (TOMATE, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "berinjela"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 200,
+                "min": 200,
+                "max": 200,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6705401 (BERINJELA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "cebola"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 70,
+                "min": 30,
+                "max": 70,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6705701 (CEBOLA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "alho"
+                ],
+                "unitLabel": "cabeça",
+                "unitPlural": "cabeças",
+                "grams": 4.4,
+                "min": 4.4,
+                "max": 4.4,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6706201 (ALHO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "laranja"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 180,
+                "min": 90,
+                "max": 180,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6801801 (LARANJA (PERA, SELETA, LIMA, DA TERRA, ETC), UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "lima"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 180,
+                "min": 180,
+                "max": 180,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6801901 (LIMA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "limao"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 84,
+                "min": 84,
+                "max": 84,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6802001 (LIMAO (COMUM, GALEGO, ETC), UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "tangerina",
+                        "mexerica",
+                        "bergamota",
+                        "mimosa",
+                        "ponkan",
+                        "pocan",
+                        "murcote",
+                        "tanja",
+                        "maricota"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 135,
+                "min": 100,
+                "max": 135,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6802201 (TANGERINA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "abacaxi"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 750,
+                "min": 480,
+                "max": 750,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6802601 (ABACAXI, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "abacate",
+                        "avocado"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 430,
+                "min": 370,
+                "max": 430,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6802701 (ABACATE, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "caqui"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 110,
+                "min": 85,
+                "max": 110,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6802801 (CAQUI, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "figo"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 55,
+                "min": 55,
+                "max": 55,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6802901 (FIGO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "maca"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 150,
+                "min": 90,
+                "max": 150,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803001 (MACA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "mamao",
+                        "papaia"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 310,
+                "min": 270,
+                "max": 310,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803101 (MAMAO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "manga"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 140,
+                "min": 60,
+                "max": 140,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803201 (MANGA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "maracuja"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 45,
+                "min": 45,
+                "max": 45,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803301 (MARACUJA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "melao"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 660,
+                "min": 660,
+                "max": 660,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803501 (MELAO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pera"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 130,
+                "min": 97.5,
+                "max": 130,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803601 (PERA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pessego"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 60,
+                "min": 32,
+                "max": 60,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803701 (PESSEGO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "uva"
+                ],
+                "unitLabel": "cacho",
+                "unitPlural": "cachos",
+                "grams": 170,
+                "min": 170,
+                "max": 170,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6803901 (UVA, CACHO)"
+        },
+        {
+                "keywords": [
+                        "jenipapo"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 60,
+                "min": 60,
+                "max": 60,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804001 (JENIPAPO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "goiaba"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 170,
+                "min": 50,
+                "max": 170,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804201 (GOIABA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "ameixa"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 42,
+                "min": 34,
+                "max": 42,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804301 (AMEIXA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "caju"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 90,
+                "min": 80,
+                "max": 90,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804401 (CAJU, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "cereja"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 6.8,
+                "min": 6.8,
+                "max": 6.8,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804501 (CEREJA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "tapereba",
+                        "caja"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 5.7,
+                "min": 5.7,
+                "max": 5.7,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804701 (TAPEREBA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "carambola"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 75,
+                "min": 75,
+                "max": 75,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804801 (CARAMBOLA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "jaboticaba"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 5,
+                "min": 5,
+                "max": 5,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6804901 (JABOTICABA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "graviola"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 227,
+                "min": 227,
+                "max": 227,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6805001 (GRAVIOLA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "morango"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 12,
+                "min": 7,
+                "max": 12,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6805201 (MORANGO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "jambo"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 40,
+                "min": 40,
+                "max": 40,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6805301 (JAMBO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "atemoia"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 227,
+                "min": 227,
+                "max": 227,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6805401 (ATEMOIA (FRUTA), UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "nespera"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 27,
+                "min": 27,
+                "max": 27,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6805801 (NESPERA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "sapoti"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 50,
+                "min": 50,
+                "max": 50,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6806001 (SAPOTI, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "tamarindo"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 8.06,
+                "min": 8.06,
+                "max": 8.06,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6806201 (TAMARINDO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "cacau"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 91.2,
+                "min": 91.2,
+                "max": 91.2,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6806301 (CACAU, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pitomba"
+                ],
+                "unitLabel": "cacho",
+                "unitPlural": "cachos",
+                "grams": 60,
+                "min": 60,
+                "max": 60,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6806401 (PITOMBA, CACHO)"
+        },
+        {
+                "keywords": [
+                        "bacuri"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 40,
+                "min": 40,
+                "max": 40,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6806501 (BACURI, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pitanga"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 10,
+                "min": 10,
+                "max": 10,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6806801 (PITANGA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "ciriguela",
+                        "seriguela"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 10,
+                "min": 5.6,
+                "max": 10,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6806901 (CIRIGUELA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "umbu",
+                        "imbu"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 33.33,
+                "min": 33.33,
+                "max": 33.33,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6807101 (UMBU, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "nectarina"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 60,
+                "min": 60,
+                "max": 60,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6807401 (NECTARINA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "roma"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 70,
+                "min": 70,
+                "max": 70,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6807601 (ROMA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "acerola"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 12,
+                "min": 12,
+                "max": 12,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6807701 (ACEROLA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "kiwi"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 94,
+                "min": 57,
+                "max": 94,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6807801 (KIWI, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "amora"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 4,
+                "min": 4,
+                "max": 4,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6809901 (AMORA, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pinhao"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 4,
+                "min": 4,
+                "max": 4,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6600401 (PINHAO, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "noz",
+                        "nozes"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 5,
+                "min": 5,
+                "max": 5,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6601501 (NOZ, UNIDADE)"
+        },
+        {
+                "keywords": [
+                        "pupunha"
+                ],
+                "unitLabel": "unidade",
+                "unitPlural": "unidades",
+                "grams": 22.5,
+                "min": 16.9,
+                "max": 22.5,
+                "source": "IBGE POF 2008-2009, medidas referidas, código 6601805 (PUPUNHA, UNIDADE)"
+        }
+    ];
+
+    /** @type {UnitWeightEntry[]} */
+    let unitWeightRules = Array.isArray(window.HORTI_UNIT_WEIGHTS)
+        ? window.HORTI_UNIT_WEIGHTS
+        : DEFAULT_UNIT_WEIGHTS;
+
+    /**
+     * @param {string} itemKeyStr
+     * @returns {UnitWeightEntry | null}
+     */
+    const findUnitWeight = (itemKeyStr) => {
+        if (Array.isArray(window.HORTI_UNIT_WEIGHTS)) {
+            unitWeightRules = window.HORTI_UNIT_WEIGHTS;
+        }
+        const padded = ` ${normalizeText(itemKeyStr).replace(/[^a-z0-9]+/g, ' ').trim()} `;
+        if (!padded.trim()) return null;
+        /** @type {{ rule: UnitWeightEntry, words: number, len: number, idx: number } | null} */
+        let best = null;
+        for (let idx = 0; idx < unitWeightRules.length; idx++) {
+            const rule = unitWeightRules[idx];
+            if (!rule || !Array.isArray(rule.keywords)) continue;
+            for (const rawKw of rule.keywords) {
+                const kw = normalizeText(rawKw).replace(/[^a-z0-9]+/g, ' ').trim();
+                if (!kw) continue;
+                if (matchesKeyword(padded, kw)) {
+                    const words = kw.split(/\s+/).length;
+                    const len = kw.length;
+                    if (
+                        !best
+                        || words > best.words
+                        || (words === best.words && len > best.len)
+                        || (words === best.words && len === best.len && idx < best.idx)
+                    ) {
+                        best = { rule, words, len, idx };
+                    }
+                }
+            }
+        }
+        return best ? best.rule : null;
+    };
+
+    /**
+     * @param {Product} item
+     * @returns {{ qty: number, label: string, gramsStr: string, priceStr: string, estPrice: number, inlineText: string, msgText: string }}
+     */
+    const formatUnitEstimate = (item) => {
+        const uw = item.unitWeight || { unitLabel: 'unidade', unitPlural: 'unidades', grams: 0, min: 0, max: 0, keywords: [], source: '' };
+        const rawQty = Number(item.quantidade);
+        const qty = Number.isFinite(rawQty) && rawQty >= 1 ? Math.round(rawQty) : 1;
+        const label = qty === 1 ? uw.unitLabel : (uw.unitPlural || `${uw.unitLabel}s`);
+        const totalGrams = qty * uw.grams;
+        const roundedGrams = Math.round(totalGrams * 10) / 10;
+        const gramsStr = Number.isInteger(roundedGrams)
+            ? String(roundedGrams)
+            : roundedGrams.toFixed(1).replace('.', ',');
+        const estPrice = (totalGrams / 1000) * item.preco;
+        const priceStr = estPrice.toFixed(2).replace('.', ',');
+        return {
+            qty,
+            label,
+            gramsStr,
+            priceStr,
+            estPrice,
+            inlineText: `${qty} ${label} ≈ ${gramsStr} g · ≈ R$ ${priceStr}`,
+            msgText: `${qty} ${label} (≈ ${gramsStr} g · ≈ R$ ${priceStr})`
+        };
+    };
+
     /**
      * @param {string | null} promoDate
      */
@@ -445,6 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nome = `${nome} (combo ${it.packQty} ${unidade})`;
             unidade = 'combo';
         }
+        const uw = unidade === 'kg' ? findUnitWeight(key) : null;
         return {
             id,
             itemKey: key,
@@ -456,7 +1451,9 @@ document.addEventListener('DOMContentLoaded', () => {
             conferir: it.confidence < 0.5,
             categoria,
             quantidade: 1,
-            selecionado: false
+            selecionado: false,
+            modo: 'kg',
+            unitWeight: uw
         };
     };
 
@@ -513,13 +1510,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const valid = {};
         Object.entries(raw).forEach(([id, entry]) => {
             if (entry && typeof entry === 'object' && typeof entry.qty === 'number' && Number.isFinite(entry.qty) && entry.qty >= 0) {
-                valid[id] = {
+                /** @type {CartV1Entry} */
+                const itemEntry = {
                     qty: entry.qty,
                     name: String(entry.name || id),
                     unit: String(entry.unit || 'un'),
                     price: Number(entry.price) || 0,
                     category: String(entry.category || 'Geral')
                 };
+                if (entry.mode === 'unit') {
+                    itemEntry.mode = 'unit';
+                }
+                valid[id] = itemEntry;
             }
         });
         return valid;
@@ -625,11 +1627,86 @@ document.addEventListener('DOMContentLoaded', () => {
             qtyInput.type = 'number';
             qtyInput.className = 'item-qty';
             qtyInput.value = item.quantidade;
-            qtyInput.min = isDecimalUnit(item.unidade) ? '0.1' : '1';
-            qtyInput.step = isDecimalUnit(item.unidade) ? '0.1' : '1';
+            qtyInput.min = isDecimalMode(item) ? '0.25' : '1';
+            qtyInput.step = isDecimalMode(item) ? '0.25' : '1';
             qtyInput.disabled = !item.selecionado;
 
             div.append(check, nameWrap, price, qtyInput);
+
+            /** @type {HTMLSpanElement | null} */
+            let unitEstimate = null;
+
+            if (item.unidade === 'kg' && item.unitWeight) {
+                div.classList.add('has-unit-mode');
+                const modeBar = document.createElement('div');
+                modeBar.className = 'unit-mode-bar';
+
+                const modeSelector = document.createElement('div');
+                modeSelector.className = 'unit-mode-selector';
+                modeSelector.setAttribute('role', 'group');
+                modeSelector.setAttribute('aria-label', 'Modo de pedido');
+
+                const kgBtn = document.createElement('button');
+                kgBtn.type = 'button';
+                kgBtn.className = `unit-mode-btn${item.modo !== 'unit' ? ' active' : ''}`;
+                kgBtn.dataset.mode = 'kg';
+                kgBtn.setAttribute('aria-pressed', String(item.modo !== 'unit'));
+                kgBtn.textContent = 'kg';
+
+                const unitBtn = document.createElement('button');
+                unitBtn.type = 'button';
+                unitBtn.className = `unit-mode-btn${item.modo === 'unit' ? ' active' : ''}`;
+                unitBtn.dataset.mode = 'unit';
+                unitBtn.setAttribute('aria-pressed', String(item.modo === 'unit'));
+                unitBtn.textContent = item.unitWeight.unitLabel;
+
+                unitEstimate = document.createElement('span');
+                unitEstimate.className = `unit-estimate${item.modo === 'unit' ? '' : ' hidden'}`;
+                if (item.modo === 'unit') {
+                    unitEstimate.textContent = formatUnitEstimate(item).inlineText;
+                }
+
+                /** @param {'kg' | 'unit'} nextMode */
+                const applyMode = (nextMode) => {
+                    item.modo = nextMode;
+                    const inUnitMode = nextMode === 'unit';
+                    kgBtn.classList.toggle('active', !inUnitMode);
+                    kgBtn.setAttribute('aria-pressed', String(!inUnitMode));
+                    unitBtn.classList.toggle('active', inUnitMode);
+                    unitBtn.setAttribute('aria-pressed', String(inUnitMode));
+
+                    if (inUnitMode) {
+                        item.quantidade = Math.max(1, Math.round(Number(item.quantidade) || 1));
+                        qtyInput.min = '1';
+                        qtyInput.step = '1';
+                        qtyInput.value = item.quantidade;
+                        if (unitEstimate) {
+                            unitEstimate.textContent = formatUnitEstimate(item).inlineText;
+                            unitEstimate.classList.remove('hidden');
+                        }
+                    } else {
+                        if (!Number.isFinite(item.quantidade) || item.quantidade < 0.25) {
+                            item.quantidade = 1;
+                        }
+                        qtyInput.min = '0.25';
+                        qtyInput.step = '0.25';
+                        qtyInput.value = item.quantidade;
+                        if (unitEstimate) {
+                            unitEstimate.textContent = '';
+                            unitEstimate.classList.add('hidden');
+                        }
+                    }
+                    updateTotals();
+                    saveCart();
+                };
+
+                kgBtn.onclick = () => applyMode('kg');
+                unitBtn.onclick = () => applyMode('unit');
+
+                modeSelector.append(kgBtn, unitBtn);
+                modeBar.append(modeSelector, unitEstimate);
+                div.appendChild(modeBar);
+            }
 
             check.onchange = (e) => {
                 item.selecionado = e.target.checked;
@@ -642,6 +1719,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             qtyInput.oninput = (e) => {
                 item.quantidade = parseFloat(e.target.value) || 0;
+                if (unitEstimate && item.modo === 'unit' && item.unitWeight && item.quantidade > 0) {
+                    unitEstimate.textContent = formatUnitEstimate(item).inlineText;
+                }
                 updateTotals();
                 saveCart();
             };
@@ -650,12 +1730,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // (durante a digitação não, para permitir apagar e digitar outro número).
             qtyInput.onchange = (e) => {
                 let qty = parseFloat(e.target.value);
-                if (Number.isFinite(qty) && !isDecimalUnit(item.unidade)) qty = Math.round(qty);
-                const min = isDecimalUnit(item.unidade) ? 0.1 : 1;
+                if (Number.isFinite(qty) && !isDecimalMode(item)) qty = Math.round(qty);
+                const min = isDecimalMode(item) ? 0.25 : 1;
                 if (!item.selecionado || (Number.isFinite(qty) && qty >= min)) {
                     if (Number.isFinite(qty)) {
                         item.quantidade = qty;
                         qtyInput.value = qty;
+                    }
+                    if (unitEstimate && item.modo === 'unit' && item.unitWeight) {
+                        unitEstimate.textContent = formatUnitEstimate(item).inlineText;
                     }
                     updateTotals();
                     saveCart();
@@ -667,6 +1750,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 qtyInput.value = 1;
                 qtyInput.disabled = true;
                 div.classList.remove('selected');
+                if (unitEstimate && item.modo === 'unit' && item.unitWeight) {
+                    unitEstimate.textContent = formatUnitEstimate(item).inlineText;
+                }
                 updateFilterBtn();
                 updateTotals();
                 saveCart();
@@ -738,12 +1824,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Só kg aceita quantidade decimal; as demais unidades (un, bdj, maço, combo...) são inteiras.
+    // Só kg (no modo kg) aceita quantidade decimal; modo unidade e demais unidades são inteiros.
     /**
      * @param {string} unidade
      * @returns {boolean}
      */
     const isDecimalUnit = (unidade) => unidade === 'kg';
+
+    /**
+     * @param {Product} item
+     * @returns {boolean}
+     */
+    const isDecimalMode = (item) => isDecimalUnit(item.unidade) && item.modo !== 'unit';
 
     // Itens que entram no pedido: marcados e com quantidade maior que zero.
     const getCartItems = () => allProducts.filter(p => p.selecionado && p.quantidade > 0);
@@ -767,27 +1859,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateTotals() {
         let subtotal = 0;
+        let hasEstimated = false;
         const selected = getCartItems();
 
         selected.forEach(p => {
-            subtotal += p.preco * p.quantidade;
+            if (p.unidade === 'kg' && p.modo === 'unit' && p.unitWeight) {
+                subtotal += formatUnitEstimate(p).estPrice;
+                hasEstimated = true;
+            } else {
+                subtotal += p.preco * p.quantidade;
+            }
         });
 
         const deliveryFee = getActiveProfile().deliveryFee;
         const total = subtotal + deliveryFee;
 
-        subtotalValue.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        if (hasEstimated) {
+            subtotalLabel.textContent = 'Subtotal estimado';
+            subtotalValue.textContent = `≈ R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            totalLabel.textContent = 'Total estimado';
+            totalValue.textContent = `≈ R$ ${total.toFixed(2).replace('.', ',')}`;
+            estimatedNote.classList.remove('hidden');
+        } else {
+            subtotalLabel.textContent = 'Subtotal';
+            subtotalValue.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            totalLabel.textContent = 'Total';
+            totalValue.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            estimatedNote.classList.add('hidden');
+        }
         deliveryFeeEl.textContent = `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
-        totalValue.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
-        generateMessage(selected, total);
+        generateMessage(selected, total, hasEstimated);
     }
 
     /**
      * @param {Product[]} items
      * @param {number} total
+     * @param {boolean} [hasEstimated]
      */
-    function generateMessage(items, total) {
+    function generateMessage(items, total, hasEstimated = false) {
         if (items.length === 0) {
             finalMessage.value = 'Selecione pelo menos um item para gerar o pedido.';
             return;
@@ -802,17 +1912,27 @@ document.addEventListener('DOMContentLoaded', () => {
         categories.forEach(cat => {
             msg += `*${toSingleLine(cat).toUpperCase()}*\n`;
             items.filter(i => i.categoria === cat).forEach(item => {
-                const itemTotal = item.preco * item.quantidade;
-                // Combo: "2x" do pacote inteiro, para o fornecedor não ler como 2 unidades.
-                const qty = item.unidade === 'combo' ? `${item.quantidade}x` : `${item.quantidade}${item.unidade}`;
-                msg += `- ${toSingleLine(item.nome)}, ${qty} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+                if (item.unidade === 'kg' && item.modo === 'unit' && item.unitWeight) {
+                    const est = formatUnitEstimate(item);
+                    msg += `- ${toSingleLine(item.nome)}, ${est.msgText}\n`;
+                } else {
+                    const itemTotal = item.preco * item.quantidade;
+                    // Combo: "2x" do pacote inteiro, para o fornecedor não ler como 2 unidades.
+                    const qtyStr = String(item.quantidade).replace('.', ',');
+                    const qty = item.unidade === 'combo' ? `${qtyStr}x` : `${qtyStr}${item.unidade}`;
+                    msg += `- ${toSingleLine(item.nome)}, ${qty} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+                }
             });
             msg += '\n';
         });
 
         const deliveryFee = getActiveProfile().deliveryFee;
         msg += `Taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}\n`;
-        msg += `*Total Geral: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+        if (hasEstimated) {
+            msg += `*Total estimado: ≈ R$ ${total.toFixed(2).replace('.', ',')} (itens por unidade são pesados na separação)*\n\n`;
+        } else {
+            msg += `*Total Geral: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+        }
         msg += `📍 *Endereço:* ${endereco}\n`;
         msg += `💳 *Pagamento:* ${pagamento}`;
 
@@ -854,15 +1974,39 @@ document.addEventListener('DOMContentLoaded', () => {
         unavailableCart = {};
         pendingSpellingSuggestions = [];
         const storedCart = loadAndMigrateCart(allProducts);
+        const storedUnitModes = readStoredObject(getUnitModesKey(), {});
         const matchedProductIds = new Set();
+
+        allProducts.forEach(p => {
+            const key = p.itemKey || p.id;
+            if (p.unitWeight && storedUnitModes[key] === 'unit') {
+                p.modo = 'unit';
+            }
+        });
+
+        /**
+         * @param {Product} target
+         * @param {CartV1Entry} entry
+         */
+        const applyCartEntryToProduct = (target, entry) => {
+            target.selecionado = true;
+            const key = target.itemKey || target.id;
+            const wantsUnit = entry.mode === 'unit' || storedUnitModes[key] === 'unit';
+            if (target.unitWeight && wantsUnit) {
+                target.modo = 'unit';
+                target.quantidade = Math.max(1, Math.round(entry.qty));
+            } else {
+                target.modo = 'kg';
+                target.quantidade = entry.qty;
+            }
+        };
 
         // Passo 1: Match exato por productId
         Object.entries(storedCart).forEach(([savedId, entry]) => {
             if (!entry || typeof entry.qty !== 'number' || !Number.isFinite(entry.qty) || entry.qty < 0) return;
             const exact = allProducts.find(p => p.id === savedId && !matchedProductIds.has(p.id));
             if (exact) {
-                exact.selecionado = true;
-                exact.quantidade = entry.qty;
+                applyCartEntryToProduct(exact, entry);
                 matchedProductIds.add(exact.id);
             }
         });
@@ -880,8 +2024,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const byKey = allProducts.filter(p => p.itemKey === savedItemKey && !matchedProductIds.has(p.id));
             if (byKey.length === 1) {
                 const target = byKey[0];
-                target.selecionado = true;
-                target.quantidade = entry.qty;
+                applyCartEntryToProduct(target, entry);
                 matchedProductIds.add(target.id);
                 return;
             }
@@ -904,13 +2047,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Passo 4: Ausente -> manter no carrinho como "indisponível nesta lista"
-            unavailableCart[savedId] = {
+            /** @type {CartV1Entry} */
+            const unavailEntry = {
                 qty: entry.qty,
                 name: String(entry.name || savedId),
                 unit: String(entry.unit || 'un'),
                 price: Number(entry.price) || 0,
                 category: String(entry.category || 'Geral')
             };
+            if (entry.mode === 'unit') {
+                unavailEntry.mode = 'unit';
+            }
+            unavailableCart[savedId] = unavailEntry;
         });
 
         saveCart();
@@ -975,6 +2123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unavailableCart = {};
         pendingSpellingSuggestions = [];
         localStorage.removeItem(getCartKey());
+        localStorage.removeItem(getUnitModesKey());
         localStorage.removeItem(CART_V1_KEY);
         localStorage.removeItem(LEGACY_CART_KEY);
         showOnlySelected = false;
@@ -1335,6 +2484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem(getLastUpdateTsKey(delId));
         localStorage.removeItem(getLastUpdateSourceKey(delId));
         localStorage.removeItem(getCartKey(delId));
+        localStorage.removeItem(getUnitModesKey(delId));
         localStorage.removeItem(getTemplatesKey(delId));
 
         const nextId = Object.keys(suppliersState.profiles)[0];
@@ -1366,6 +2516,45 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 5. Initial Hydration
+    const loadUnitWeights = async () => {
+        if (Array.isArray(window.HORTI_UNIT_WEIGHTS)) {
+            unitWeightRules = window.HORTI_UNIT_WEIGHTS;
+            return;
+        }
+        if (typeof window.fetch !== 'function' || !window.location.protocol.startsWith('http')) {
+            return;
+        }
+        try {
+            const resp = await fetch('data/unit-weights.json');
+            if (!resp.ok) return;
+            /** @type {UnitWeightsData} */
+            const data = await resp.json();
+            if (data && Array.isArray(data.items)) {
+                unitWeightRules = data.items;
+                if (allProducts.length > 0) {
+                    const storedUnitModes = readStoredObject(getUnitModesKey(), {});
+                    const storedCart = readStoredObject(getCartKey(), {});
+                    allProducts.forEach(p => {
+                        p.unitWeight = p.unidade === 'kg' ? findUnitWeight(p.itemKey || p.nome) : null;
+                        const key = p.itemKey || p.id;
+                        const savedEntry = storedCart[p.id];
+                        if (p.unitWeight && (p.modo === 'unit' || storedUnitModes[key] === 'unit' || (savedEntry && savedEntry.mode === 'unit'))) {
+                            p.modo = 'unit';
+                            p.quantidade = Math.max(1, Math.round(Number(p.quantidade) || 1));
+                        } else if (!p.unitWeight) {
+                            p.modo = 'kg';
+                        }
+                    });
+                    renderItems();
+                    updateTotals();
+                }
+            }
+        } catch (err) {
+            // Mantém DEFAULT_UNIT_WEIGHTS embutido em caso de falha ou offline
+        }
+    };
+
+    loadUnitWeights();
     initSuppliers();
     renderSupplierUI();
     loadPrefs();

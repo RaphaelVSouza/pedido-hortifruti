@@ -49,6 +49,8 @@ Existe CI de testes no GitHub Actions (`.github/workflows/test.yml`). Continua s
 | `.github/workflows/test.yml` | Workflow de CI do GitHub Actions (testes de parser e e2e) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
+| `manifest.json` | Manifesto de Web App (ADR-013: PWA instalável com ícones 192 e 512) |
+| `sw.js` | Service Worker para suporte offline (ADR-013: cache-first estáticos, network-first HTML) |
 | `docs/ADR.md` | Registro de decisões de arquitetura (ADR-001 a 016) e sequência de implementação |
 | `docs/GOVERNANCA.md` | Governança (COBIT 2019 / ITIL 4): papéis, política de mudança, registro de riscos, privacidade e incidentes |
 

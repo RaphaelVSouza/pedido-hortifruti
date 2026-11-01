@@ -39,7 +39,9 @@ test.describe('Persistência e resiliência de dados', () => {
     await page.click('#processBtn');
 
     await page.evaluate(() => {
+      localStorage.setItem('hortifruti_cart_v1_default', '{invalido-json: true');
       localStorage.setItem('hortifruti_cart_v1', '{invalido-json: true');
+      localStorage.setItem('hortifruti_suppliers_v1', '{invalido-json: true');
       localStorage.setItem('hortifruti_cart', '{invalido-json: true');
     });
 

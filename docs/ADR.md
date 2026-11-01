@@ -33,7 +33,7 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 011 | Envio direto pelo WhatsApp (`wa.me`) | Proposto | 010 |
 | 012 | Ícones próprios no site, emojis nativos na mensagem | Aceito, implementado | — |
 | 013 | PWA offline | Proposto | 012 |
-| 014 | Preço anterior e histórico de preços | Proposto | 008, 010 |
+| 014 | Preço anterior e histórico de preços | Aceito, implementado | 008, 010 |
 | 015 | Ajustes do parser a partir do fornecedor real | Aceito, implementado com casos provisórios | — |
 | 016 | Pedido por unidade em itens vendidos por kg | Proposto | 008, 010 |
 
@@ -304,7 +304,7 @@ Os ícones são PNGs 3D remotos de um espelho comunitário (`cdn.jsdelivr.net/gh
 
 ## ADR-014 — Preço anterior e histórico de preços
 
-**Status:** Proposto
+**Status:** Aceito, implementado (com testes em `tests/e2e/historico.spec.js`)
 
 ### Contexto
 `oldPrice` é mapeado para `precoAnterior` (`script.js:298`) mas nunca exibido. Toda lista importada é descartada na seguinte.

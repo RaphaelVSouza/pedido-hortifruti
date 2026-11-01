@@ -78,6 +78,7 @@ Modelo de um produto: `{ id, itemKey, nome, preco, precoAnterior, unidade, promo
 | `hortifruti_last_update_ts_<id>` | ISO timestamp da última importação por fornecedor |
 | `hortifruti_last_update_source_<id>` | `manual` ou `clipboard` por fornecedor |
 | `hortifruti_templates_v1_<id>` | templates aprendidos por fornecedor (migra de `hortifruti.templates.v1` / `hortifruti_templates_v1`) |
+| `hortifruti_history_v1_<id>` | histórico de até 10 snapshots de preços por fornecedor (`{ importedAt, promoDate, prices: { [productId]: { price, unit } } }`) (ADR-014) |
 
 O carrinho (`hortifruti_cart_v1`) é indexado por `productId = categoryKey + '|' + itemKey` (exportados por `parser.js`: `itemKey`, `categoryKey`, `productId`, `levenshtein`). No reprocessamento: (1) match exato por `productId`; (2) match único por `itemKey` em outra categoria; (3) Levenshtein ≤ 2 em `itemKey` (≥ 6 caracteres) fica registrado em `pendingSpellingSuggestions` sem aplicar automaticamente; (4) itens ausentes permanecem no carrinho como "indisponível nesta lista" (fora do total e da mensagem, com botão de remover).
 

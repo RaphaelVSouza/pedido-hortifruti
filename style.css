@@ -563,6 +563,42 @@ button:focus-visible {
     color: var(--muted);
     font-size: 0.9rem;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+.old-price {
+    text-decoration: line-through;
+    color: var(--muted);
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+.price-diff {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.1;
+    padding: 1px 6px;
+    border-radius: 999px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.price-diff.price-up {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.price-diff.price-down {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
 }
 
 .item-qty {
@@ -1708,6 +1744,15 @@ button:focus-visible {
     .item-price {
         font-size: 0.72rem;
         min-width: 0;
+    }
+
+    .old-price {
+        font-size: 0.75em;
+    }
+
+    .price-diff {
+        font-size: 0.65rem;
+        padding: 1px 4px;
     }
 
     .item-qty,

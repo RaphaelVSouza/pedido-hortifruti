@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
      * @property {string} category
      * @property {'kg' | 'unit'} [mode]
      *
+     * @typedef {Object} PriceSnapshotEntry
+     * @property {number} price
+     * @property {string} unit
+     *
+     * @typedef {Object} PriceSnapshot
+     * @property {string} importedAt
+     * @property {string | null} promoDate
+     * @property {Record<string, PriceSnapshotEntry>} prices
+     *
      * @typedef {Record<string, CartV1Entry>} CartV1
      */
     // DOM Elements
@@ -89,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const DEFAULT_PAYMENT_METHODS = ['PIX', 'Cartão de Crédito'];
     const LEGACY_TEMPLATES_DOT_KEY = 'hortifruti.templates.v1';
     const LEGACY_TEMPLATES_KEY = 'hortifruti_templates_v1';
+    const HISTORY_V1_KEY = 'hortifruti_history_v1';
 
     /** @returns {SupplierProfile} */
     const createDefaultProfile = () => ({
@@ -117,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const getCartKey = (id = getActiveSupplierId()) => `${CART_V1_KEY}_${id}`;
     const getUnitModesKey = (id = getActiveSupplierId()) => `${UNIT_MODES_KEY}_${id}`;
     const getTemplatesKey = (id = getActiveSupplierId()) => `${LEGACY_TEMPLATES_KEY}_${id}`;
+    const getHistoryKey = (id = getActiveSupplierId()) => `${HISTORY_V1_KEY}_${id}`;
     const RAW_TEXT_KEY = 'hortifruti_raw_text';
     const LAST_UPDATE_TS_KEY = 'hortifruti_last_update_ts';
     const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
@@ -203,11 +214,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const readStoredObject = (key, fallback = null) => {
         try {
             const parsed = JSON.parse(localStorage.getItem(key));
+            if (Array.isArray(fallback)) {
+                return Array.isArray(parsed) ? parsed : fallback;
+            }
             return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
         } catch (error) {
             console.error(`Valor inválido em ${key}, ignorando:`, error);
             return fallback;
         }
+    };
+
+    /**
+     * @param {string} supplierId
+     * @param {Product[]} products
+     * @param {string | null} promoDate
+     */
+    const savePriceSnapshot = (supplierId, products, promoDate) => {
+        /** @type {PriceSnapshot[]} */
+        const snapshots = readStoredObject(getHistoryKey(supplierId), []);
+        /** @type {Record<string, { price: number, unit: string }>} */
+        const prices = {};
+        products.forEach(p => {
+            prices[p.id] = { price: p.preco, unit: p.unidade };
+        });
+        /** @type {PriceSnapshot} */
+        const snapshot = {
+            importedAt: new Date().toISOString(),
+            promoDate: promoDate || null,
+            prices
+        };
+        const list = Array.isArray(snapshots) ? [...snapshots] : [];
+        list.unshift(snapshot);
+        const limited = list.slice(0, 10);
+        localStorage.setItem(getHistoryKey(supplierId), JSON.stringify(limited));
+    };
+
+    /**
+     * @param {PriceSnapshot} snapshot
+     * @returns {string}
+     */
+    const formatDateRef = (snapshot) => {
+        if (snapshot.promoDate) return snapshot.promoDate;
+        if (snapshot.importedAt) {
+            const d = new Date(snapshot.importedAt);
+            if (!Number.isNaN(d.getTime())) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                return `${day}/${month}`;
+            }
+        }
+        return '';
+    };
+
+    /**
+     * @param {string} [supplierId]
+     * @returns {PriceSnapshot | null}
+     */
+    const getPreviousPriceSnapshot = (supplierId = getActiveSupplierId()) => {
+        /** @type {PriceSnapshot[]} */
+        const snapshots = readStoredObject(getHistoryKey(supplierId), []);
+        if (!Array.isArray(snapshots) || snapshots.length === 0) return null;
+        const currentSavedText = localStorage.getItem(getRawTextKey(supplierId));
+        const isCurrentSaved = Boolean(currentSavedText && rawText.value === currentSavedText);
+        if (isCurrentSaved) {
+            return snapshots[1] || null;
+        }
+        return snapshots[0] || null;
     };
 
     const loadPrefs = () => {
@@ -2615,6 +2687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderItems() {
+        const prevSnapshot = getPreviousPriceSnapshot(getActiveSupplierId());
         const searchTerm = normalizeText(searchInput.value).trim();
         itemsList.innerHTML = '';
 
@@ -2665,7 +2738,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const price = document.createElement('span');
             price.className = 'item-price';
-            price.textContent = `R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}`;
+
+            if (item.precoAnterior && item.precoAnterior > 0 && item.precoAnterior !== item.preco) {
+                const oldPriceEl = document.createElement('del');
+                oldPriceEl.className = 'old-price';
+                const formattedOld = item.precoAnterior.toFixed(2).replace('.', ',');
+                oldPriceEl.setAttribute('aria-label', `antes R$ ${formattedOld}`);
+                oldPriceEl.textContent = `R$ ${formattedOld}`;
+                price.appendChild(oldPriceEl);
+                price.appendChild(document.createTextNode(' '));
+            }
+
+            const currentPriceText = document.createTextNode(`R$ ${item.preco.toFixed(2).replace('.', ',')}/${item.unidade}`);
+            price.appendChild(currentPriceText);
+
+            if (prevSnapshot && prevSnapshot.prices && prevSnapshot.prices[item.id]) {
+                const prevEntry = prevSnapshot.prices[item.id];
+                if (prevEntry.unit === item.unidade && typeof prevEntry.price === 'number' && prevEntry.price > 0 && item.preco !== prevEntry.price) {
+                    const pct = Math.round(((item.preco - prevEntry.price) / prevEntry.price) * 100);
+                    if (pct !== 0) {
+                        const isUp = pct > 0;
+                        const absPct = Math.abs(pct);
+                        const arrow = isUp ? '↑' : '↓';
+                        const action = isUp ? 'subiu' : 'caiu';
+                        const diffBadge = document.createElement('span');
+                        diffBadge.className = `price-diff ${isUp ? 'price-up' : 'price-down'}`;
+                        diffBadge.textContent = `${arrow} ${absPct}%`;
+                        const dateRef = formatDateRef(prevSnapshot);
+                        const labelText = dateRef ? `${action} ${absPct}% desde ${dateRef}` : `${action} ${absPct}%`;
+                        diffBadge.setAttribute('aria-label', labelText);
+                        diffBadge.setAttribute('title', labelText);
+                        price.appendChild(document.createTextNode(' '));
+                        price.appendChild(diffBadge);
+                    }
+                }
+            }
 
             const qtyInput = document.createElement('input');
             qtyInput.type = 'number';
@@ -3056,6 +3163,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (saveToStorage) {
             persistRawText(text, source);
+            savePriceSnapshot(getActiveSupplierId(), parsed.products, parsed.promoDate);
         }
         if (parsed.unparsed > 0) {
             updateStatusEl.appendChild(document.createTextNode(` ${parsed.unparsed} linha(s) não reconhecida(s) e ignorada(s). `));
@@ -4125,6 +4233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem(getCartKey(delId));
         localStorage.removeItem(getUnitModesKey(delId));
         localStorage.removeItem(getTemplatesKey(delId));
+        localStorage.removeItem(getHistoryKey(delId));
 
         const nextId = Object.keys(suppliersState.profiles)[0];
         suppliersState.activeId = nextId;

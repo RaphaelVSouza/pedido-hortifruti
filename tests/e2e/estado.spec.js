@@ -201,7 +201,7 @@ test('ADR-010: criar segundo fornecedor, alternar entre perfis (carrinho, texto,
   await importar(page, 'FRUTAS\nBanana prata *R$ 5,00* kg');
   await page.locator('.item-row .item-check').first().check();
   await expect(page.locator('.item-row').first()).toHaveClass(/promo-item/);
-  await expect(page.locator('#totalValue')).toHaveText('R$ 10,00');
+  await expect(page.locator('#totalValue')).toHaveText('≈ R$ 10,00');
 
   await page.click('#newSupplierBtn');
   await expect(page.locator('#supplierConfigPanel')).not.toHaveClass(/hidden/);
@@ -224,7 +224,7 @@ test('ADR-010: criar segundo fornecedor, alternar entre perfis (carrinho, texto,
   const cenouraRow = page.locator('.item-row').first();
   await expect(cenouraRow).not.toHaveClass(/promo-item/);
   await cenouraRow.locator('.item-check').check();
-  await expect(page.locator('#totalValue')).toHaveText('R$ 12,50');
+  await expect(page.locator('#totalValue')).toHaveText('≈ R$ 12,50');
   await expect(page.locator('#finalMessage')).toHaveValue(/Taxa de entrega: R\$ 8,50/);
 
   await page.selectOption('#supplierSelect', 'default');
@@ -233,7 +233,7 @@ test('ADR-010: criar segundo fornecedor, alternar entre perfis (carrinho, texto,
   await expect(page.locator('.item-row').first()).toContainText('Banana prata');
   await expect(page.locator('.item-row').first()).toHaveClass(/promo-item/);
   await expect(page.locator('.item-row .item-check').first()).toBeChecked();
-  await expect(page.locator('#totalValue')).toHaveText('R$ 10,00');
+  await expect(page.locator('#totalValue')).toHaveText('≈ R$ 10,00');
 });
 
 test('ADR-010: validação do formulário de fornecedor (taxa >= 0, WhatsApp 12-13 dígitos ou vazio, proibido excluir último)', async ({ page }) => {
@@ -265,24 +265,19 @@ test('ADR-010: validação do formulário de fornecedor (taxa >= 0, WhatsApp 12-
 });
 
 test('ADR-016: alho a R$ 24,99/kg, 2 cabeças com 50 g cada (valor fictício de teste) exibe estimativa e total estimado', async ({ page }) => {
-  await page.route('**/data/unit-weights.json', (route) => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({
-      version: 1,
-      items: [
-        {
-          keywords: ['alho'],
-          unitLabel: 'cabeça',
-          unitPlural: 'cabeças',
-          grams: 50,
-          min: 50,
-          max: 50,
-          source: 'IBGE POF 2008-2009, medidas referidas, código 6706201 (valor fictício de teste 50g)'
-        }
-      ]
-    })
-  }));
+  await page.addInitScript(() => {
+    /** @type {any} */ (window).HORTI_UNIT_WEIGHTS = [
+      {
+        keywords: ['alho'],
+        unitLabel: 'cabeça',
+        unitPlural: 'cabeças',
+        grams: 50,
+        min: 50,
+        max: 50,
+        source: 'IBGE POF 2008-2009, medidas referidas, código 6706201 (valor fictício de teste 50g)'
+      }
+    ];
+  });
   await page.goto('/');
 
   await importar(page, 'LEGUMES\nAlho R$ 24,99kg\nCenoura R$ 3,98kg');
@@ -346,4 +341,38 @@ test('ADR-016: item sem entrada na tabela não mostra seletor, recarregar preser
 
   const noOverflowAfter = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
   expect(noOverflowAfter).toBe(true);
+});
+
+test('itens por kg no modo kg exibem total estimado com observação de balança e itens unitários fixos mantêm Total Geral', async ({ page }) => {
+  // 1. Pedido só com item unitário fixo
+  await importar(page, 'OUTROS\nOvos bandeja R$ 12,00');
+  const ovosRow = page.locator('.item-row').filter({ hasText: 'Ovos' });
+  await ovosRow.locator('.item-check').check();
+
+  await expect(page.locator('#subtotalLabel')).toHaveText('Subtotal');
+  await expect(page.locator('#subtotalValue')).toHaveText('R$ 12,00');
+  await expect(page.locator('#totalLabel')).toHaveText('Total');
+  await expect(page.locator('#totalValue')).toHaveText('R$ 17,00');
+  await expect(page.locator('#estimatedNote')).toHaveClass(/hidden/);
+
+  let msg = await page.locator('#finalMessage').inputValue();
+  expect(msg).toContain('*Total Geral: R$ 17,00*');
+  expect(msg).not.toContain('Total estimado');
+  expect(msg).not.toContain('peso real dos itens por kg pode variar');
+
+  // 2. Pedido com item em kg no modo kg
+  await importar(page, 'FRUTAS\nManga 5,99kg');
+  const mangaRow = page.locator('.item-row').filter({ hasText: 'Manga' });
+  await mangaRow.locator('.item-check').check();
+
+  await expect(page.locator('#subtotalLabel')).toHaveText('Subtotal estimado');
+  await expect(page.locator('#subtotalValue')).toHaveText('≈ R$ 5,99');
+  await expect(page.locator('#totalLabel')).toHaveText('Total estimado');
+  await expect(page.locator('#totalValue')).toHaveText('≈ R$ 10,99');
+  await expect(page.locator('#estimatedNote')).not.toHaveClass(/hidden/);
+  await expect(page.locator('#estimatedNote')).toHaveText('(itens por kg são pesados na balança na separação)');
+
+  msg = await page.locator('#finalMessage').inputValue();
+  expect(msg).toContain('*Total estimado: ≈ R$ 10,99 (itens por kg são pesados na separação)*');
+  expect(msg).toContain('_Obs: O peso real dos itens por kg pode variar ligeiramente na balança na hora da separação._');
 });

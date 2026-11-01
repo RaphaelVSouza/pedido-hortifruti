@@ -3008,13 +3008,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateTotals() {
         let subtotal = 0;
-        let hasEstimated = false;
         const selected = getCartItems();
+        const hasUnitEstimated = selected.some(p => p.unidade === 'kg' && p.modo === 'unit' && p.unitWeight);
+        const hasWeighedItems = selected.some(p => p.unidade === 'kg');
+        const hasEstimated = hasWeighedItems;
 
         selected.forEach(p => {
             if (p.unidade === 'kg' && p.modo === 'unit' && p.unitWeight) {
                 subtotal += formatUnitEstimate(p).estPrice;
-                hasEstimated = true;
             } else {
                 subtotal += p.preco * p.quantidade;
             }
@@ -3029,6 +3030,9 @@ document.addEventListener('DOMContentLoaded', () => {
             totalLabel.textContent = 'Total estimado';
             totalValue.textContent = `≈ R$ ${total.toFixed(2).replace('.', ',')}`;
             estimatedNote.classList.remove('hidden');
+            estimatedNote.textContent = hasUnitEstimated
+                ? '(itens por unidade são pesados na separação)'
+                : '(itens por kg são pesados na balança na separação)';
         } else {
             subtotalLabel.textContent = 'Subtotal';
             subtotalValue.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
@@ -3129,8 +3133,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const deliveryFee = getActiveProfile().deliveryFee;
         msg += `Taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}\n`;
+        const hasUnitEstimated = items.some(p => p.unidade === 'kg' && p.modo === 'unit' && p.unitWeight);
         if (hasEstimated) {
-            msg += `*Total estimado: ≈ R$ ${total.toFixed(2).replace('.', ',')} (itens por unidade são pesados na separação)*\n\n`;
+            if (hasUnitEstimated) {
+                msg += `*Total estimado: ≈ R$ ${total.toFixed(2).replace('.', ',')} (itens por unidade são pesados na separação)*\n`;
+            } else {
+                msg += `*Total estimado: ≈ R$ ${total.toFixed(2).replace('.', ',')} (itens por kg são pesados na separação)*\n`;
+            }
+            msg += `_Obs: O peso real dos itens por kg pode variar ligeiramente na balança na hora da separação._\n\n`;
         } else {
             msg += `*Total Geral: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
         }

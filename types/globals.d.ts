@@ -175,6 +175,17 @@ interface SuppliersStoreV1 {
   profiles: Record<string, SupplierProfile>;
 }
 
+interface PriceSnapshotEntry {
+  price: number;
+  unit: string;
+}
+
+interface PriceSnapshot {
+  importedAt: string;
+  promoDate: string | null;
+  prices: Record<string, PriceSnapshotEntry>;
+}
+
 interface HortiParserAPI {
   parse(text: string, opts?: ParseOptions): ParseResult;
   analyzeLine(rawLine: string, boldIsPromo?: boolean): AnalyzedSegment[];

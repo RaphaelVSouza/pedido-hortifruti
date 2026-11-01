@@ -26,7 +26,7 @@ Correções da revisão 2 (mesma data): teste de CSP do ADR-006 (script injetado
 | 004 | Extração linear com janela fixa de contexto | Aceito, implementado (`a4fe095`) | 001 |
 | 005 | Correção de bugs de estado | Parcial: bugs 1 e 3 e limpeza por prefixo implementados; bug 2 aguarda o ADR-008 | — |
 | 006 | Testes de navegador versionados e CI | Aceito, implementado | — |
-| 007 | Tipagem com `// @ts-check` + JSDoc | Proposto | 006 |
+| 007 | Tipagem com `// @ts-check` + JSDoc | Aceito, implementado | 006 |
 | 008 | Identidade de item e carrinho v1 | Proposto | 005 |
 | 009 | Tela de revisão e templates aprendidos | Proposto | 008, 010 |
 | 010 | Perfis de fornecedor | Proposto | 008 |
@@ -142,7 +142,7 @@ Não existe CI de testes, só o GitGuardian. Os testes de XSS e CSP citados no P
 
 ## ADR-007 — Tipagem com `// @ts-check` + JSDoc
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 - `// @ts-check` em `parser.js` e `script.js`.
 - Tipos em JSDoc: `ParsedItem`, `ParseResult`, `UnparsedLine`, `Template`, `Product` (o objeto de `toProduct`), `CartV1` e, depois do ADR-010, `SupplierProfile`.

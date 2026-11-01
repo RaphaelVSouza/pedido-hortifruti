@@ -1,3 +1,4 @@
+// @ts-check
 /*
  * Hortifruti Digital — parser de listas de WhatsApp
  *
@@ -11,7 +12,53 @@
  *
  * Sem dependências. Funciona como <script> (window.HortiParser) ou em Node (require).
  */
-(function (root, factory) {
+/**
+ * @typedef {Object} PriceTier
+ * @property {number} qty
+ * @property {number} price
+ *
+ * @typedef {Object} ParsedItem
+ * @property {string} name
+ * @property {number} price
+ * @property {string | null} unit
+ * @property {string | null} unitFrom
+ * @property {number | null} oldPrice
+ * @property {number | null} packQty
+ * @property {PriceTier[] | null} tiers
+ * @property {boolean} fromPrice
+ * @property {boolean} promo
+ * @property {string | null} category
+ * @property {number} confidence
+ * @property {'template' | 'heuristic'} source
+ * @property {string} raw
+ * @property {boolean} [_bare]
+ * @property {boolean} [_strong]
+ *
+ * @typedef {Object} UnparsedLine
+ * @property {string} line
+ * @property {string} reason
+ *
+ * @typedef {Object} ParseStats
+ * @property {number} lines
+ * @property {number} items
+ * @property {number} unparsed
+ * @property {number} candidateLines
+ *
+ * @typedef {Object} ParseResult
+ * @property {ParsedItem[]} items
+ * @property {UnparsedLine[]} unparsed
+ * @property {string | null} promoDate
+ * @property {ParseStats} stats
+ *
+ * @typedef {Object} Template
+ * @property {string} source
+ * @property {string} flags
+ * @property {string | null} fixedUnit
+ * @property {number} createdAt
+ * @property {number} hits
+ * @property {RegExp} [_re]
+ */
+(function (/** @type {any} */ root, /** @type {() => HortiParserAPI} */ factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.HortiParser = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
@@ -34,8 +81,11 @@
   };
   const UNIT = '(?:' + Object.values(UNIT_ALTS).join('|') + ')';
   const UNIT_END = '(?![\\p{L}])';
+  /** @type {Array<[string, RegExp]>} */
   const UNIT_CANON = Object.entries(UNIT_ALTS).map(([k, a]) => [k, new RegExp('^(?:' + a + ')$', 'iu')]);
+  /** @type {Set<string | null>} */
   const SIZE_UNITS = new Set(['g', 'ml', 'kg', 'litro']);
+  /** @type {Set<string | null>} */
   const COUNT_UNITS = new Set(['un', 'duzia', 'bandeja', 'maco', 'caixa', 'pacote', 'penca']);
 
   // Número monetário: 8 | 8,0 | 8,00 | 4.99. Sem separador de milhar (preços de FLV < 1000).
@@ -77,17 +127,30 @@
 
   // ------------------------------------------------------------------ utilitários
 
+  /**
+   * @param {string | null | undefined} tok
+   * @returns {string | null}
+   */
   function canonUnit(tok) {
     if (!tok) return null;
     for (const [k, re] of UNIT_CANON) if (re.test(tok)) return k;
     return null;
   }
 
+  /**
+   * @param {string | number} raw
+   * @returns {number}
+   */
   function toNumber(raw) {
     return Math.round(parseFloat(String(raw).replace(',', '.')) * 100) / 100;
   }
 
-  /** Substitui trechos por espaços preservando índices. */
+  /**
+   * Substitui trechos por espaços preservando índices.
+   * @param {string} s
+   * @param {RegExp} re
+   * @returns {string}
+   */
   function blank(s, re) {
     return s.replace(re, (m) => ' '.repeat(m.length));
   }
@@ -101,6 +164,10 @@
   // Inteiro sem moeda nem unidade acima disso não é preço plausível de FLV ("Caixa 123").
   const MAX_BARE_INT = 200;
 
+  /**
+   * @param {string} text
+   * @returns {string}
+   */
   function normalizeText(text) {
     return String(text || '')
       .normalize('NFC')
@@ -109,6 +176,10 @@
       .replace(/[  \t]/g, ' ');
   }
 
+  /**
+   * @param {string} s
+   * @returns {string}
+   */
   function foldAccents(s) {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   }
@@ -118,8 +189,13 @@
   const LEAD_TRIM = new Set('-–—•·*>+_=:.,|/~'.split(''));
   const TRAIL_TRIM = new Set('-–—•·*>+_=:.,|/(~'.split(''));
   const TRAIL_WORD_RE = /^(?:por|a|apenas|s[oó]|de|o|ao|cada|=)$/iu;
+  /** @param {string} ch */
   const isSpace = (ch) => /\s/.test(ch);
 
+  /**
+   * @param {string} n
+   * @returns {string}
+   */
   function trimEdges(n) {
     let a = 0;
     let b = n.length;
@@ -128,6 +204,10 @@
     return n.slice(a, b);
   }
 
+  /**
+   * @param {string} n
+   * @returns {string}
+   */
   function dropTrailingWord(n) {
     let j = n.length;
     while (j > 0 && !isSpace(n[j - 1])) j--;
@@ -135,6 +215,10 @@
     return n;
   }
 
+  /**
+   * @param {string} s
+   * @returns {string}
+   */
   function cleanName(s) {
     let n = s.replace(EMOJI_RE, ' ').replace(/R\s?\$/g, ' ').replace(/\$/g, ' ');
     n = n.replace(/\(\s*\)/g, ' ');
@@ -151,7 +235,12 @@
 
   // ------------------------------------------------------- candidatos e pontuação
 
+  /**
+   * @param {string} s
+   * @returns {Candidate[]}
+   */
   function scanCandidates(s) {
+    /** @type {Candidate[]} */
     const out = [];
     CANDIDATE_RE.lastIndex = 0;
     let m;
@@ -174,6 +263,7 @@
         }
       }
 
+      /** @type {Candidate} */
       const c = {
         start, numEnd, end: numEnd, raw, value: toNumber(raw), cur, dec,
         reais: false, unit: null, unitFrom: null, attached: false,
@@ -215,6 +305,10 @@
     return out;
   }
 
+  /**
+   * @param {Candidate[]} cands
+   * @returns {Candidate[]}
+   */
   function scoreCandidates(cands) {
     const live = cands.filter((c) => c.role === 'price');
     for (let i = 0; i < live.length; i++) {
@@ -247,7 +341,12 @@
     return cands;
   }
 
-  /** Divide linhas com vários itens ("Banana 4,99 | Maçã 9,90"). */
+  /**
+   * Divide linhas com vários itens ("Banana 4,99 | Maçã 9,90").
+   * @param {string} s
+   * @param {Candidate[]} cands
+   * @returns {string[] | null}
+   */
   function splitSegments(s, cands) {
     const strong = cands.filter((c) => c.role === 'price' && c.score >= 3);
     const cuts = [];
@@ -266,6 +365,11 @@
 
   // ---------------------------------------------------------- análise de uma linha
 
+  /**
+   * @param {string} s
+   * @param {string} raw
+   * @returns {AnalyzedSegment}
+   */
   function analyzeSegment(s, raw) {
     const cands = scoreCandidates(scanCandidates(s));
     const prices = cands.filter((c) => c.role === 'price' && c.score >= 0);
@@ -278,6 +382,7 @@
     // Combos escalonados (ADR-015 regra 4): cada N por se liga ao preço imediatamente seguinte
     let tiers = null;
     let selectedPrice = best;
+    /** @type {Candidate | null | undefined} */
     let selectedCombo = combo;
     let firstComboStart = null;
     const hasAnyCombo = cands.some((c) => c.role === 'combo');
@@ -357,6 +462,10 @@
     };
   }
 
+  /**
+   * @param {AnalyzedSegment} item
+   * @returns {boolean}
+   */
   function isPriceOnly(item) {
     const words = foldAccents(item.residual)
       .replace(new RegExp('(?:^|[^\\p{L}])' + UNIT + UNIT_END, 'giu'), ' ')
@@ -365,6 +474,10 @@
     return words.every((w) => PRICE_ONLY_STOP.has(w));
   }
 
+  /**
+   * @param {string} rawLine
+   * @returns {AnalyzedSegment[]}
+   */
   function analyzeLine(rawLine) {
     const raw = rawLine;
     const line = normalizeText(rawLine).trim();
@@ -382,6 +495,7 @@
     }
 
     // Riscado ~R$ 8,99~ => preço antigo explícito
+    /** @type {number | null} */
     let struck = null;
     let s = line.replace(/~([^~]*\d[^~]*)~/g, (_, inner) => {
       const m = inner.match(/\d+(?:[.,]\d{1,2})?/);
@@ -397,6 +511,7 @@
     if (NOISE_RE.test(s)) return [{ kind: 'noise', raw, dates }];
 
     // Cabeçalho inline: "FRUTAS: Banana 4,99 | Maçã 9,90"
+    /** @type {string | null} */
     let inlineCategory = null;
     const ih = s.match(/^\s*([^\p{Ll}\d:]*\p{Lu}[^\p{Ll}\d:]{2,30}):\s+(?=.*\d)/u);
     if (ih) { inlineCategory = cleanName(ih[1]); s = ' '.repeat(ih[0].length) + s.slice(ih[0].length); }
@@ -434,9 +549,17 @@
   const NAME_GROUP = '(?<name>.+?)';
   const UNIT_GROUP = '(?<unit>' + UNIT + ')' + UNIT_END;
 
+  /**
+   * @param {string} s
+   * @returns {string}
+   */
   function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'); }
 
-  /** Generaliza um trecho literal: espaços -> \s*, dígitos -> \d+, pontuação repetida -> X+. */
+  /**
+   * Generaliza um trecho literal: espaços -> \s*, dígitos -> \d+, pontuação repetida -> X+.
+   * @param {string} lit
+   * @returns {string}
+   */
   function generalizeLiteral(lit) {
     let out = '';
     const re = /(\s+)|(\d+(?:[.,]\d+)?)|(\p{L}+)|((\p{Extended_Pictographic}|[️‍])+)|(([^\s\p{L}\d])\7*)/gu;
@@ -454,6 +577,9 @@
   /**
    * Induz uma regex a partir de UMA linha anotada pelo usuário.
    * ann = { name: 'Jaca inteira', price: '15', unit?: 'kg' } — substrings da linha.
+   * @param {string} line
+   * @param {TemplateAnnotation} ann
+   * @returns {Template}
    */
   function induceTemplate(line, ann) {
     const norm = normalizeText(line).trim();
@@ -480,6 +606,7 @@
     src += generalizeLiteral(norm.slice(cursor)) + '\\s*$';
     src = src.replace(/(?:\\s\*)+/g, '\\s*');
 
+    /** @type {Template} */
     const tpl = { source: src, flags: 'iu', fixedUnit: ann.unit ? null : (ann.fixedUnit || null), createdAt: Date.now(), hits: 0 };
     const check = matchTemplate(tpl, norm);
     if (!check || check.name !== cleanName(ann.name) || check.price !== toNumber(String(ann.price).replace(/^R\s?\$\s?/, ''))) {
@@ -488,6 +615,11 @@
     return tpl;
   }
 
+  /**
+   * @param {Template} tpl
+   * @param {string} line
+   * @returns {AnalyzedSegment | null}
+   */
   function matchTemplate(tpl, line) {
     const re = tpl._re || (tpl._re = new RegExp(tpl.source, tpl.flags));
     const m = re.exec(normalizeText(line).trim());
@@ -507,12 +639,13 @@
 
   /**
    * @param {string} text
-   * @param {{templates?: Array}} [opts]
-   * @returns {{items, unparsed, promoDate, stats}}
+   * @param {ParseOptions} [opts]
+   * @returns {ParseResult}
    */
   function parse(text, opts = {}) {
     const templates = opts.templates || [];
     const lines = normalizeText(text).split('\n');
+    /** @type {AnalyzedSegment[][]} */
     const analyzed = lines.map((l) => {
       if (l.length > MAX_LINE) return [{ kind: 'long', raw: l.slice(0, 80) }];
       for (const t of templates) {
@@ -522,10 +655,15 @@
       return analyzeLine(l);
     });
 
+    /** @type {ParsedItem[]} */
     const items = [];
+    /** @type {UnparsedLine[]} */
     const unparsed = [];
+    /** @type {string | null} */
     let category = null;
+    /** @type {AnalyzedSegment | null} */
     let pending = null; // linha só com nome, aguardando preço na linha seguinte
+    /** @type {string | null} */
     let promoDate = null;
 
     const flushPending = () => {
@@ -628,12 +766,20 @@
 
   // ------------------------------------------------------ armazenamento de regras
 
-  /** Repositório de templates por fornecedor (localStorage no navegador, memória em Node). */
+  /**
+   * Repositório de templates por fornecedor (localStorage no navegador, memória em Node).
+   * @param {Storage | null} [storage]
+   * @param {string} [key]
+   * @returns {TemplateStore}
+   */
   function createTemplateStore(storage, key = 'hortifruti.templates.v1') {
+    /** @type {Template[]} */
     let mem = [];
+    /** @returns {Template[]} */
     const load = () => {
       try { return storage ? JSON.parse(storage.getItem(key) || '[]') : mem; } catch { return []; }
     };
+    /** @param {Template[]} list */
     const save = (list) => {
       const plain = list.map(({ _re, ...t }) => t);
       try { if (storage) storage.setItem(key, JSON.stringify(plain)); else mem = plain; } catch { mem = plain; }

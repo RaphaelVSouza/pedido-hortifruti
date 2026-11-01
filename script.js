@@ -1,4 +1,27 @@
+// @ts-check
 document.addEventListener('DOMContentLoaded', () => {
+    /**
+     * @typedef {Object} Product
+     * @property {string} id
+     * @property {string} nome
+     * @property {number} preco
+     * @property {string} unidade
+     * @property {boolean} promocao
+     * @property {number | null} precoAnterior
+     * @property {boolean} conferir
+     * @property {string} categoria
+     * @property {number} quantidade
+     * @property {boolean} selecionado
+     *
+     * @typedef {Object} CartV1Entry
+     * @property {number} qty
+     * @property {string} name
+     * @property {string} unit
+     * @property {number} price
+     * @property {string} category
+     *
+     * @typedef {Record<string, CartV1Entry>} CartV1
+     */
     // DOM Elements
     const rawText = document.getElementById('rawText');
     const processBtn = document.getElementById('processBtn');
@@ -24,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const RAW_TEXT_KEY = 'hortifruti_raw_text';
     const LAST_UPDATE_TS_KEY = 'hortifruti_last_update_ts';
     const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
+    /** @type {Product[]} */
     let allProducts = [];
     let activeCategory = 'Todos';
     let showOnlySelected = false;
@@ -37,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const saveCart = () => {
+        /** @type {Record<string, number>} */
         const cart = {};
         allProducts.forEach(p => {
             if (p.selecionado) {
@@ -46,6 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('hortifruti_cart', JSON.stringify(cart));
     };
 
+    /**
+     * @param {HTMLSelectElement} selectEl
+     * @param {string} value
+     */
     const setSelectValue = (selectEl, value) => {
         const fallback = selectEl.options[0]?.value || '';
         const hasMatchingOption = [...selectEl.options].some(option => option.value === value);
@@ -53,6 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Lê um objeto JSON do localStorage; valor ausente, corrompido ou de outro tipo vira `fallback`.
+    /**
+     * @param {string} key
+     * @param {any} [fallback]
+     * @returns {any}
+     */
     const readStoredObject = (key, fallback = null) => {
         try {
             const parsed = JSON.parse(localStorage.getItem(key));
@@ -71,11 +105,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    /**
+     * @param {string} value
+     * @returns {string}
+     */
     const normalizeText = (value) => (value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase();
 
+    /**
+     * @param {string} category
+     * @returns {string}
+     */
     const getCategoryIcon = (category) => {
         const normalized = normalizeText(category);
 
@@ -143,6 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
         { emoji: '🥜', keywords: ['tamara'] }
     ];
 
+    /**
+     * @param {string} emoji
+     * @returns {string}
+     */
     const emojiToExternalIconUrl = (emoji) => {
         const codepoints = [...emoji]
             .map(char => char.codePointAt(0).toString(16))
@@ -153,11 +199,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Casa por palavra inteira (com plural simples "s"/"es"), para que "sal" não case em "salada".
+    /**
+     * @param {string} paddedName
+     * @param {string} keyword
+     * @returns {boolean}
+     */
     const matchesKeyword = (paddedName, keyword) =>
         paddedName.includes(` ${keyword} `)
         || paddedName.includes(` ${keyword}s `)
         || paddedName.includes(` ${keyword}es `);
 
+    /**
+     * @param {string} itemName
+     * @param {string} category
+     * @returns {string}
+     */
     const getItemIconEmoji = (itemName, category) => {
         const paddedName = ` ${normalizeText(itemName).replace(/[^a-z0-9]+/g, ' ').trim()} `;
         const matchedRule = ITEM_ICON_RULES.find(rule =>
@@ -168,17 +224,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return getCategoryIcon(category);
     };
 
+    /**
+     * @param {string} source
+     * @returns {string}
+     */
     const getSourceLabel = (source) => {
         if (source === 'clipboard') return 'área de transferência';
         if (source === 'manual') return 'colagem manual';
         return 'dados salvos';
     };
 
+    /**
+     * @param {string} state
+     * @param {string} message
+     */
     const setUpdateStatus = (state, message) => {
         updateStatusEl.dataset.state = state;
         updateStatusEl.textContent = message;
     };
 
+    /**
+     * @param {string} text
+     * @returns {boolean}
+     */
     const fallbackCopyText = (text) => {
         const tempTextArea = document.createElement('textarea');
         tempTextArea.value = text;
@@ -205,6 +273,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return copied;
     };
 
+    /**
+     * @param {string} text
+     * @returns {Promise<boolean>}
+     */
     const copyTextToClipboard = async (text) => {
         if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
             try {
@@ -218,6 +290,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return fallbackCopyText(text);
     };
 
+    /**
+     * @param {string} timestamp
+     * @returns {string | null}
+     */
     const formatUpdateTimestamp = (timestamp) => {
         const parsedDate = new Date(timestamp);
         if (Number.isNaN(parsedDate.getTime())) return null;
@@ -245,6 +321,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setUpdateStatus('ok', `Última atualização: ${formattedTimestamp} (${getSourceLabel(source)}).`);
     };
 
+    /**
+     * @param {string} text
+     * @param {string} source
+     */
     const persistRawText = (text, source) => {
         localStorage.setItem(RAW_TEXT_KEY, text);
         localStorage.setItem(LAST_UPDATE_TS_KEY, new Date().toISOString());
@@ -266,11 +346,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const { parse: parseList } = window.HortiParser;
 
     // Unidades do parser -> códigos exibidos no app e na mensagem.
+    /** @type {Record<string, string>} */
     const UNIT_LABELS = {
         kg: 'kg', g: 'g', un: 'un', bandeja: 'bdj', maco: 'maço', duzia: 'dz',
         caixa: 'cx', pacote: 'pc', penca: 'penca', litro: 'lt', ml: 'ml'
     };
 
+    /**
+     * @param {string | null} promoDate
+     */
     const showPromoDate = (promoDate) => {
         if (promoDate) {
             promoDateEl.textContent = `📅 Promoção de: ${promoDate}`;
@@ -282,6 +366,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Converte a saída do parser no modelo do app. Combos ("3 por R$ 10") viram
     // um item com o preço exato do combo, para o total não perder centavos.
+    /**
+     * @param {ParsedItem & { unit: any }} it
+     * @returns {Product}
+     */
     const toProduct = (it) => {
         let nome = it.name;
         let unidade = UNIT_LABELS[it.unit] || 'un';
@@ -303,6 +391,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
+    /**
+     * @param {string} text
+     * @returns {{ products: Product[], unparsed: number, promoDate: string | null }}
+     */
     function parseProducts(text) {
         const result = parseList(text);
         return {
@@ -449,12 +541,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Só kg aceita quantidade decimal; as demais unidades (un, bdj, maço, combo...) são inteiras.
+    /**
+     * @param {string} unidade
+     * @returns {boolean}
+     */
     const isDecimalUnit = (unidade) => unidade === 'kg';
 
     // Itens que entram no pedido: marcados e com quantidade maior que zero.
     const getCartItems = () => allProducts.filter(p => p.selecionado && p.quantidade > 0);
 
     // Mensagem de uma linha só: remove quebras e caracteres de controle de texto externo.
+    /**
+     * @param {string} value
+     * @returns {string}
+     */
     const toSingleLine = (value) => String(value)
         .replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ')
         .replace(/\s+/g, ' ')
@@ -483,6 +583,10 @@ document.addEventListener('DOMContentLoaded', () => {
         generateMessage(selected, total);
     }
 
+    /**
+     * @param {Product[]} items
+     * @param {number} total
+     */
     function generateMessage(items, total) {
         if (items.length === 0) {
             finalMessage.value = 'Selecione pelo menos um item para gerar o pedido.';
@@ -515,6 +619,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 4. Main Actions
+    /**
+     * @param {string} text
+     * @param {{ source?: string, saveToStorage?: boolean }} [opts]
+     * @returns {boolean}
+     */
     const processContent = (text, { source = 'manual', saveToStorage = true } = {}) => {
         const parsed = parseProducts(text);
 

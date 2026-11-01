@@ -66,6 +66,7 @@ interface TemplateStore {
 
 interface ParseOptions {
   templates?: Template[];
+  boldIsPromo?: boolean;
 }
 
 interface Candidate {
@@ -140,9 +141,23 @@ interface CartV1Entry {
 
 type CartV1 = Record<string, CartV1Entry>;
 
+interface SupplierProfile {
+  id: string;
+  name: string;
+  whatsapp: string;
+  deliveryFee: number;
+  paymentMethods: string[];
+  boldIsPromo: boolean;
+}
+
+interface SuppliersStoreV1 {
+  activeId: string;
+  profiles: Record<string, SupplierProfile>;
+}
+
 interface HortiParserAPI {
   parse(text: string, opts?: ParseOptions): ParseResult;
-  analyzeLine(rawLine: string): AnalyzedSegment[];
+  analyzeLine(rawLine: string, boldIsPromo?: boolean): AnalyzedSegment[];
   induceTemplate(line: string, ann: TemplateAnnotation): Template;
   matchTemplate(tpl: Template, line: string): AnalyzedSegment | null;
   createTemplateStore(storage?: Storage | null, key?: string): TemplateStore;
@@ -166,13 +181,13 @@ interface Window {
 
 interface Document {
   getElementById(elementId: 'rawText' | 'finalMessage'): HTMLTextAreaElement;
-  getElementById(elementId: 'search' | 'endereco'): HTMLInputElement;
-  getElementById(elementId: 'pagamento'): HTMLSelectElement;
+  getElementById(elementId: 'search' | 'endereco' | 'supplierName' | 'supplierWhatsapp' | 'supplierDeliveryFee' | 'supplierPayments' | 'supplierBoldIsPromo'): HTMLInputElement;
+  getElementById(elementId: 'pagamento' | 'supplierSelect'): HTMLSelectElement;
   getElementById(
-    elementId: 'processBtn' | 'clipboardBtn' | 'clearDataBtn' | 'copyBtn' | 'deselectAllBtn' | 'filterSelectedBtn'
+    elementId: 'processBtn' | 'clipboardBtn' | 'clearDataBtn' | 'copyBtn' | 'deselectAllBtn' | 'filterSelectedBtn' | 'editSupplierBtn' | 'newSupplierBtn' | 'saveSupplierBtn' | 'cancelSupplierBtn' | 'deleteSupplierBtn'
   ): HTMLButtonElement;
   getElementById(
-    elementId: 'updateStatus' | 'selectionSection' | 'summarySection' | 'itemsList' | 'subtotalValue' | 'totalValue' | 'tabsContainer' | 'promo-date'
+    elementId: 'updateStatus' | 'selectionSection' | 'summarySection' | 'itemsList' | 'subtotalValue' | 'deliveryFee' | 'totalValue' | 'tabsContainer' | 'promo-date' | 'supplierConfigPanel' | 'supplierFormTitle' | 'supplierFormError'
   ): HTMLElement;
   createElement(
     tagName: 'input',

@@ -212,7 +212,7 @@ O carrinho é `hortifruti_cart = { nome: quantidade }`, sem versão. A chave é 
 
 ## ADR-010 — Perfis de fornecedor
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 ### Contexto
 `DELIVERY_FEE = 5.00` (`script.js:23`), texto estático `R$ 5,00` em `index.html:92` e `:95`, pagamentos fixos em `index.html:82-85`. Não existe número de WhatsApp.

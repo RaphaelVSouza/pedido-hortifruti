@@ -67,11 +67,13 @@ Modelo de um produto: `{ id, itemKey, nome, preco, precoAnterior, unidade, promo
 
 | Chave | Conteúdo |
 |---|---|
-| `hortifruti_prefs` | `{ endereco, pagamento }` |
-| `hortifruti_cart_v1` | mapa `productId → { qty, name, unit, price, category }` (itens selecionados e itens indisponíveis na lista atual; migra automaticamente da chave legada `hortifruti_cart` se presente) |
-| `hortifruti_raw_text` | último texto colado |
-| `hortifruti_last_update_ts` | ISO timestamp da última importação |
-| `hortifruti_last_update_source` | `manual` ou `clipboard` |
+| `hortifruti_prefs` | `{ endereco, pagamento }` (preferências globais) |
+| `hortifruti_suppliers_v1` | `{ activeId, profiles: { [id]: { id, name, whatsapp, deliveryFee, paymentMethods, boldIsPromo } } }` |
+| `hortifruti_cart_v1_<id>` | mapa `productId → { qty, name, unit, price, category }` por fornecedor (migra automaticamente de `hortifruti_cart_v1` ou `hortifruti_cart` se presente) |
+| `hortifruti_raw_text_<id>` | último texto colado por fornecedor (migra de `hortifruti_raw_text`) |
+| `hortifruti_last_update_ts_<id>` | ISO timestamp da última importação por fornecedor |
+| `hortifruti_last_update_source_<id>` | `manual` ou `clipboard` por fornecedor |
+| `hortifruti_templates_v1_<id>` | templates aprendidos por fornecedor (migra de `hortifruti.templates.v1` / `hortifruti_templates_v1`) |
 
 O carrinho (`hortifruti_cart_v1`) é indexado por `productId = categoryKey + '|' + itemKey` (exportados por `parser.js`: `itemKey`, `categoryKey`, `productId`, `levenshtein`). No reprocessamento: (1) match exato por `productId`; (2) match único por `itemKey` em outra categoria; (3) Levenshtein ≤ 2 em `itemKey` (≥ 6 caracteres) fica registrado em `pendingSpellingSuggestions` sem aplicar automaticamente; (4) itens ausentes permanecem no carrinho como "indisponível nesta lista" (fora do total e da mensagem, com botão de remover).
 
@@ -95,8 +97,7 @@ O carrinho (`hortifruti_cart_v1`) é indexado por `productId = categoryKey + '|'
 
 ## Mensagem de pedido
 
-- Taxa de entrega fixa: `DELIVERY_FEE = 5.00` em `script.js`. O valor "R$ 5,00" em `#deliveryFee` no `index.html` é **texto estático separado**; altere os dois juntos.
-- Pagamento: `<select id="pagamento">` com `PIX` e `Cartão de Crédito`.
+- Taxa de entrega e formas de pagamento vêm do perfil do fornecedor ativo (`hortifruti_suppliers_v1`, padrão `default` = "Meu hortifruti" com `deliveryFee: 5.00`, `paymentMethods: ['PIX', 'Cartão de Crédito']` e `boldIsPromo: true`). `#deliveryFee`, `#totalValue` e `<select id="pagamento">` são renderizados dinamicamente a partir do perfil ativo.
 - Formato: saudação, blocos `*CATEGORIA*` com `- nome, QTDunidade (R$ total)`, taxa, `*Total Geral*`, endereço e pagamento. A saudação segue a hora local (`getGreeting`: Bom dia < 12h, Boa tarde < 18h, Boa noite).
 - Só entram no pedido itens marcados **e** com quantidade > 0 (`getCartItems`). Ao sair do campo de quantidade, valor vazio, inválido ou abaixo do mínimo desmarca o item (kg: mínimo 0,1; demais unidades: inteiros ≥ 1, com arredondamento); durante a digitação nada é desmarcado. Nome, categoria e endereço passam por `toSingleLine` (remove quebras e caracteres de controle).
 - O botão "Limpar dados salvos" (`#clearDataBtn`) apaga por prefixo toda chave que começa com `hortifruti_` ou `hortifruti.` (chaves de outros apps ficam) e reinicia a interface.

@@ -44,7 +44,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterSelectedBtn = document.getElementById('filterSelectedBtn');
     const promoDateEl = document.getElementById('promo-date');
 
-    const DELIVERY_FEE = 5.00;
+    const deliveryFeeEl = document.getElementById('deliveryFee');
+    const supplierSelect = document.getElementById('supplierSelect');
+    const editSupplierBtn = document.getElementById('editSupplierBtn');
+    const newSupplierBtn = document.getElementById('newSupplierBtn');
+    const supplierConfigPanel = document.getElementById('supplierConfigPanel');
+    const supplierFormTitle = document.getElementById('supplierFormTitle');
+    const supplierNameInput = document.getElementById('supplierName');
+    const supplierWhatsappInput = document.getElementById('supplierWhatsapp');
+    const supplierDeliveryFeeInput = document.getElementById('supplierDeliveryFee');
+    const supplierPaymentsInput = document.getElementById('supplierPayments');
+    const supplierBoldIsPromoInput = document.getElementById('supplierBoldIsPromo');
+    const supplierFormError = document.getElementById('supplierFormError');
+    const saveSupplierBtn = document.getElementById('saveSupplierBtn');
+    const cancelSupplierBtn = document.getElementById('cancelSupplierBtn');
+    const deleteSupplierBtn = document.getElementById('deleteSupplierBtn');
+    const SUPPLIERS_KEY = 'hortifruti_suppliers_v1';
+    const DEFAULT_SUPPLIER_ID = 'default';
+    const DEFAULT_DELIVERY_FEE = 5.00;
+    const DEFAULT_PAYMENT_METHODS = ['PIX', 'Cartão de Crédito'];
+    const LEGACY_TEMPLATES_DOT_KEY = 'hortifruti.templates.v1';
+    const LEGACY_TEMPLATES_KEY = 'hortifruti_templates_v1';
+
+    /** @returns {SupplierProfile} */
+    const createDefaultProfile = () => ({
+        id: DEFAULT_SUPPLIER_ID,
+        name: 'Meu hortifruti',
+        whatsapp: '',
+        deliveryFee: DEFAULT_DELIVERY_FEE,
+        paymentMethods: [...DEFAULT_PAYMENT_METHODS],
+        boldIsPromo: true
+    });
+
+    /** @type {SuppliersStoreV1} */
+    let suppliersState = {
+        activeId: DEFAULT_SUPPLIER_ID,
+        profiles: { [DEFAULT_SUPPLIER_ID]: createDefaultProfile() }
+    };
+    /** @type {string | null} */
+    let editingSupplierId = null;
+
+    const getActiveSupplierId = () => suppliersState.activeId || DEFAULT_SUPPLIER_ID;
+    /** @returns {SupplierProfile} */
+    const getActiveProfile = () => suppliersState.profiles[getActiveSupplierId()] || createDefaultProfile();
+    const getRawTextKey = (id = getActiveSupplierId()) => `${RAW_TEXT_KEY}_${id}`;
+    const getLastUpdateTsKey = (id = getActiveSupplierId()) => `${LAST_UPDATE_TS_KEY}_${id}`;
+    const getLastUpdateSourceKey = (id = getActiveSupplierId()) => `${LAST_UPDATE_SOURCE_KEY}_${id}`;
+    const getCartKey = (id = getActiveSupplierId()) => `${CART_V1_KEY}_${id}`;
+    const getTemplatesKey = (id = getActiveSupplierId()) => `${LEGACY_TEMPLATES_KEY}_${id}`;
     const RAW_TEXT_KEY = 'hortifruti_raw_text';
     const LAST_UPDATE_TS_KEY = 'hortifruti_last_update_ts';
     const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
@@ -86,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cart[id] = entry;
             }
         });
-        localStorage.setItem(CART_V1_KEY, JSON.stringify(cart));
+        localStorage.setItem(getCartKey(), JSON.stringify(cart));
     };
 
     /**
@@ -323,8 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const syncLastUpdateStatus = () => {
-        const timestamp = localStorage.getItem(LAST_UPDATE_TS_KEY);
-        const source = localStorage.getItem(LAST_UPDATE_SOURCE_KEY) || 'manual';
+        const timestamp = localStorage.getItem(getLastUpdateTsKey());
+        const source = localStorage.getItem(getLastUpdateSourceKey()) || 'manual';
         if (!timestamp) {
             setUpdateStatus('idle', 'Aguardando atualização da lista.');
             return;
@@ -344,9 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {string} source
      */
     const persistRawText = (text, source) => {
-        localStorage.setItem(RAW_TEXT_KEY, text);
-        localStorage.setItem(LAST_UPDATE_TS_KEY, new Date().toISOString());
-        localStorage.setItem(LAST_UPDATE_SOURCE_KEY, source);
+        localStorage.setItem(getRawTextKey(), text);
+        localStorage.setItem(getLastUpdateTsKey(), new Date().toISOString());
+        localStorage.setItem(getLastUpdateSourceKey(), source);
         syncLastUpdateStatus();
     };
 
@@ -361,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Parser Logic
     // O parser vive em parser.js (window.HortiParser) e é testável em Node: tests/parser.test.js.
-    const { parse: parseList, itemKey, categoryKey, productId, levenshtein } = window.HortiParser;
+    const { parse: parseList, createTemplateStore, itemKey, categoryKey, productId, levenshtein } = window.HortiParser;
 
     // Unidades do parser -> códigos exibidos no app e na mensagem.
     /** @type {Record<string, string>} */
@@ -418,7 +465,12 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns {CartV1}
      */
     const loadAndMigrateCart = (products) => {
-        if (localStorage.getItem(CART_V1_KEY) === null && localStorage.getItem(LEGACY_CART_KEY) !== null) {
+        const cartKey = getCartKey();
+        if (localStorage.getItem(cartKey) === null && localStorage.getItem(CART_V1_KEY) !== null) {
+            localStorage.setItem(cartKey, localStorage.getItem(CART_V1_KEY) || '{}');
+            localStorage.removeItem(CART_V1_KEY);
+        }
+        if (localStorage.getItem(cartKey) === null && localStorage.getItem(LEGACY_CART_KEY) !== null) {
             const legacy = readStoredObject(LEGACY_CART_KEY, {});
             /** @type {CartV1} */
             const migrated = {};
@@ -451,12 +503,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            localStorage.setItem(CART_V1_KEY, JSON.stringify(migrated));
+            localStorage.setItem(cartKey, JSON.stringify(migrated));
             localStorage.removeItem(LEGACY_CART_KEY);
             return migrated;
         }
 
-        const raw = readStoredObject(CART_V1_KEY, {});
+        const raw = readStoredObject(cartKey, {});
         /** @type {CartV1} */
         const valid = {};
         Object.entries(raw).forEach(([id, entry]) => {
@@ -478,7 +530,9 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns {{ products: Product[], unparsed: number, promoDate: string | null }}
      */
     function parseProducts(text) {
-        const result = parseList(text);
+        const activeProfile = getActiveProfile();
+        const templates = createTemplateStore(localStorage, getTemplatesKey()).list();
+        const result = parseList(text, { templates, boldIsPromo: activeProfile.boldIsPromo });
         return {
             products: result.items.map(toProduct).filter(p => p.nome && p.preco > 0),
             unparsed: result.unparsed.length,
@@ -719,9 +773,11 @@ document.addEventListener('DOMContentLoaded', () => {
             subtotal += p.preco * p.quantidade;
         });
 
-        const total = subtotal + DELIVERY_FEE;
+        const deliveryFee = getActiveProfile().deliveryFee;
+        const total = subtotal + deliveryFee;
 
         subtotalValue.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        deliveryFeeEl.textContent = `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
         totalValue.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
         generateMessage(selected, total);
@@ -754,7 +810,8 @@ document.addEventListener('DOMContentLoaded', () => {
             msg += '\n';
         });
 
-        msg += `Taxa de entrega: R$ ${DELIVERY_FEE.toFixed(2).replace('.', ',')}\n`;
+        const deliveryFee = getActiveProfile().deliveryFee;
+        msg += `Taxa de entrega: R$ ${deliveryFee.toFixed(2).replace('.', ',')}\n`;
         msg += `*Total Geral: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
         msg += `📍 *Endereço:* ${endereco}\n`;
         msg += `💳 *Pagamento:* ${pagamento}`;
@@ -917,6 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         unavailableCart = {};
         pendingSpellingSuggestions = [];
+        localStorage.removeItem(getCartKey());
         localStorage.removeItem(CART_V1_KEY);
         localStorage.removeItem(LEGACY_CART_KEY);
         showOnlySelected = false;
@@ -942,6 +1000,14 @@ document.addEventListener('DOMContentLoaded', () => {
         rawText.value = '';
         searchInput.value = '';
         enderecoInput.value = '';
+        suppliersState = {
+            activeId: DEFAULT_SUPPLIER_ID,
+            profiles: { [DEFAULT_SUPPLIER_ID]: createDefaultProfile() }
+        };
+        editingSupplierId = null;
+        supplierConfigPanel.classList.add('hidden');
+        supplierFormError.classList.add('hidden');
+        renderSupplierUI();
         setSelectValue(pagamentoSelect, '');
         itemsList.innerHTML = '';
         tabsContainer.innerHTML = '';
@@ -951,6 +1017,331 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateFilterBtn();
         setUpdateStatus('idle', 'Dados apagados. Aguardando atualização da lista.');
+        updateTotals();
+    };
+
+    const saveSuppliersState = () => {
+        localStorage.setItem(SUPPLIERS_KEY, JSON.stringify(suppliersState));
+    };
+
+    /**
+     * @param {any} raw
+     * @param {string} fallbackId
+     * @returns {SupplierProfile | null}
+     */
+    const sanitizeSupplierProfile = (raw, fallbackId) => {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+        const id = toSingleLine(raw.id || fallbackId);
+        const name = toSingleLine(raw.name || '');
+        if (!id || !name) return null;
+        const fee = Number(raw.deliveryFee);
+        const deliveryFee = Number.isFinite(fee) && fee >= 0 ? fee : DEFAULT_DELIVERY_FEE;
+        const whatsapp = typeof raw.whatsapp === 'string' && /^\d{12,13}$/.test(raw.whatsapp.trim())
+            ? raw.whatsapp.trim()
+            : '';
+        const rawMethods = Array.isArray(raw.paymentMethods) ? raw.paymentMethods : [];
+        const paymentMethods = rawMethods
+            .map((/** @type {any} */ m) => toSingleLine(m))
+            .filter(Boolean);
+        return {
+            id,
+            name,
+            whatsapp,
+            deliveryFee,
+            paymentMethods: paymentMethods.length > 0 ? paymentMethods : [...DEFAULT_PAYMENT_METHODS],
+            boldIsPromo: raw.boldIsPromo !== false
+        };
+    };
+
+    const initSuppliers = () => {
+        const stored = readStoredObject(SUPPLIERS_KEY);
+        /** @type {Record<string, SupplierProfile>} */
+        const validProfiles = {};
+        if (stored && stored.profiles && typeof stored.profiles === 'object' && !Array.isArray(stored.profiles)) {
+            Object.entries(stored.profiles).forEach(([key, prof]) => {
+                const sanitized = sanitizeSupplierProfile(prof, key);
+                if (sanitized) validProfiles[sanitized.id] = sanitized;
+            });
+        }
+        if (Object.keys(validProfiles).length === 0) {
+            validProfiles[DEFAULT_SUPPLIER_ID] = createDefaultProfile();
+        }
+        const preferredActive = stored && typeof stored.activeId === 'string' && validProfiles[stored.activeId]
+            ? stored.activeId
+            : (validProfiles[DEFAULT_SUPPLIER_ID] ? DEFAULT_SUPPLIER_ID : Object.keys(validProfiles)[0]);
+
+        suppliersState = {
+            activeId: preferredActive,
+            profiles: validProfiles
+        };
+
+        const targetId = validProfiles[DEFAULT_SUPPLIER_ID] ? DEFAULT_SUPPLIER_ID : preferredActive;
+
+        // Migração de chaves legadas sem sufixo para o fornecedor padrão
+        const legacyRaw = localStorage.getItem(RAW_TEXT_KEY);
+        if (legacyRaw !== null) {
+            if (localStorage.getItem(getRawTextKey(targetId)) === null) {
+                localStorage.setItem(getRawTextKey(targetId), legacyRaw);
+            }
+            localStorage.removeItem(RAW_TEXT_KEY);
+        }
+
+        const legacyTs = localStorage.getItem(LAST_UPDATE_TS_KEY);
+        if (legacyTs !== null) {
+            if (localStorage.getItem(getLastUpdateTsKey(targetId)) === null) {
+                localStorage.setItem(getLastUpdateTsKey(targetId), legacyTs);
+            }
+            localStorage.removeItem(LAST_UPDATE_TS_KEY);
+        }
+
+        const legacySource = localStorage.getItem(LAST_UPDATE_SOURCE_KEY);
+        if (legacySource !== null) {
+            if (localStorage.getItem(getLastUpdateSourceKey(targetId)) === null) {
+                localStorage.setItem(getLastUpdateSourceKey(targetId), legacySource);
+            }
+            localStorage.removeItem(LAST_UPDATE_SOURCE_KEY);
+        }
+
+        const legacyCartV1 = localStorage.getItem(CART_V1_KEY);
+        if (legacyCartV1 !== null) {
+            if (localStorage.getItem(getCartKey(targetId)) === null) {
+                localStorage.setItem(getCartKey(targetId), legacyCartV1);
+            }
+            localStorage.removeItem(CART_V1_KEY);
+        }
+
+        const legacyTplDot = localStorage.getItem(LEGACY_TEMPLATES_DOT_KEY);
+        if (legacyTplDot !== null) {
+            if (localStorage.getItem(getTemplatesKey(targetId)) === null) {
+                localStorage.setItem(getTemplatesKey(targetId), legacyTplDot);
+            }
+            localStorage.removeItem(LEGACY_TEMPLATES_DOT_KEY);
+        }
+
+        const legacyTpl = localStorage.getItem(LEGACY_TEMPLATES_KEY);
+        if (legacyTpl !== null) {
+            if (localStorage.getItem(getTemplatesKey(targetId)) === null) {
+                localStorage.setItem(getTemplatesKey(targetId), legacyTpl);
+            }
+            localStorage.removeItem(LEGACY_TEMPLATES_KEY);
+        }
+    };
+
+    function renderSupplierUI() {
+        const activeProfile = getActiveProfile();
+        supplierSelect.innerHTML = '';
+        Object.values(suppliersState.profiles).forEach(prof => {
+            const opt = document.createElement('option');
+            opt.value = prof.id;
+            opt.textContent = prof.name;
+            supplierSelect.appendChild(opt);
+        });
+        supplierSelect.value = activeProfile.id;
+
+        const prefs = readStoredObject('hortifruti_prefs');
+        const desiredPayment = pagamentoSelect.value || (prefs && prefs.pagamento) || '';
+        pagamentoSelect.innerHTML = '';
+        activeProfile.paymentMethods.forEach(method => {
+            const opt = document.createElement('option');
+            opt.value = method;
+            opt.textContent = method;
+            pagamentoSelect.appendChild(opt);
+        });
+        setSelectValue(pagamentoSelect, desiredPayment);
+
+        deliveryFeeEl.textContent = `R$ ${activeProfile.deliveryFee.toFixed(2).replace('.', ',')}`;
+    }
+
+    /**
+     * @param {string} supplierId
+     */
+    const switchActiveSupplier = (supplierId) => {
+        if (!suppliersState.profiles[supplierId]) return;
+        suppliersState.activeId = supplierId;
+        renderSupplierUI();
+        syncLastUpdateStatus();
+
+        const savedText = localStorage.getItem(getRawTextKey(supplierId));
+        if (savedText) {
+            rawText.value = savedText;
+            const source = localStorage.getItem(getLastUpdateSourceKey(supplierId)) || 'manual';
+            processContent(savedText, { saveToStorage: false, source });
+            if (!localStorage.getItem(getLastUpdateTsKey(supplierId))) {
+                setUpdateStatus('ok', `Lista carregada de ${getSourceLabel('manual')}.`);
+            }
+        } else {
+            allProducts = [];
+            unavailableCart = {};
+            pendingSpellingSuggestions = [];
+            activeCategory = 'Todos';
+            showOnlySelected = false;
+            rawText.value = '';
+            searchInput.value = '';
+            itemsList.innerHTML = '';
+            tabsContainer.innerHTML = '';
+            promoDateEl.classList.add('hidden');
+            selectionSection.classList.add('hidden');
+            summarySection.classList.add('hidden');
+            updateFilterBtn();
+            updateTotals();
+        }
+    };
+
+    /**
+     * @param {string | null} supplierId
+     */
+    const openSupplierConfig = (supplierId) => {
+        editingSupplierId = supplierId;
+        supplierFormError.classList.add('hidden');
+        supplierFormError.textContent = '';
+
+        if (supplierId && suppliersState.profiles[supplierId]) {
+            const prof = suppliersState.profiles[supplierId];
+            supplierFormTitle.textContent = 'Configurar fornecedor';
+            supplierNameInput.value = prof.name;
+            supplierWhatsappInput.value = prof.whatsapp;
+            supplierDeliveryFeeInput.value = prof.deliveryFee.toFixed(2);
+            supplierPaymentsInput.value = prof.paymentMethods.join(', ');
+            supplierBoldIsPromoInput.checked = prof.boldIsPromo !== false;
+            deleteSupplierBtn.disabled = Object.keys(suppliersState.profiles).length <= 1;
+            deleteSupplierBtn.classList.remove('hidden');
+        } else {
+            supplierFormTitle.textContent = 'Novo fornecedor';
+            supplierNameInput.value = '';
+            supplierWhatsappInput.value = '';
+            supplierDeliveryFeeInput.value = DEFAULT_DELIVERY_FEE.toFixed(2);
+            supplierPaymentsInput.value = DEFAULT_PAYMENT_METHODS.join(', ');
+            supplierBoldIsPromoInput.checked = true;
+            deleteSupplierBtn.disabled = true;
+            deleteSupplierBtn.classList.add('hidden');
+        }
+        supplierConfigPanel.classList.remove('hidden');
+    };
+
+    const closeSupplierConfig = () => {
+        supplierConfigPanel.classList.add('hidden');
+        supplierFormError.classList.add('hidden');
+        supplierFormError.textContent = '';
+        editingSupplierId = null;
+    };
+
+    /**
+     * @param {string} msg
+     */
+    const showSupplierFormError = (msg) => {
+        supplierFormError.textContent = msg;
+        supplierFormError.classList.remove('hidden');
+    };
+
+    supplierSelect.onchange = () => {
+        closeSupplierConfig();
+        const nextId = supplierSelect.value;
+        if (!suppliersState.profiles[nextId]) return;
+        suppliersState.activeId = nextId;
+        saveSuppliersState();
+        switchActiveSupplier(nextId);
+    };
+
+    editSupplierBtn.onclick = () => {
+        openSupplierConfig(getActiveSupplierId());
+    };
+
+    newSupplierBtn.onclick = () => {
+        openSupplierConfig(null);
+    };
+
+    cancelSupplierBtn.onclick = () => {
+        closeSupplierConfig();
+    };
+
+    saveSupplierBtn.onclick = () => {
+        const name = toSingleLine(supplierNameInput.value);
+        if (!name) {
+            showSupplierFormError('Informe o nome do fornecedor.');
+            return;
+        }
+
+        const rawFee = String(supplierDeliveryFeeInput.value).trim().replace(',', '.');
+        const deliveryFee = rawFee === '' ? NaN : Number(rawFee);
+        if (!Number.isFinite(deliveryFee) || deliveryFee < 0) {
+            showSupplierFormError('A taxa de entrega deve ser um número maior ou igual a zero.');
+            return;
+        }
+
+        const whatsapp = String(supplierWhatsappInput.value).trim();
+        if (whatsapp !== '' && !/^\d{12,13}$/.test(whatsapp)) {
+            showSupplierFormError('O WhatsApp deve conter apenas dígitos (12 a 13 caracteres com DDI) ou ficar vazio.');
+            return;
+        }
+
+        const paymentMethods = String(supplierPaymentsInput.value)
+            .split(',')
+            .map(s => toSingleLine(s))
+            .filter(Boolean);
+        if (paymentMethods.length === 0) {
+            showSupplierFormError('Informe pelo menos uma forma de pagamento.');
+            return;
+        }
+
+        const boldIsPromo = supplierBoldIsPromoInput.checked;
+
+        if (editingSupplierId && suppliersState.profiles[editingSupplierId]) {
+            const id = editingSupplierId;
+            suppliersState.profiles[id] = {
+                id,
+                name,
+                whatsapp,
+                deliveryFee,
+                paymentMethods,
+                boldIsPromo
+            };
+            suppliersState.activeId = id;
+            saveSuppliersState();
+            closeSupplierConfig();
+            renderSupplierUI();
+            if (rawText.value.trim()) {
+                const source = localStorage.getItem(getLastUpdateSourceKey(id)) || 'manual';
+                processContent(rawText.value, { source, saveToStorage: false });
+            } else {
+                updateTotals();
+            }
+        } else {
+            const newId = `sup_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+            suppliersState.profiles[newId] = {
+                id: newId,
+                name,
+                whatsapp,
+                deliveryFee,
+                paymentMethods,
+                boldIsPromo
+            };
+            suppliersState.activeId = newId;
+            saveSuppliersState();
+            closeSupplierConfig();
+            switchActiveSupplier(newId);
+        }
+    };
+
+    deleteSupplierBtn.onclick = () => {
+        if (!editingSupplierId || !suppliersState.profiles[editingSupplierId]) return;
+        const ids = Object.keys(suppliersState.profiles);
+        if (ids.length <= 1) {
+            showSupplierFormError('Não é possível excluir o único fornecedor.');
+            return;
+        }
+        const delId = editingSupplierId;
+        delete suppliersState.profiles[delId];
+        localStorage.removeItem(getRawTextKey(delId));
+        localStorage.removeItem(getLastUpdateTsKey(delId));
+        localStorage.removeItem(getLastUpdateSourceKey(delId));
+        localStorage.removeItem(getCartKey(delId));
+        localStorage.removeItem(getTemplatesKey(delId));
+
+        const nextId = Object.keys(suppliersState.profiles)[0];
+        suppliersState.activeId = nextId;
+        saveSuppliersState();
+        closeSupplierConfig();
+        switchActiveSupplier(nextId);
     };
 
     enderecoInput.oninput = () => { updateTotals(); savePrefs(); };
@@ -975,14 +1366,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 5. Initial Hydration
+    initSuppliers();
+    renderSupplierUI();
     loadPrefs();
+    updateTotals();
     syncLastUpdateStatus();
-    const savedText = localStorage.getItem(RAW_TEXT_KEY);
+    const savedText = localStorage.getItem(getRawTextKey());
     if (savedText) {
         rawText.value = savedText;
         processContent(savedText, { saveToStorage: false, source: 'manual' });
 
-        if (!localStorage.getItem(LAST_UPDATE_TS_KEY)) {
+        if (!localStorage.getItem(getLastUpdateTsKey())) {
             setUpdateStatus('ok', `Lista carregada de ${getSourceLabel('manual')}.`);
         }
     }

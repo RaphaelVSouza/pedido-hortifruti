@@ -416,6 +416,9 @@ Caju (bdj) ----> 9 conto`;
     ['categoryKey normaliza e usa geral se vazio', `${P.categoryKey('🍎 Frutas & Cia!')}/${P.categoryKey('')}/${P.categoryKey(null)}`, 'frutas cia/geral/geral'],
     ['productId combina categoryKey e itemKey', P.productId('Frutas', 'Abacate', 3), 'frutas|abacate#combo3'],
     ['levenshtein calcula distância exata', `${P.levenshtein('mamao formosa', 'mamao fermosa')}/${P.levenshtein('banana', 'banana')}/${P.levenshtein('abc', '')}`, '1/0/3'],
+    ['boldIsPromo=true (padrão) marca negrito como promo', P.parse('Banana *R$ 4,99* kg').items[0].promo, true],
+    ['boldIsPromo=false não marca negrito como promo', P.parse('Banana *R$ 4,99* kg', { boldIsPromo: false }).items[0].promo, false],
+    ['boldIsPromo=false mantém promo explícito ou preço antigo', P.parse('Banana de R$ 6,99 por *R$ 4,99* kg', { boldIsPromo: false }).items[0].promo, true],
   ];
   const bad = checks.filter(([, got, want]) => got !== want);
   if (bad.length) {

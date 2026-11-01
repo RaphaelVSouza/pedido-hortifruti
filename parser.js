@@ -476,16 +476,17 @@
 
   /**
    * @param {string} rawLine
+   * @param {boolean} [boldIsPromo]
    * @returns {AnalyzedSegment[]}
    */
-  function analyzeLine(rawLine) {
+  function analyzeLine(rawLine, boldIsPromo = true) {
     const raw = rawLine;
     const line = normalizeText(rawLine).trim();
     if (!line) return [{ kind: 'blank', raw }];
 
     const hadEmoji = EMOJI_RE.test(line);
     EMOJI_RE.lastIndex = 0;
-    const promoMarkup = /\*[^*]*\d[^*]*\*/.test(line);
+    const promoMarkup = boldIsPromo !== false && /\*[^*]*\d[^*]*\*/.test(line);
     const promoWord = PROMO_WORD_RE.test(line);
     const dates = [...line.matchAll(DATE_RE)].map((m) => m[0]);
 
@@ -644,6 +645,7 @@
    */
   function parse(text, opts = {}) {
     const templates = opts.templates || [];
+    const boldIsPromo = opts.boldIsPromo !== false;
     const lines = normalizeText(text).split('\n');
     /** @type {AnalyzedSegment[][]} */
     const analyzed = lines.map((l) => {
@@ -652,7 +654,7 @@
         const hit = matchTemplate(t, l);
         if (hit) { t.hits = (t.hits || 0) + 1; return [hit]; }
       }
-      return analyzeLine(l);
+      return analyzeLine(l, boldIsPromo);
     });
 
     /** @type {ParsedItem[]} */

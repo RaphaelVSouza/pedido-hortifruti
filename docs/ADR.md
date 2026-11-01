@@ -291,7 +291,7 @@ Os ícones são PNGs 3D remotos de um espelho comunitário (`cdn.jsdelivr.net/gh
 
 ## ADR-013 — PWA offline
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 - `manifest.json` (nome, ícones 192/512 a partir do `favicon.svg`, `display: standalone`, `theme_color` das variáveis de `:root`).
 - `sw.js`: cache-first para assets (incluindo `icons/`), network-first para `index.html`, versão de cache incrementada a cada release.

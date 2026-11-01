@@ -63,6 +63,11 @@
                         <input type="checkbox" id="supplierBoldIsPromo" checked>
                         <span>Tratar preços em <strong>*negrito*</strong> como promoção</span>
                     </label>
+                    <div id="supplierTemplatesSection" class="supplier-templates-section">
+                        <h4 class="supplier-templates-title">Formatos aprendidos (templates)</h4>
+                        <p class="supplier-templates-desc">Padrões de texto aprendidos para este fornecedor.</p>
+                        <div id="supplierTemplatesList" class="supplier-templates-list"></div>
+                    </div>
                     <p id="supplierFormError" class="supplier-form-error hidden" role="alert"></p>
                     <div class="supplier-form-actions">
                         <button type="button" id="saveSupplierBtn" class="primary-btn small-btn">Salvar fornecedor</button>
@@ -75,9 +80,42 @@
                 <div class="input-actions">
                     <button id="processBtn">✨ Processar Mensagem</button>
                     <button id="clipboardBtn" class="secondary-btn">📋 Ler da área de transferência</button>
+                    <button type="button" id="openReviewBtn" class="secondary-btn small-btn hidden">🔍 Revisar (<span id="reviewCountBadge">0</span>)</button>
                     <button id="clearDataBtn" class="secondary-btn">🧹 Limpar dados salvos</button>
                 </div>
                 <p id="updateStatus" class="update-status" data-state="idle">Aguardando atualização da lista.</p>
+            </section>
+
+            <section id="reviewPanel" class="panel review-panel hidden" role="region" aria-labelledby="reviewTitle">
+                <div class="panel-heading panel-heading-inline">
+                    <div>
+                        <span class="step-badge">Revisão</span>
+                        <h2 id="reviewTitle">Revisar lista</h2>
+                    </div>
+                    <button type="button" id="closeReviewBtn" class="secondary-btn small-btn">✕ Fechar</button>
+                </div>
+                <div id="reviewFeedback" class="review-feedback hidden" role="status"></div>
+                <div id="reviewUnparsedSection" class="review-section">
+                    <div class="review-section-header">
+                        <h3>Linhas não reconhecidas (<span id="unparsedCount">0</span>)</h3>
+                        <p class="review-section-desc">Linhas que o parser não identificou como produto. Edite os campos e adicione ou aprenda o formato.</p>
+                    </div>
+                    <div id="reviewUnparsedList" class="review-list"></div>
+                </div>
+                <div id="reviewConferirSection" class="review-section">
+                    <div class="review-section-header">
+                        <h3>Itens a conferir (<span id="conferirCount">0</span>)</h3>
+                        <p class="review-section-desc">Itens com confiança baixa (ex.: inteiros sem R$ ou 1 casa decimal). Confirme ou corrija os valores.</p>
+                    </div>
+                    <div id="reviewConferirList" class="review-list"></div>
+                </div>
+                <div id="reviewSpellingSection" class="review-section">
+                    <div class="review-section-header">
+                        <h3>Sugestões de grafia (<span id="spellingCount">0</span>)</h3>
+                        <p class="review-section-desc">Itens do pedido anterior que parecem ter mudado de nome nesta lista.</p>
+                    </div>
+                    <div id="reviewSpellingList" class="review-list"></div>
+                </div>
             </section>
 
             <section id="selectionSection" class="panel selection-panel hidden">

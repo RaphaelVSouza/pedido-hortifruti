@@ -182,7 +182,7 @@ O carrinho é `hortifruti_cart = { nome: quantidade }`, sem versão. A chave é 
 
 ## ADR-009 — Tela de revisão e templates aprendidos
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 ### Contexto
 `unparsed` só aparece como contagem no status (`script.js:502-504`). `source` e `unitFrom` não são usados. O motor de templates existe em `parser.js` (`createTemplateStore`, chave `hortifruti.templates.v1`) mas `script.js` nunca passa `templates` para `parse` (`script.js:306-312`).

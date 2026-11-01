@@ -474,5 +474,80 @@ Caju (bdj) ----> 9 conto`;
   console.log(`${!errs.length ? 'OK  ' : 'FAIL'} R - data/unit-weights.json com >= 40 itens e fonte IBGE POF 2008-2009 (ADR-016)`);
 }
 
-console.log(`\n${CORPUS.length + 3 + 7 - fail}/${CORPUS.length + 3 + 7} cenários OK, ${total} itens verificados`);
+// ---- Resiliência a templates corrompidos e aprendizado com unit externa (ADR-009)
+{
+  const errs = [];
+  const fakeStorage = (initialVal) => {
+    let val = initialVal;
+    return {
+      getItem: () => val,
+      setItem: (_, v) => { val = v; }
+    };
+  };
+
+  // 1. JSON corrompido / não-array / objetos inválidos
+  const corruptInputs = [
+    'invalid-json{',
+    '{"not": "array"}',
+    '123',
+    '"string"',
+    JSON.stringify([null, 123, 'str', {}, { source: 'ok' }, { source: '(', flags: 'iu' }])
+  ];
+
+  for (const bad of corruptInputs) {
+    try {
+      const store = P.createTemplateStore(fakeStorage(bad), 'tpl_key');
+      const list = store.list();
+      if (!Array.isArray(list)) errs.push(`esperado array, obtido ${typeof list}`);
+      if (list.length !== 0) errs.push(`esperado array vazio para entrada corrompida, obtido ${list.length}`);
+    } catch (e) {
+      errs.push(`lançou exceção com entrada corrompida: ${e.message}`);
+    }
+  }
+
+  // 2. matchTemplate seguro
+  try {
+    if (P.matchTemplate(null, 'linha') !== null) errs.push('matchTemplate(null) deve retornar null');
+    if (P.matchTemplate({}, 'linha') !== null) errs.push('matchTemplate({}) deve retornar null');
+    if (P.matchTemplate({ source: '[bad', flags: 'iu' }, 'linha') !== null) errs.push('matchTemplate com regex inválida deve retornar null');
+  } catch (e) {
+    errs.push(`matchTemplate lançou exceção: ${e.message}`);
+  }
+
+  // 3. parse com templates corrompidos em opts
+  try {
+    const res = P.parse('Banana prata R$ 4,99kg', { templates: [null, {}, { source: '(' }] });
+    if (res.items.length !== 1 || res.items[0].name !== 'Banana prata') errs.push('parse falhou ao lidar com templates corrompidos');
+  } catch (e) {
+    errs.push(`parse lançou com templates corrompidos: ${e.message}`);
+  }
+
+  // 4. learn com unit que não é substring da linha (usa fixedUnit)
+  try {
+    const store = P.createTemplateStore(null);
+    store.learn('Jaca inteira ---> 15 conto', { name: 'Jaca inteira', price: 15, unit: 'un' });
+    const text = 'Jaca inteira ---> 15 conto\nPinha --> 12 conto';
+    const parsed = P.parse(text, { templates: store.list() });
+    if (parsed.items.length !== 2) {
+      errs.push(`esperado 2 itens reconhecidos, obtido ${parsed.items.length}`);
+    } else {
+      if (parsed.items[0].name !== 'Jaca inteira' || parsed.items[0].price !== 15 || parsed.items[0].unit !== 'un') {
+        errs.push(`item 0 inválido: ${JSON.stringify(parsed.items[0])}`);
+      }
+      if (parsed.items[1].name !== 'Pinha' || parsed.items[1].price !== 12 || parsed.items[1].unit !== 'un') {
+        errs.push(`item 1 inválido: ${JSON.stringify(parsed.items[1])}`);
+      }
+    }
+  } catch (e) {
+    errs.push(`learn com unit falhou: ${e.message}`);
+  }
+
+  if (errs.length) {
+    fail++;
+    console.log('  FAIL S:', errs.join('; '));
+  }
+  console.log(`${!errs.length ? 'OK  ' : 'FAIL'} S - resiliência a templates corrompidos e aprendizado com unit externa (ADR-009)`);
+}
+
+console.log(`\n${CORPUS.length + 3 + 8 - fail}/${CORPUS.length + 3 + 8} cenários OK, ${total} itens verificados`);
 process.exitCode = fail ? 1 : 0;

@@ -145,6 +145,8 @@ interface Product {
   indisponivel?: boolean;
   modo?: 'kg' | 'unit';
   unitWeight?: UnitWeightEntry | null;
+  source?: 'template' | 'heuristic' | 'manual';
+  raw?: string;
 }
 
 interface CartV1Entry {
@@ -178,6 +180,7 @@ interface HortiParserAPI {
   analyzeLine(rawLine: string, boldIsPromo?: boolean): AnalyzedSegment[];
   induceTemplate(line: string, ann: TemplateAnnotation): Template;
   matchTemplate(tpl: Template, line: string): AnalyzedSegment | null;
+  isValidTemplate(t: any): t is Template;
   createTemplateStore(storage?: Storage | null, key?: string): TemplateStore;
   canonUnit(tok: string | null | undefined): string | null;
   itemKey(name: string, packQty?: number | null): string;

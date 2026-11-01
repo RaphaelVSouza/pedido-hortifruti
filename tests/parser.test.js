@@ -403,5 +403,27 @@ Caju (bdj) ----> 9 conto`;
   console.log(`${ok ? 'OK  ' : 'FAIL'} M - extração linear (10k: ${small}ms, 40k: ${big}ms)`);
 }
 
-console.log(`\n${CORPUS.length + 2 + 6 - fail}/${CORPUS.length + 2 + 6} cenários OK, ${total} itens verificados`);
+// ---- Identidade de item e productId (ADR-008)
+{
+  const checks = [
+    ['acentos, caixa e pontuação', P.itemKey('Maçã Gala (Importada)!'), 'maca gala importada'],
+    ['emojis e palavras de unidade soltas', P.itemKey('🍌 Banana Prata kg'), 'banana prata'],
+    ['tamanho 500g vs 500 g iguais', P.itemKey('Uva Thompson 500g') === P.itemKey('uva thompson 500 g') && P.itemKey('Uva Thompson 500g'), 'uva thompson 500g'],
+    ['tamanhos 500g vs 1kg diferentes', P.itemKey('Uva Thompson 500g') !== P.itemKey('Uva Thompson 1kg'), true],
+    ['tamanhos 30un vs 20un diferentes', P.itemKey('Ovos brancos 30un') !== P.itemKey('Ovos brancos 20un') && P.itemKey('Ovos brancos 30 un'), 'ovos brancos 30un'],
+    ['combo sufixado com #comboN', P.itemKey('Abacate', 3), 'abacate#combo3'],
+    ['unidade no fim removida vs início mantida', P.itemKey('Morango bandeja') === 'morango' && P.itemKey('Bandeja de morango'), 'bandeja de morango'],
+    ['categoryKey normaliza e usa geral se vazio', `${P.categoryKey('🍎 Frutas & Cia!')}/${P.categoryKey('')}/${P.categoryKey(null)}`, 'frutas cia/geral/geral'],
+    ['productId combina categoryKey e itemKey', P.productId('Frutas', 'Abacate', 3), 'frutas|abacate#combo3'],
+    ['levenshtein calcula distância exata', `${P.levenshtein('mamao formosa', 'mamao fermosa')}/${P.levenshtein('banana', 'banana')}/${P.levenshtein('abc', '')}`, '1/0/3'],
+  ];
+  const bad = checks.filter(([, got, want]) => got !== want);
+  if (bad.length) {
+    fail++;
+    for (const [desc, got, want] of bad) console.log(`  FAIL Q (${desc}): esperado ${JSON.stringify(want)}, obtido ${JSON.stringify(got)}`);
+  }
+  console.log(`${!bad.length ? 'OK  ' : 'FAIL'} Q - itemKey, categoryKey, productId e levenshtein (ADR-008)`);
+}
+
+console.log(`\n${CORPUS.length + 3 + 6 - fail}/${CORPUS.length + 3 + 6} cenários OK, ${total} itens verificados`);
 process.exitCode = fail ? 1 : 0;

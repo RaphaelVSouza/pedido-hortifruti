@@ -114,6 +114,9 @@ interface AnalyzedSegment {
 
 interface Product {
   id: string;
+  itemKey?: string;
+  rawName?: string;
+  packQty?: number | null;
   nome: string;
   preco: number;
   unidade: string;
@@ -123,6 +126,7 @@ interface Product {
   categoria: string;
   quantidade: number;
   selecionado: boolean;
+  indisponivel?: boolean;
 }
 
 interface CartV1Entry {
@@ -131,6 +135,7 @@ interface CartV1Entry {
   unit: string;
   price: number;
   category: string;
+  packQty?: number | null;
 }
 
 type CartV1 = Record<string, CartV1Entry>;
@@ -142,6 +147,10 @@ interface HortiParserAPI {
   matchTemplate(tpl: Template, line: string): AnalyzedSegment | null;
   createTemplateStore(storage?: Storage | null, key?: string): TemplateStore;
   canonUnit(tok: string | null | undefined): string | null;
+  itemKey(name: string, packQty?: number | null): string;
+  categoryKey(category: string | null | undefined): string;
+  productId(category: string | null | undefined, name: string, packQty?: number | null): string;
+  levenshtein(a: string, b: string): number;
   _internals: {
     UNIT: string;
     CANDIDATE_RE: RegExp;

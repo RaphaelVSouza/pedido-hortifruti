@@ -798,5 +798,88 @@
     };
   }
 
-  return { parse, analyzeLine, induceTemplate, matchTemplate, createTemplateStore, canonUnit, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
+  // --------------------------------------------------- identidade e comparação (ADR-008)
+
+  // Palavras por extenso de unidade que permanecem quando iniciam o nome ("Bandeja de morango")
+  const FULL_LEAD_UNIT_RE = /^(?:unidades?|bandejas?|macos?|molhos?|duzias?|caixas?|pacotes?|sacos?|sacolas?|potes?|pencas?|litros?|quilos?|kilos?|quilogramas?|gramas?)$/;
+
+  /**
+   * Normaliza o nome de uma categoria para compor o productId (ADR-008).
+   * @param {string | null | undefined} category
+   * @returns {string}
+   */
+  function categoryKey(category) {
+    const norm = foldAccents(normalizeText(String(category || '')).replace(EMOJI_RE, ' '))
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    return norm || 'geral';
+  }
+
+  /**
+   * Gera a chave canônica de identidade de um item (ADR-008).
+   * Remove acentos, minúsculas, emojis, palavras de unidade soltas e pontuação;
+   * mantém tamanhos com número ("500 g" -> "500g"); preserva unidade por extenso
+   * no início do nome ("Bandeja de morango"); acrescenta "#combo<packQty>" quando houver combo.
+   * @param {string} name
+   * @param {number | null | undefined} [packQty]
+   * @returns {string}
+   */
+  function itemKey(name, packQty) {
+    let s = foldAccents(normalizeText(String(name || '')).replace(EMOJI_RE, ' '));
+    // Colapsa tamanho com número antes de remover pontuação/unidades ("500 g" -> "500g", "1,5 kg" -> "1.5kg")
+    s = s.replace(/(\d+(?:[.,]\d+)?)\s*([a-z]+)\b/g, (m, num, u) => (canonUnit(u) ? num.replace(',', '.') + u : m));
+    // Remove pontuação exceto ponto decimal entre dígitos ("1.5kg")
+    s = s.replace(/\.(?!\d)|(?<!\d)\./g, ' ').replace(/[^a-z0-9.]+/g, ' ');
+    const tokens = s.trim().split(/\s+/).filter(Boolean);
+    const filtered = tokens.filter((tok, idx) => {
+      if (/^\d/.test(tok)) return true;
+      if (!canonUnit(tok)) return true;
+      if (idx === 0 && tokens.length > 1 && FULL_LEAD_UNIT_RE.test(tok)) return true;
+      return false;
+    });
+    const base = filtered.join(' ');
+    return packQty ? `${base}#combo${packQty}` : base;
+  }
+
+  /**
+   * Gera o identificador único de produto combinando categoria e item (ADR-008).
+   * @param {string | null | undefined} category
+   * @param {string} name
+   * @param {number | null | undefined} [packQty]
+   * @returns {string}
+   */
+  function productId(category, name, packQty) {
+    return `${categoryKey(category)}|${itemKey(name, packQty)}`;
+  }
+
+  /**
+   * Distância de edição de Levenshtein entre duas strings (ADR-008).
+   * @param {string} a
+   * @param {string} b
+   * @returns {number}
+   */
+  function levenshtein(a, b) {
+    const s = String(a || '');
+    const t = String(b || '');
+    if (s === t) return 0;
+    const n = s.length;
+    const m = t.length;
+    if (!n) return m;
+    if (!m) return n;
+    const dp = new Array(m + 1);
+    for (let j = 0; j <= m; j++) dp[j] = j;
+    for (let i = 1; i <= n; i++) {
+      let prev = dp[0];
+      dp[0] = i;
+      for (let j = 1; j <= m; j++) {
+        const temp = dp[j];
+        const cost = s.charCodeAt(i - 1) === t.charCodeAt(j - 1) ? 0 : 1;
+        dp[j] = Math.min(dp[j] + 1, dp[j - 1] + 1, prev + cost);
+        prev = temp;
+      }
+    }
+    return dp[m];
+  }
+
+  return { parse, analyzeLine, induceTemplate, matchTemplate, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
 });

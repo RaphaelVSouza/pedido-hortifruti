@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * @typedef {Object} Product
      * @property {string} id
+     * @property {string} [itemKey]
      * @property {string} nome
      * @property {number} preco
      * @property {string} unidade
@@ -47,8 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const RAW_TEXT_KEY = 'hortifruti_raw_text';
     const LAST_UPDATE_TS_KEY = 'hortifruti_last_update_ts';
     const LAST_UPDATE_SOURCE_KEY = 'hortifruti_last_update_source';
+    const CART_V1_KEY = 'hortifruti_cart_v1';
+    const LEGACY_CART_KEY = 'hortifruti_cart';
     /** @type {Product[]} */
     let allProducts = [];
+    /** @type {CartV1} */
+    let unavailableCart = {};
+    /** @type {Array<{ oldId: string, oldEntry: CartV1Entry, newProductId: string, newName: string }>} */
+    let pendingSpellingSuggestions = [];
     let activeCategory = 'Todos';
     let showOnlySelected = false;
 
@@ -61,14 +68,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const saveCart = () => {
-        /** @type {Record<string, number>} */
+        /** @type {CartV1} */
         const cart = {};
         allProducts.forEach(p => {
             if (p.selecionado) {
-                cart[p.nome] = p.quantidade;
+                cart[p.id] = {
+                    qty: p.quantidade,
+                    name: p.nome,
+                    unit: p.unidade,
+                    price: p.preco,
+                    category: p.categoria
+                };
             }
         });
-        localStorage.setItem('hortifruti_cart', JSON.stringify(cart));
+        Object.entries(unavailableCart).forEach(([id, entry]) => {
+            if (!(id in cart)) {
+                cart[id] = entry;
+            }
+        });
+        localStorage.setItem(CART_V1_KEY, JSON.stringify(cart));
     };
 
     /**
@@ -343,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Parser Logic
     // O parser vive em parser.js (window.HortiParser) e é testável em Node: tests/parser.test.js.
-    const { parse: parseList } = window.HortiParser;
+    const { parse: parseList, itemKey, categoryKey, productId, levenshtein } = window.HortiParser;
 
     // Unidades do parser -> códigos exibidos no app e na mensagem.
     /** @type {Record<string, string>} */
@@ -371,6 +389,9 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns {Product}
      */
     const toProduct = (it) => {
+        const categoria = it.category || 'Geral';
+        const key = itemKey(it.name, it.packQty);
+        const id = productId(categoria, it.name, it.packQty);
         let nome = it.name;
         let unidade = UNIT_LABELS[it.unit] || 'un';
         if (it.packQty) {
@@ -378,17 +399,78 @@ document.addEventListener('DOMContentLoaded', () => {
             unidade = 'combo';
         }
         return {
-            id: 'item-' + Math.random().toString(36).substr(2, 9),
+            id,
+            itemKey: key,
             nome,
             preco: it.price,
             unidade,
             promocao: !!it.promo,
             precoAnterior: it.oldPrice,
             conferir: it.confidence < 0.5,
-            categoria: it.category || 'Geral',
+            categoria,
             quantidade: 1,
             selecionado: false
         };
+    };
+
+    /**
+     * @param {Product[]} products
+     * @returns {CartV1}
+     */
+    const loadAndMigrateCart = (products) => {
+        if (localStorage.getItem(CART_V1_KEY) === null && localStorage.getItem(LEGACY_CART_KEY) !== null) {
+            const legacy = readStoredObject(LEGACY_CART_KEY, {});
+            /** @type {CartV1} */
+            const migrated = {};
+            const comboSuffixRe = /^(.*?)\s*\(combo\s+(\d+)\s+[^)]+\)$/i;
+
+            Object.entries(legacy).forEach(([oldName, rawQty]) => {
+                if (typeof rawQty !== 'number' || !Number.isFinite(rawQty) || rawQty < 0) return;
+                const m = oldName.match(comboSuffixRe);
+                const baseName = m ? m[1].trim() : oldName;
+                const packQty = m ? parseInt(m[2], 10) : null;
+                const key = itemKey(baseName, packQty);
+                const matched = products.find(p => p.itemKey === key);
+                if (matched) {
+                    migrated[matched.id] = {
+                        qty: rawQty,
+                        name: matched.nome,
+                        unit: matched.unidade,
+                        price: matched.preco,
+                        category: matched.categoria
+                    };
+                } else {
+                    const fallbackId = productId('Geral', baseName, packQty);
+                    migrated[fallbackId] = {
+                        qty: rawQty,
+                        name: oldName,
+                        unit: packQty ? 'combo' : 'un',
+                        price: 0,
+                        category: 'Geral'
+                    };
+                }
+            });
+
+            localStorage.setItem(CART_V1_KEY, JSON.stringify(migrated));
+            localStorage.removeItem(LEGACY_CART_KEY);
+            return migrated;
+        }
+
+        const raw = readStoredObject(CART_V1_KEY, {});
+        /** @type {CartV1} */
+        const valid = {};
+        Object.entries(raw).forEach(([id, entry]) => {
+            if (entry && typeof entry === 'object' && typeof entry.qty === 'number' && Number.isFinite(entry.qty) && entry.qty >= 0) {
+                valid[id] = {
+                    qty: entry.qty,
+                    name: String(entry.name || id),
+                    unit: String(entry.unit || 'un'),
+                    price: Number(entry.price) || 0,
+                    category: String(entry.category || 'Geral')
+                };
+            }
+        });
+        return valid;
     };
 
     /**
@@ -538,6 +620,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
             itemsList.appendChild(div);
         });
+
+        const filteredUnavailable = Object.entries(unavailableCart).filter(([, entry]) => {
+            const matchesSearch = normalizeText(entry.name).includes(searchTerm);
+            const matchesTab = activeCategory === 'Todos'
+                || (activeCategory !== 'Promoção' && entry.category === activeCategory);
+            return matchesSearch && matchesTab;
+        });
+
+        filteredUnavailable.forEach(([unavailId, entry]) => {
+            const div = document.createElement('div');
+            div.className = 'item-row unavailable-item';
+
+            const itemEmoji = getItemIconEmoji(entry.name, entry.category);
+            const itemIconUrl = emojiToExternalIconUrl(itemEmoji);
+
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.className = 'item-check';
+            check.checked = true;
+            check.disabled = true;
+
+            const nameWrap = document.createElement('span');
+            nameWrap.className = 'item-name';
+
+            const icon = document.createElement('img');
+            icon.className = 'item-icon';
+            icon.src = itemIconUrl;
+            icon.alt = itemEmoji;
+            icon.loading = 'lazy';
+            icon.decoding = 'async';
+            icon.referrerPolicy = 'no-referrer';
+
+            const nameText = document.createElement('span');
+            nameText.className = 'item-name-text';
+            nameText.textContent = entry.name;
+
+            const badge = document.createElement('span');
+            badge.className = 'unavailable-badge';
+            badge.textContent = 'indisponível nesta lista';
+
+            nameWrap.append(icon, nameText, badge);
+
+            const price = document.createElement('span');
+            price.className = 'item-price';
+            price.textContent = entry.price > 0
+                ? `R$ ${entry.price.toFixed(2).replace('.', ',')}/${entry.unit}`
+                : '—';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-unavailable-btn';
+            removeBtn.textContent = 'Remover';
+            removeBtn.onclick = () => {
+                delete unavailableCart[unavailId];
+                saveCart();
+                updateFilterBtn();
+                renderItems();
+            };
+
+            div.append(check, nameWrap, price, removeBtn);
+            itemsList.appendChild(div);
+        });
     }
 
     // Só kg aceita quantidade decimal; as demais unidades (un, bdj, maço, combo...) são inteiras.
@@ -649,16 +793,69 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionSection.classList.remove('hidden');
         summarySection.classList.remove('hidden');
         
-        // Hydrate cart from storage
-        const cart = readStoredObject('hortifruti_cart', {});
-        allProducts.forEach(p => {
-            const savedQty = cart[p.nome];
-            if (typeof savedQty === 'number' && Number.isFinite(savedQty) && savedQty >= 0) {
-                p.selecionado = true;
-                p.quantidade = savedQty;
+        // Hydrate cart from storage (ADR-008: migração + 4 passos de reconciliação)
+        unavailableCart = {};
+        pendingSpellingSuggestions = [];
+        const storedCart = loadAndMigrateCart(allProducts);
+        const matchedProductIds = new Set();
+
+        // Passo 1: Match exato por productId
+        Object.entries(storedCart).forEach(([savedId, entry]) => {
+            if (!entry || typeof entry.qty !== 'number' || !Number.isFinite(entry.qty) || entry.qty < 0) return;
+            const exact = allProducts.find(p => p.id === savedId && !matchedProductIds.has(p.id));
+            if (exact) {
+                exact.selecionado = true;
+                exact.quantidade = entry.qty;
+                matchedProductIds.add(exact.id);
             }
         });
-        // Regrava o carrinho só com itens presentes na lista atual (descarta entradas órfãs).
+
+        // Passos 2, 3 e 4 para itens não casados exatamente
+        Object.entries(storedCart).forEach(([savedId, entry]) => {
+            if (!entry || typeof entry.qty !== 'number' || !Number.isFinite(entry.qty) || entry.qty < 0) return;
+            if (matchedProductIds.has(savedId)) return;
+
+            const savedItemKey = savedId.includes('|')
+                ? savedId.slice(savedId.indexOf('|') + 1)
+                : itemKey(entry.name || savedId);
+
+            // Passo 2: Match único por itemKey em outra categoria
+            const byKey = allProducts.filter(p => p.itemKey === savedItemKey && !matchedProductIds.has(p.id));
+            if (byKey.length === 1) {
+                const target = byKey[0];
+                target.selecionado = true;
+                target.quantidade = entry.qty;
+                matchedProductIds.add(target.id);
+                return;
+            }
+
+            // Passo 3: Levenshtein <= 2 sobre itemKey (nomes com >= 6 caracteres) -> não aplicar automaticamente
+            const baseSavedKey = savedItemKey.replace(/#combo\d+$/, '');
+            if (baseSavedKey.length >= 6) {
+                const similar = allProducts.find(p => {
+                    const pKey = (p.itemKey || '').replace(/#combo\d+$/, '');
+                    return pKey.length >= 6 && levenshtein(savedItemKey, p.itemKey || '') <= 2;
+                });
+                if (similar) {
+                    pendingSpellingSuggestions.push({
+                        oldId: savedId,
+                        oldEntry: entry,
+                        newProductId: similar.id,
+                        newName: similar.nome
+                    });
+                }
+            }
+
+            // Passo 4: Ausente -> manter no carrinho como "indisponível nesta lista"
+            unavailableCart[savedId] = {
+                qty: entry.qty,
+                name: String(entry.name || savedId),
+                unit: String(entry.unit || 'un'),
+                price: Number(entry.price) || 0,
+                category: String(entry.category || 'Geral')
+            };
+        });
+
         saveCart();
 
         renderTabs();
@@ -718,7 +915,10 @@ document.addEventListener('DOMContentLoaded', () => {
             p.selecionado = false;
             p.quantidade = 1;
         });
-        localStorage.removeItem('hortifruti_cart');
+        unavailableCart = {};
+        pendingSpellingSuggestions = [];
+        localStorage.removeItem(CART_V1_KEY);
+        localStorage.removeItem(LEGACY_CART_KEY);
         showOnlySelected = false;
         updateFilterBtn();
         renderItems();
@@ -734,6 +934,8 @@ document.addEventListener('DOMContentLoaded', () => {
             .forEach(key => localStorage.removeItem(key));
 
         allProducts = [];
+        unavailableCart = {};
+        pendingSpellingSuggestions = [];
         activeCategory = 'Todos';
         showOnlySelected = false;
 

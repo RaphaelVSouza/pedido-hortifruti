@@ -187,6 +187,7 @@ interface HortiParserAPI {
   categoryKey(category: string | null | undefined): string;
   productId(category: string | null | undefined, name: string, packQty?: number | null): string;
   levenshtein(a: string, b: string): number;
+  buildWhatsAppUrl(phone: string | null | undefined, message: string): string;
   _internals: {
     UNIT: string;
     CANDIDATE_RE: RegExp;
@@ -205,11 +206,12 @@ interface Document {
   getElementById(elementId: 'rawText' | 'finalMessage'): HTMLTextAreaElement;
   getElementById(elementId: 'search' | 'endereco' | 'supplierName' | 'supplierWhatsapp' | 'supplierDeliveryFee' | 'supplierPayments' | 'supplierBoldIsPromo'): HTMLInputElement;
   getElementById(elementId: 'pagamento' | 'supplierSelect'): HTMLSelectElement;
+  getElementById(elementId: 'whatsappBtn'): HTMLAnchorElement;
   getElementById(
     elementId: 'processBtn' | 'clipboardBtn' | 'clearDataBtn' | 'copyBtn' | 'deselectAllBtn' | 'filterSelectedBtn' | 'editSupplierBtn' | 'newSupplierBtn' | 'saveSupplierBtn' | 'cancelSupplierBtn' | 'deleteSupplierBtn'
   ): HTMLButtonElement;
   getElementById(
-    elementId: 'updateStatus' | 'selectionSection' | 'summarySection' | 'itemsList' | 'subtotalLabel' | 'subtotalValue' | 'deliveryFee' | 'totalLabel' | 'totalValue' | 'estimatedNote' | 'tabsContainer' | 'promo-date' | 'supplierConfigPanel' | 'supplierFormTitle' | 'supplierFormError'
+    elementId: 'whatsappNotice' | 'updateStatus' | 'selectionSection' | 'summarySection' | 'itemsList' | 'subtotalLabel' | 'subtotalValue' | 'deliveryFee' | 'totalLabel' | 'totalValue' | 'estimatedNote' | 'tabsContainer' | 'promo-date' | 'supplierConfigPanel' | 'supplierFormTitle' | 'supplierFormError'
   ): HTMLElement;
   createElement(
     tagName: 'input',

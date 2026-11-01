@@ -234,7 +234,7 @@ O carrinho é `hortifruti_cart = { nome: quantidade }`, sem versão. A chave é 
 
 ## ADR-011 — Envio direto pelo WhatsApp (`wa.me`)
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 ### Contexto
 Hoje só há cópia (`copyBtn.onclick`, `script.js:619-633`).

@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const estimatedNote = document.getElementById('estimatedNote');
     const finalMessage = document.getElementById('finalMessage');
     const copyBtn = document.getElementById('copyBtn');
+    const whatsappBtn = document.getElementById('whatsappBtn');
+    const whatsappNotice = document.getElementById('whatsappNotice');
     const searchInput = document.getElementById('search');
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const tabsContainer = document.getElementById('tabsContainer');
@@ -454,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Parser Logic
     // O parser vive em parser.js (window.HortiParser) e é testável em Node: tests/parser.test.js.
-    const { parse: parseList, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein } = window.HortiParser;
+    const { parse: parseList, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, buildWhatsAppUrl } = window.HortiParser;
 
     // Unidades do parser -> códigos exibidos no app e na mensagem.
     /** @type {Record<string, string>} */
@@ -1911,7 +1913,52 @@ document.addEventListener('DOMContentLoaded', () => {
         deliveryFeeEl.textContent = `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`;
 
         generateMessage(selected, total, hasEstimated);
+        updateWhatsAppButton(selected, finalMessage.value);
     }
+
+    /**
+     * @param {Product[]} items
+     * @param {string} message
+     */
+    function updateWhatsAppButton(items, message) {
+        if (!whatsappBtn) return;
+        const profile = getActiveProfile();
+        const hasPhone = Boolean(profile && profile.whatsapp && profile.whatsapp.trim().length > 0);
+        const hasItems = items.length > 0;
+
+        if (hasPhone && hasItems) {
+            const url = buildWhatsAppUrl(profile.whatsapp, message);
+            whatsappBtn.href = url;
+            whatsappBtn.setAttribute('aria-disabled', 'false');
+            whatsappBtn.classList.remove('disabled');
+            whatsappBtn.removeAttribute('tabindex');
+            whatsappBtn.title = 'Enviar pedido diretamente no WhatsApp do fornecedor';
+
+            if (whatsappNotice) {
+                if (encodeURIComponent(message).length > 2000) {
+                    whatsappNotice.classList.remove('hidden');
+                } else {
+                    whatsappNotice.classList.add('hidden');
+                }
+            }
+        } else {
+            whatsappBtn.removeAttribute('href');
+            whatsappBtn.setAttribute('aria-disabled', 'true');
+            whatsappBtn.classList.add('disabled');
+            whatsappBtn.setAttribute('tabindex', '-1');
+
+            if (!hasItems) {
+                whatsappBtn.title = 'Selecione itens no carrinho para enviar o pedido';
+            } else if (!hasPhone) {
+                whatsappBtn.title = 'Configure o WhatsApp do fornecedor em "Configurar fornecedor" para enviar direto';
+            }
+
+            if (whatsappNotice) {
+                whatsappNotice.classList.add('hidden');
+            }
+        }
+    }
+
 
     /**
      * @param {Product[]} items
@@ -1938,9 +1985,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     msg += `- ${toSingleLine(item.nome)}, ${est.msgText}\n`;
                 } else {
                     const itemTotal = item.preco * item.quantidade;
-                    // Combo: "2x" do pacote inteiro, para o fornecedor não ler como 2 unidades.
+                    // Combo: formato explícito "N combo(s)", para o fornecedor não ler como N unidades (ADR-011).
                     const qtyStr = String(item.quantidade).replace('.', ',');
-                    const qty = item.unidade === 'combo' ? `${qtyStr}x` : `${qtyStr}${item.unidade}`;
+                    const isCombo = item.unidade === 'combo' || Boolean(/** @type {any} */ (item).packQty);
+                    const qty = isCombo
+                        ? `${qtyStr} ${item.quantidade === 1 ? 'combo' : 'combos'}`
+                        : `${qtyStr}${item.unidade}`;
                     msg += `- ${toSingleLine(item.nome)}, ${qty} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
                 }
             });
@@ -2858,6 +2908,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setSelectValue(pagamentoSelect, desiredPayment);
 
         deliveryFeeEl.textContent = `R$ ${activeProfile.deliveryFee.toFixed(2).replace('.', ',')}`;
+        updateWhatsAppButton(getCartItems(), finalMessage.value);
     }
 
     /**
@@ -3067,6 +3118,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (closeReviewBtn) {
         closeReviewBtn.onclick = () => closeReviewPanel();
+    }
+
+    if (whatsappBtn) {
+        whatsappBtn.onclick = (e) => {
+            if (whatsappBtn.getAttribute('aria-disabled') === 'true') {
+                e.preventDefault();
+            }
+        };
     }
 
     copyBtn.onclick = async () => {

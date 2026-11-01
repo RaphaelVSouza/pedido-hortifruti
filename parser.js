@@ -929,5 +929,17 @@
     return dp[m];
   }
 
-  return { parse, analyzeLine, induceTemplate, matchTemplate, isValidTemplate, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
+  /**
+   * Constrói a URL do WhatsApp Web / wa.me com telefone e mensagem (ADR-011).
+   * @param {string | null | undefined} phone
+   * @param {string} message
+   * @returns {string}
+   */
+  function buildWhatsAppUrl(phone, message) {
+    const digits = String(phone || '').replace(/\D/g, '');
+    if (!digits) return '';
+    return `https://wa.me/${digits}?text=${encodeURIComponent(String(message || ""))}`;
+  }
+
+  return { parse, analyzeLine, induceTemplate, matchTemplate, isValidTemplate, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, buildWhatsAppUrl, _internals: { UNIT, CANDIDATE_RE, AFTER_UNIT_RE, BEFORE_UNIT_RE, COMBO_RE } };
 });

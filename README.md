@@ -41,7 +41,7 @@ Taxa de entrega: R$ 5,00
 
 - Parser tolerante a formatos variados: `8,00un.`, `R$4,99kg`, `kg R$ 4,99`, pontilhado, bullets, preço antes do nome, `5 reais`, "de X por Y", combos (`3 por R$ 10`), vários itens por linha e cabeçalhos de categoria com ou sem marcação. Ignora linhas operacionais (taxa, PIX, telefone) e avisa quantas linhas não reconheceu.
 - Detecção de promoções (preço entre asteriscos) e da data da promoção (`dd/mm/aaaa`).
-- Ícones por produto (emoji 3D Fluent) com fallback por categoria.
+- Ícones próprios locais em SVG por produto (catálogo flat sem CDN) com fallback por categoria, e emojis nativos na mensagem do WhatsApp.
 - Persistência local: texto importado, carrinho, endereço e forma de pagamento sobrevivem ao recarregar a página. O botão "Limpar dados salvos" apaga tudo que o app guardou. Reimportar um texto sem produtos mantém a lista e o carrinho anteriores.
 - Busca sem diferenciar acentos ("maca" acha "Maçã") e saudação pela hora (Bom dia, Boa tarde, Boa noite).
 - Layout responsivo, incluindo telas de 360px.
@@ -56,7 +56,7 @@ python3 -m http.server 8080
 
 Acesse `http://localhost:8080`.
 
-A leitura da área de transferência exige HTTPS ou `localhost` e permissão do navegador. Os ícones são carregados de `cdn.jsdelivr.net`, então precisam de internet; sem ela, o restante funciona normalmente.
+A leitura da área de transferência exige HTTPS ou `localhost` e permissão do navegador. Os ícones são locais (SVG), funcionando 100% offline.
 
 ## Estrutura
 

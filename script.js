@@ -227,89 +227,1083 @@ document.addEventListener('DOMContentLoaded', () => {
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase();
 
-    /**
-     * @param {string} category
-     * @returns {string}
-     */
-    const getCategoryIcon = (category) => {
-        const normalized = normalizeText(category);
-
-        if (normalized.includes('todo')) return '🧺';
-        if (normalized.includes('promoc')) return '🏷️';
-        if (normalized.includes('fruta')) return '🍉';
-        if (normalized.includes('legume')) return '🥕';
-        if (normalized.includes('verdura')) return '🥬';
-        if (normalized.includes('mercad')) return '🛒';
-        if (normalized.includes('geladeira')) return '🧊';
-        if (normalized.includes('limpeza')) return '🧼';
-        return '📦';
-    };
-
-    const ITEM_ICON_RULES = [
-        { emoji: '🍍', keywords: ['abacaxi'] },
-        { emoji: '🥑', keywords: ['abacate'] },
-        { emoji: '🍌', keywords: ['banana'] },
-        { emoji: '🍎', keywords: ['maca fuji', 'maca gala', 'maca promo', 'maca saquinho'] },
-        { emoji: '🍏', keywords: ['maca verde'] },
-        { emoji: '🍊', keywords: ['laranja', 'tangerina'] },
-        { emoji: '🍋', keywords: ['limao'] },
-        { emoji: '🍇', keywords: ['uva'] },
-        { emoji: '🍓', keywords: ['morango'] },
-        { emoji: '🍉', keywords: ['melancia'] },
-        { emoji: '🍈', keywords: ['melao'] },
-        { emoji: '🥭', keywords: ['manga', 'mamao'] },
-        { emoji: '🍑', keywords: ['ameixa', 'goiaba', 'caqui', 'maracuja', 'pitaia', 'graviola'] },
-        { emoji: '🍐', keywords: ['pera'] },
-        { emoji: '🥝', keywords: ['kiwi'] },
-        { emoji: '🥥', keywords: ['coco'] },
-        { emoji: '🍅', keywords: ['tomate', 'tomatinho'] },
-        { emoji: '🥒', keywords: ['pepino'] },
-        { emoji: '🍆', keywords: ['berinjela'] },
-        { emoji: '🧄', keywords: ['alho', 'gengibre'] },
-        { emoji: '🧅', keywords: ['cebola'] },
-        { emoji: '🥕', keywords: ['cenoura', 'jilo', 'maxixe', 'vagem', 'quiabo', 'beterraba'] },
-        { emoji: '🥔', keywords: ['batata', 'aipim', 'mandioca', 'inhame', 'baroa'] },
-        { emoji: '🎃', keywords: ['abobora', 'abobrinha', 'chuchu'] },
-        { emoji: '🫑', keywords: ['pimentao'] },
-        { emoji: '🥦', keywords: ['brocolis', 'couve flor'] },
-        { emoji: '🥬', keywords: ['alface', 'couve', 'espinafre', 'agriao', 'coentro', 'salsa', 'hortela', 'louro', 'cheiro verde', 'repolho', 'chicoria'] },
-        { emoji: '🌿', keywords: ['ervilha bdj', 'ervilha'] },
-        { emoji: '🥚', keywords: ['ovo'] },
-        { emoji: '🍯', keywords: ['mel silvestre', 'mel'] },
-        { emoji: '☕', keywords: ['cafe', 'nescau', 'cha leao', 'cha'] },
-        { emoji: '🥛', keywords: ['leite', 'requeijao', 'margarina', 'manteiga', 'creme de leite', 'condensado'] },
-        { emoji: '🍞', keywords: ['pao', 'torrada', 'bisnaguinha', 'tapioca'] },
-        { emoji: '🍪', keywords: ['biscoito', 'rosquinha'] },
-        { emoji: '🍿', keywords: ['pipoca', 'salgadinho'] },
-        { emoji: '🧃', keywords: ['suco', 'agua de coco', 'refresco', 'salada de frutas'] },
-        { emoji: '🍚', keywords: ['arroz', 'feijao', 'farinha', 'espaguete', 'parafuso', 'miojo', 'macarrao', 'flocao'] },
-        { emoji: '🌽', keywords: ['milho'] },
-        { emoji: '🫒', keywords: ['azeite', 'oleo'] },
-        { emoji: '🧂', keywords: ['sal', 'canela', 'condimentos', 'sazon', 'caldo', 'fermento'] },
-        { emoji: '🍅', keywords: ['ketchup', 'mostarda', 'maionese', 'vinagre'] },
-        { emoji: '🧈', keywords: ['acucar', 'aveia', 'gelatina'] },
-        { emoji: '🌭', keywords: ['salsicha'] },
-        { emoji: '🧀', keywords: ['parmesao', 'queijo'] },
-        { emoji: '🔥', keywords: ['carvao', 'churrasco', 'palito', 'fosforo'] },
-        { emoji: '🧻', keywords: ['papel toalha', 'papel aluminio'] },
-        { emoji: '🧼', keywords: ['detergente', 'sabao', 'alcool', 'baygon', 'sabonete', 'desodorante', 'pasta de dente', 'esponja', 'multiuso'] },
-        { emoji: '🫘', keywords: ['farofa', 'ervilha p'] },
-        { emoji: '🍶', keywords: ['leite de coco', 'coco ralado'] },
-        { emoji: '🥜', keywords: ['tamara'] }
+    // --------------------------------------------------- catálogo de ícones (ADR-012)
+    /** @type {Array<{ id: string, keywords: string[] }>} */
+    const ICON_CATALOG = [
+        {
+            "id": "maracuja",
+            "keywords": [
+                "maracuja"
+            ]
+        },
+        {
+            "id": "mamao",
+            "keywords": [
+                "mamao",
+                "papaia",
+                "papaya",
+                "formosa"
+            ]
+        },
+        {
+            "id": "goiaba",
+            "keywords": [
+                "goiaba"
+            ]
+        },
+        {
+            "id": "caqui",
+            "keywords": [
+                "caqui",
+                "kaki"
+            ]
+        },
+        {
+            "id": "acerola",
+            "keywords": [
+                "acerola"
+            ]
+        },
+        {
+            "id": "pitaya",
+            "keywords": [
+                "pitaya",
+                "pitaia"
+            ]
+        },
+        {
+            "id": "jabuticaba",
+            "keywords": [
+                "jabuticaba",
+                "jaboticaba"
+            ]
+        },
+        {
+            "id": "graviola",
+            "keywords": [
+                "graviola"
+            ]
+        },
+        {
+            "id": "carambola",
+            "keywords": [
+                "carambola"
+            ]
+        },
+        {
+            "id": "figo",
+            "keywords": [
+                "figo"
+            ]
+        },
+        {
+            "id": "ameixa",
+            "keywords": [
+                "ameixa"
+            ]
+        },
+        {
+            "id": "limao-taiti",
+            "keywords": [
+                "limao",
+                "taiti",
+                "tahiti",
+                "lima da persia"
+            ]
+        },
+        {
+            "id": "caju",
+            "keywords": [
+                "caju"
+            ]
+        },
+        {
+            "id": "roma",
+            "keywords": [
+                "roma"
+            ]
+        },
+        {
+            "id": "chuchu",
+            "keywords": [
+                "chuchu"
+            ]
+        },
+        {
+            "id": "mandioca",
+            "keywords": [
+                "mandioca",
+                "aipim",
+                "macaxeira"
+            ]
+        },
+        {
+            "id": "quiabo",
+            "keywords": [
+                "quiabo"
+            ]
+        },
+        {
+            "id": "jilo",
+            "keywords": [
+                "jilo"
+            ]
+        },
+        {
+            "id": "maxixe",
+            "keywords": [
+                "maxixe"
+            ]
+        },
+        {
+            "id": "abobrinha",
+            "keywords": [
+                "abobrinha",
+                "abobora italiana"
+            ]
+        },
+        {
+            "id": "beterraba",
+            "keywords": [
+                "beterraba"
+            ]
+        },
+        {
+            "id": "inhame",
+            "keywords": [
+                "inhame",
+                "cara"
+            ]
+        },
+        {
+            "id": "batata-doce",
+            "keywords": [
+                "batata doce",
+                "batata-doce"
+            ]
+        },
+        {
+            "id": "mandioquinha",
+            "keywords": [
+                "mandioquinha",
+                "batata baroa",
+                "baroa",
+                "batata salsa"
+            ]
+        },
+        {
+            "id": "vagem",
+            "keywords": [
+                "vagem",
+                "vajem"
+            ]
+        },
+        {
+            "id": "ervilha",
+            "keywords": [
+                "ervilha"
+            ]
+        },
+        {
+            "id": "abobora-cabotia",
+            "keywords": [
+                "cabotia",
+                "cabotian",
+                "abobora japonesa",
+                "kabocha"
+            ]
+        },
+        {
+            "id": "abobora-moranga",
+            "keywords": [
+                "moranga",
+                "abobora"
+            ]
+        },
+        {
+            "id": "gengibre",
+            "keywords": [
+                "gengibre"
+            ]
+        },
+        {
+            "id": "rabanete",
+            "keywords": [
+                "rabanete"
+            ]
+        },
+        {
+            "id": "cogumelo",
+            "keywords": [
+                "cogumelo",
+                "champignon",
+                "shimeji",
+                "shitake",
+                "shiitake",
+                "paris"
+            ]
+        },
+        {
+            "id": "couve",
+            "keywords": [
+                "couve"
+            ]
+        },
+        {
+            "id": "alface",
+            "keywords": [
+                "alface"
+            ]
+        },
+        {
+            "id": "rucula",
+            "keywords": [
+                "rucula"
+            ]
+        },
+        {
+            "id": "agriao",
+            "keywords": [
+                "agriao"
+            ]
+        },
+        {
+            "id": "espinafre",
+            "keywords": [
+                "espinafre"
+            ]
+        },
+        {
+            "id": "repolho",
+            "keywords": [
+                "repolho"
+            ]
+        },
+        {
+            "id": "repolho-roxo",
+            "keywords": [
+                "repolho roxo"
+            ]
+        },
+        {
+            "id": "couve-flor",
+            "keywords": [
+                "couve flor",
+                "couve-flor",
+                "couveflor"
+            ]
+        },
+        {
+            "id": "acelga",
+            "keywords": [
+                "acelga"
+            ]
+        },
+        {
+            "id": "salsinha",
+            "keywords": [
+                "salsinha",
+                "salsa"
+            ]
+        },
+        {
+            "id": "cebolinha",
+            "keywords": [
+                "cebolinha"
+            ]
+        },
+        {
+            "id": "cheiro-verde",
+            "keywords": [
+                "cheiro verde",
+                "cheiro-verde"
+            ]
+        },
+        {
+            "id": "coentro",
+            "keywords": [
+                "coentro"
+            ]
+        },
+        {
+            "id": "manjericao",
+            "keywords": [
+                "manjericao",
+                "alfavaca"
+            ]
+        },
+        {
+            "id": "hortela",
+            "keywords": [
+                "hortela",
+                "menta"
+            ]
+        },
+        {
+            "id": "alecrim",
+            "keywords": [
+                "alecrim"
+            ]
+        },
+        {
+            "id": "cebola-roxa",
+            "keywords": [
+                "cebola roxa"
+            ]
+        },
+        {
+            "id": "ovos-cartela",
+            "keywords": [
+                "ovos",
+                "ovo",
+                "cartela",
+                "duzia de ovos"
+            ]
+        },
+        {
+            "id": "tamara",
+            "keywords": [
+                "tamara",
+                "tamaras"
+            ]
+        },
+        {
+            "id": "caja",
+            "keywords": [
+                "caja",
+                "taperaba"
+            ]
+        },
+        {
+            "id": "lichia",
+            "keywords": [
+                "lichia",
+                "lichias",
+                "lichi"
+            ]
+        },
+        {
+            "id": "chicoria",
+            "keywords": [
+                "chicoria",
+                "escarola",
+                "almeirao"
+            ]
+        },
+        {
+            "id": "louro",
+            "keywords": [
+                "louro"
+            ]
+        },
+        {
+            "id": "pimentas",
+            "keywords": [
+                "pimentas",
+                "pimenta",
+                "pimenta dedo de moca",
+                "pimenta de cheiro",
+                "pimenta biquinho",
+                "malagueta"
+            ]
+        },
+        {
+            "id": "suco-garrafa",
+            "keywords": [
+                "suco",
+                "sucos",
+                "refresco",
+                "cha",
+                "agua de coco"
+            ]
+        },
+        {
+            "id": "salada-de-frutas",
+            "keywords": [
+                "salada de frutas",
+                "salada de fruta"
+            ]
+        },
+        {
+            "id": "legumes-picados",
+            "keywords": [
+                "legumes picados",
+                "picados",
+                "sopa pronta",
+                "mix de legumes"
+            ]
+        },
+        {
+            "id": "acucar",
+            "keywords": [
+                "acucar"
+            ]
+        },
+        {
+            "id": "farinha",
+            "keywords": [
+                "farinha",
+                "farofa",
+                "fuba",
+                "flocao",
+                "aveia",
+                "polvilho",
+                "tapioca",
+                "mistura p bolo",
+                "mistura para bolo"
+            ]
+        },
+        {
+            "id": "sabao-em-po",
+            "keywords": [
+                "sabao po",
+                "sabao em po",
+                "lava roupas"
+            ]
+        },
+        {
+            "id": "inseticida",
+            "keywords": [
+                "baygon",
+                "inseticida",
+                "sbp",
+                "raid",
+                "repelente"
+            ]
+        },
+        {
+            "id": "oleo",
+            "keywords": [
+                "oleo",
+                "azeite",
+                "vinagre"
+            ]
+        },
+        {
+            "id": "banana",
+            "keywords": [
+                "banana",
+                "bananas"
+            ]
+        },
+        {
+            "id": "maca",
+            "keywords": [
+                "maca",
+                "macas"
+            ]
+        },
+        {
+            "id": "maca-verde",
+            "keywords": [
+                "maca verde",
+                "granny smith"
+            ]
+        },
+        {
+            "id": "pera",
+            "keywords": [
+                "pera",
+                "peras"
+            ]
+        },
+        {
+            "id": "uva",
+            "keywords": [
+                "uva",
+                "uvas"
+            ]
+        },
+        {
+            "id": "laranja",
+            "keywords": [
+                "laranja",
+                "laranjas"
+            ]
+        },
+        {
+            "id": "mexerica",
+            "keywords": [
+                "mexerica",
+                "tangerina",
+                "ponkan",
+                "bergamota",
+                "murcote",
+                "murcott"
+            ]
+        },
+        {
+            "id": "limao-siciliano",
+            "keywords": [
+                "limao siciliano",
+                "siciliano"
+            ]
+        },
+        {
+            "id": "melancia",
+            "keywords": [
+                "melancia"
+            ]
+        },
+        {
+            "id": "melao",
+            "keywords": [
+                "melao",
+                "pele de sapo"
+            ]
+        },
+        {
+            "id": "abacaxi",
+            "keywords": [
+                "abacaxi"
+            ]
+        },
+        {
+            "id": "morango",
+            "keywords": [
+                "morango",
+                "morangos"
+            ]
+        },
+        {
+            "id": "manga",
+            "keywords": [
+                "manga",
+                "mangas",
+                "palmer",
+                "tommy"
+            ]
+        },
+        {
+            "id": "abacate",
+            "keywords": [
+                "abacate",
+                "avocado"
+            ]
+        },
+        {
+            "id": "kiwi",
+            "keywords": [
+                "kiwi"
+            ]
+        },
+        {
+            "id": "coco",
+            "keywords": [
+                "coco",
+                "coco seco",
+                "coco verde"
+            ]
+        },
+        {
+            "id": "pessego",
+            "keywords": [
+                "pessego",
+                "nectarina"
+            ]
+        },
+        {
+            "id": "cereja",
+            "keywords": [
+                "cereja",
+                "cerejas"
+            ]
+        },
+        {
+            "id": "mirtilo",
+            "keywords": [
+                "mirtilo",
+                "blueberry"
+            ]
+        },
+        {
+            "id": "tomate",
+            "keywords": [
+                "tomate",
+                "tomates"
+            ]
+        },
+        {
+            "id": "tomate-cereja",
+            "keywords": [
+                "tomatinho",
+                "tomate cereja",
+                "tomate grape",
+                "sweet grape"
+            ]
+        },
+        {
+            "id": "batata",
+            "keywords": [
+                "batata",
+                "batatas",
+                "asterix",
+                "batata inglesa"
+            ]
+        },
+        {
+            "id": "cenoura",
+            "keywords": [
+                "cenoura",
+                "cenouras"
+            ]
+        },
+        {
+            "id": "cebola",
+            "keywords": [
+                "cebola",
+                "cebolas"
+            ]
+        },
+        {
+            "id": "alho",
+            "keywords": [
+                "alho"
+            ]
+        },
+        {
+            "id": "berinjela",
+            "keywords": [
+                "berinjela"
+            ]
+        },
+        {
+            "id": "pepino",
+            "keywords": [
+                "pepino"
+            ]
+        },
+        {
+            "id": "pimentao",
+            "keywords": [
+                "pimentao",
+                "pimentao verde"
+            ]
+        },
+        {
+            "id": "pimentao-colorido",
+            "keywords": [
+                "pimentao vermelho",
+                "pimentao amarelo",
+                "pimentao colorido"
+            ]
+        },
+        {
+            "id": "milho",
+            "keywords": [
+                "milho",
+                "espiga"
+            ]
+        },
+        {
+            "id": "brocolis",
+            "keywords": [
+                "brocolis"
+            ]
+        },
+        {
+            "id": "mel",
+            "keywords": [
+                "mel"
+            ]
+        },
+        {
+            "id": "cafe",
+            "keywords": [
+                "cafe"
+            ]
+        },
+        {
+            "id": "arroz",
+            "keywords": [
+                "arroz"
+            ]
+        },
+        {
+            "id": "feijao",
+            "keywords": [
+                "feijao",
+                "lentilha",
+                "grao de bico"
+            ]
+        },
+        {
+            "id": "macarrao",
+            "keywords": [
+                "macarrao",
+                "miojos",
+                "espaguete",
+                "parafuso",
+                "penne",
+                "massa",
+                "miojo",
+                "lamen"
+            ]
+        },
+        {
+            "id": "molho",
+            "keywords": [
+                "molho",
+                "extrato",
+                "catchup",
+                "ketchup",
+                "mostarda"
+            ]
+        },
+        {
+            "id": "maionese",
+            "keywords": [
+                "maionese"
+            ]
+        },
+        {
+            "id": "enlatado",
+            "keywords": [
+                "lata",
+                "enlatado",
+                "sardinha",
+                "atum",
+                "milho em lata",
+                "ervilha p sopa",
+                "azeitona"
+            ]
+        },
+        {
+            "id": "biscoito",
+            "keywords": [
+                "biscoito",
+                "rosquinha",
+                "bolacha",
+                "cookies",
+                "cookie",
+                "torrada",
+                "wafer"
+            ]
+        },
+        {
+            "id": "chocolate",
+            "keywords": [
+                "chocolate",
+                "bombom",
+                "nescau",
+                "achocolatado",
+                "toddy"
+            ]
+        },
+        {
+            "id": "salgadinho",
+            "keywords": [
+                "salgadinho",
+                "batata palha",
+                "chips",
+                "torcida"
+            ]
+        },
+        {
+            "id": "pao",
+            "keywords": [
+                "pao",
+                "paes",
+                "bisnaguinha",
+                "bisnaga",
+                "pao de forma"
+            ]
+        },
+        {
+            "id": "leite",
+            "keywords": [
+                "leite",
+                "leite em po",
+                "leite condensado",
+                "creme de leite",
+                "leite de coco"
+            ]
+        },
+        {
+            "id": "queijo",
+            "keywords": [
+                "queijo",
+                "parmesao",
+                "mussarela",
+                "polenguinho"
+            ]
+        },
+        {
+            "id": "manteiga",
+            "keywords": [
+                "manteiga",
+                "margarina",
+                "requeijao"
+            ]
+        },
+        {
+            "id": "sal",
+            "keywords": [
+                "sal",
+                "sal grosso",
+                "condimentos",
+                "caldo",
+                "sazon",
+                "canela",
+                "fermento",
+                "gelatina",
+                "tempero pronto"
+            ]
+        },
+        {
+            "id": "refrigerante",
+            "keywords": [
+                "refrigerante",
+                "refri",
+                "coca",
+                "guarana",
+                "sprite",
+                "schweppes",
+                "tonica",
+                "gatorade",
+                "h2o",
+                "h20",
+                "del vale",
+                "guaracamp"
+            ]
+        },
+        {
+            "id": "agua",
+            "keywords": [
+                "agua",
+                "aguas",
+                "agua com gas",
+                "agua sem gas"
+            ]
+        },
+        {
+            "id": "papel-higienico",
+            "keywords": [
+                "papel higienico",
+                "papel toalha",
+                "guardanapo"
+            ]
+        },
+        {
+            "id": "detergente",
+            "keywords": [
+                "detergente",
+                "multiuso",
+                "desinfetante",
+                "agua sanitaria",
+                "alcool",
+                "amaciante"
+            ]
+        },
+        {
+            "id": "esponja",
+            "keywords": [
+                "esponja",
+                "bombril",
+                "la de aco"
+            ]
+        },
+        {
+            "id": "sabonete",
+            "keywords": [
+                "sabonete",
+                "shampoo",
+                "desodorante"
+            ]
+        },
+        {
+            "id": "pasta-de-dente",
+            "keywords": [
+                "pasta de dente",
+                "creme dental",
+                "escova de dente"
+            ]
+        },
+        {
+            "id": "fosforo",
+            "keywords": [
+                "fosforo",
+                "fosforos"
+            ]
+        },
+        {
+            "id": "pipoca",
+            "keywords": [
+                "pipoca",
+                "milho de pipoca"
+            ]
+        },
+        {
+            "id": "salsicha",
+            "keywords": [
+                "salsicha",
+                "linguica"
+            ]
+        },
+        {
+            "id": "cat-frutas",
+            "keywords": [
+                "frutas",
+                "fruta"
+            ]
+        },
+        {
+            "id": "cat-legumes",
+            "keywords": [
+                "legumes",
+                "legume",
+                "raizes",
+                "tuberculos"
+            ]
+        },
+        {
+            "id": "cat-verduras",
+            "keywords": [
+                "verduras",
+                "verdura",
+                "folhas",
+                "folhosas",
+                "hortalicas"
+            ]
+        },
+        {
+            "id": "cat-temperos",
+            "keywords": [
+                "temperos",
+                "tempero",
+                "ervas"
+            ]
+        },
+        {
+            "id": "cat-granja",
+            "keywords": [
+                "granja",
+                "ovos"
+            ]
+        },
+        {
+            "id": "cat-mercearia",
+            "keywords": [
+                "mercearia",
+                "secos",
+                "graos"
+            ]
+        },
+        {
+            "id": "cat-mercadinho",
+            "keywords": [
+                "mercadinho",
+                "mercado",
+                "mercadao",
+                "armazem",
+                "emporio"
+            ]
+        },
+        {
+            "id": "cat-laticinios",
+            "keywords": [
+                "laticinios",
+                "frios",
+                "leite",
+                "queijo"
+            ]
+        },
+        {
+            "id": "cat-padaria",
+            "keywords": [
+                "padaria",
+                "paes",
+                "pao"
+            ]
+        },
+        {
+            "id": "cat-bebidas",
+            "keywords": [
+                "bebidas",
+                "sucos",
+                "suco"
+            ]
+        },
+        {
+            "id": "cat-limpeza",
+            "keywords": [
+                "limpeza",
+                "higiene"
+            ]
+        },
+        {
+            "id": "cat-congelados",
+            "keywords": [
+                "congelados",
+                "geladeira",
+                "gelados",
+                "polpas"
+            ]
+        },
+        {
+            "id": "cat-acougue",
+            "keywords": [
+                "acougue",
+                "carnes",
+                "carne",
+                "frango",
+                "peixe"
+            ]
+        },
+        {
+            "id": "cat-promocao",
+            "keywords": [
+                "promocao",
+                "promocoes",
+                "oferta",
+                "ofertas",
+                "destaque"
+            ]
+        },
+        {
+            "id": "cat-organicos",
+            "keywords": [
+                "organicos",
+                "organico"
+            ]
+        },
+        {
+            "id": "cat-combo",
+            "keywords": [
+                "combo",
+                "kit",
+                "cesta"
+            ]
+        },
+        {
+            "id": "cat-outros",
+            "keywords": [
+                "outros",
+                "diversos",
+                "geral"
+            ]
+        }
     ];
 
-    /**
-     * @param {string} emoji
-     * @returns {string}
-     */
-    const emojiToExternalIconUrl = (emoji) => {
-        const codepoints = [...emoji]
-            .map(char => char.codePointAt(0).toString(16))
-            .filter(cp => cp !== 'fe0f')
-            .join('-');
+    /** @type {Array<{ id: string, kw: string, len: number }>} */
+    const ITEM_ICON_RULES = [];
+    /** @type {Array<{ id: string, kw: string, len: number }>} */
+    const CATEGORY_ICON_RULES = [];
 
-        return `https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/${codepoints}_3d.png`;
-    };
+    ICON_CATALOG.forEach(icon => {
+        if (icon.id.startsWith('cat-')) {
+            icon.keywords.forEach(kw => {
+                CATEGORY_ICON_RULES.push({ id: icon.id, kw, len: kw.length });
+            });
+        } else {
+            icon.keywords.forEach(kw => {
+                ITEM_ICON_RULES.push({ id: icon.id, kw, len: kw.length });
+            });
+        }
+    });
+
+    ITEM_ICON_RULES.sort((a, b) => b.len - a.len || a.kw.localeCompare(b.kw));
+    CATEGORY_ICON_RULES.sort((a, b) => b.len - a.len || a.kw.localeCompare(b.kw));
 
     // Casa por palavra inteira (com plural simples "s"/"es"), para que "sal" não case em "salada".
     /**
@@ -323,18 +1317,39 @@ document.addEventListener('DOMContentLoaded', () => {
         || paddedName.includes(` ${keyword}es `);
 
     /**
-     * @param {string} itemName
-     * @param {string} category
+     * @param {string | null | undefined} category
      * @returns {string}
      */
-    const getItemIconEmoji = (itemName, category) => {
-        const paddedName = ` ${normalizeText(itemName).replace(/[^a-z0-9]+/g, ' ').trim()} `;
-        const matchedRule = ITEM_ICON_RULES.find(rule =>
-            rule.keywords.some(keyword => matchesKeyword(paddedName, keyword))
-        );
+    const getCategoryIconUrl = (category) => {
+        if (!category) return 'icons/custom/cat-outros.svg';
+        const norm = normalizeText(category).replace(/[^a-z0-9]+/g, ' ').trim();
+        const padded = ` ${norm} `;
+        for (let i = 0; i < CATEGORY_ICON_RULES.length; i++) {
+            const rule = CATEGORY_ICON_RULES[i];
+            if (matchesKeyword(padded, rule.kw)) {
+                return `icons/custom/${rule.id}.svg`;
+            }
+        }
+        return 'icons/custom/cat-outros.svg';
+    };
 
-        if (matchedRule) return matchedRule.emoji;
-        return getCategoryIcon(category);
+    /**
+     * @param {string | null | undefined} name
+     * @param {string | null | undefined} category
+     * @returns {string}
+     */
+    const getItemIcon = (name, category) => {
+        if (name) {
+            const norm = normalizeText(name).replace(/[^a-z0-9]+/g, ' ').trim();
+            const padded = ` ${norm} `;
+            for (let i = 0; i < ITEM_ICON_RULES.length; i++) {
+                const rule = ITEM_ICON_RULES[i];
+                if (matchesKeyword(padded, rule.kw)) {
+                    return `icons/custom/${rule.id}.svg`;
+                }
+            }
+        }
+        return getCategoryIconUrl(category);
     };
 
     /**
@@ -456,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Parser Logic
     // O parser vive em parser.js (window.HortiParser) e é testável em Node: tests/parser.test.js.
-    const { parse: parseList, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, buildWhatsAppUrl } = window.HortiParser;
+    const { parse: parseList, createTemplateStore, canonUnit, itemKey, categoryKey, productId, levenshtein, buildWhatsAppUrl, getWhatsAppCategoryEmoji, getWhatsAppItemEmoji } = window.HortiParser;
 
     // Unidades do parser -> códigos exibidos no app e na mensagem.
     /** @type {Record<string, string>} */
@@ -1581,7 +2596,15 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.type = 'button';
             tab.dataset.category = cat;
             tab.className = `tab ${activeCategory === cat ? 'active' : ''}`;
-            tab.textContent = `${getCategoryIcon(cat)} ${cat}`;
+            const tabIcon = document.createElement('img');
+            tabIcon.src = getCategoryIconUrl(cat);
+            tabIcon.alt = '';
+            tabIcon.className = 'tab-icon';
+
+            const tabLabel = document.createElement('span');
+            tabLabel.textContent = cat;
+
+            tab.append(tabIcon, tabLabel);
             tab.onclick = () => {
                 activeCategory = cat;
                 renderTabs();
@@ -1606,8 +2629,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach(item => {
             const div = document.createElement('div');
             const itemClasses = ['item-row'];
-            const itemEmoji = getItemIconEmoji(item.nome, item.categoria);
-            const itemIconUrl = emojiToExternalIconUrl(itemEmoji);
+            const itemIconUrl = getItemIcon(item.nome, item.categoria);
             if (item.selecionado) itemClasses.push('selected');
             if (item.promocao) itemClasses.push('promo-item');
             div.className = itemClasses.join(' ');
@@ -1624,10 +2646,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = document.createElement('img');
             icon.className = 'item-icon';
             icon.src = itemIconUrl;
-            icon.alt = itemEmoji;
+            icon.alt = '';
             icon.loading = 'lazy';
             icon.decoding = 'async';
-            icon.referrerPolicy = 'no-referrer';
 
             const nameText = document.createElement('span');
             nameText.className = 'item-name-text';
@@ -1795,8 +2816,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div');
             div.className = 'item-row unavailable-item';
 
-            const itemEmoji = getItemIconEmoji(entry.name, entry.category);
-            const itemIconUrl = emojiToExternalIconUrl(itemEmoji);
+            const itemIconUrl = getItemIcon(entry.name, entry.category);
 
             const check = document.createElement('input');
             check.type = 'checkbox';
@@ -1810,10 +2830,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = document.createElement('img');
             icon.className = 'item-icon';
             icon.src = itemIconUrl;
-            icon.alt = itemEmoji;
+            icon.alt = '';
             icon.loading = 'lazy';
             icon.decoding = 'async';
-            icon.referrerPolicy = 'no-referrer';
 
             const nameText = document.createElement('span');
             nameText.className = 'item-name-text';
@@ -1978,11 +2997,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const categories = [...new Set(items.map(i => i.categoria))];
         categories.forEach(cat => {
-            msg += `*${toSingleLine(cat).toUpperCase()}*\n`;
+            const catEmoji = getWhatsAppCategoryEmoji(cat);
+            const catUpper = toSingleLine(cat).toUpperCase();
+            msg += `${catEmoji} *${catUpper}*\n`;
             items.filter(i => i.categoria === cat).forEach(item => {
+                const itemEmoji = getWhatsAppItemEmoji(item.nome);
+                const prefix = itemEmoji ? `${itemEmoji} ` : '';
                 if (item.unidade === 'kg' && item.modo === 'unit' && item.unitWeight) {
                     const est = formatUnitEstimate(item);
-                    msg += `- ${toSingleLine(item.nome)}, ${est.msgText}\n`;
+                    msg += `- ${prefix}${toSingleLine(item.nome)}, ${est.msgText}\n`;
                 } else {
                     const itemTotal = item.preco * item.quantidade;
                     // Combo: formato explícito "N combo(s)", para o fornecedor não ler como N unidades (ADR-011).
@@ -1991,7 +3014,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const qty = isCombo
                         ? `${qtyStr} ${item.quantidade === 1 ? 'combo' : 'combos'}`
                         : `${qtyStr}${item.unidade}`;
-                    msg += `- ${toSingleLine(item.nome)}, ${qty} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+                    msg += `- ${prefix}${toSingleLine(item.nome)}, ${qty} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
                 }
             });
             msg += '\n';

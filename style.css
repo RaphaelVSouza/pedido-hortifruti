@@ -426,6 +426,9 @@ button:focus-visible {
 }
 
 .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     border: 1px solid transparent;
     border-radius: 999px;
     padding: 8px 14px;
@@ -434,6 +437,13 @@ button:focus-visible {
     color: #475569;
     background: #edf2f7;
     font-weight: 700;
+}
+
+.tab-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .tab:hover {
@@ -1370,6 +1380,12 @@ button:focus-visible {
     .tab {
         padding: 7px 12px;
         font-size: 0.82rem;
+        gap: 5px;
+    }
+
+    .tab-icon {
+        width: 16px;
+        height: 16px;
     }
 
     .step-badge {

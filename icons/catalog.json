@@ -1,0 +1,1332 @@
+{
+  "version": 1,
+  "icons": [
+    {
+      "id": "maracuja",
+      "file": "custom/maracuja.svg",
+      "group": "fruta",
+      "keywords": [
+        "maracuja"
+      ]
+    },
+    {
+      "id": "mamao",
+      "file": "custom/mamao.svg",
+      "group": "fruta",
+      "keywords": [
+        "mamao",
+        "papaia",
+        "papaya",
+        "formosa"
+      ]
+    },
+    {
+      "id": "goiaba",
+      "file": "custom/goiaba.svg",
+      "group": "fruta",
+      "keywords": [
+        "goiaba"
+      ]
+    },
+    {
+      "id": "caqui",
+      "file": "custom/caqui.svg",
+      "group": "fruta",
+      "keywords": [
+        "caqui",
+        "kaki"
+      ]
+    },
+    {
+      "id": "acerola",
+      "file": "custom/acerola.svg",
+      "group": "fruta",
+      "keywords": [
+        "acerola"
+      ]
+    },
+    {
+      "id": "pitaya",
+      "file": "custom/pitaya.svg",
+      "group": "fruta",
+      "keywords": [
+        "pitaya",
+        "pitaia"
+      ]
+    },
+    {
+      "id": "jabuticaba",
+      "file": "custom/jabuticaba.svg",
+      "group": "fruta",
+      "keywords": [
+        "jabuticaba",
+        "jaboticaba"
+      ]
+    },
+    {
+      "id": "graviola",
+      "file": "custom/graviola.svg",
+      "group": "fruta",
+      "keywords": [
+        "graviola"
+      ]
+    },
+    {
+      "id": "carambola",
+      "file": "custom/carambola.svg",
+      "group": "fruta",
+      "keywords": [
+        "carambola"
+      ]
+    },
+    {
+      "id": "figo",
+      "file": "custom/figo.svg",
+      "group": "fruta",
+      "keywords": [
+        "figo"
+      ]
+    },
+    {
+      "id": "ameixa",
+      "file": "custom/ameixa.svg",
+      "group": "fruta",
+      "keywords": [
+        "ameixa"
+      ]
+    },
+    {
+      "id": "limao-taiti",
+      "file": "custom/limao-taiti.svg",
+      "group": "fruta",
+      "keywords": [
+        "limao",
+        "taiti",
+        "tahiti",
+        "lima da persia"
+      ]
+    },
+    {
+      "id": "caju",
+      "file": "custom/caju.svg",
+      "group": "fruta",
+      "keywords": [
+        "caju"
+      ]
+    },
+    {
+      "id": "roma",
+      "file": "custom/roma.svg",
+      "group": "fruta",
+      "keywords": [
+        "roma"
+      ]
+    },
+    {
+      "id": "chuchu",
+      "file": "custom/chuchu.svg",
+      "group": "legume",
+      "keywords": [
+        "chuchu"
+      ]
+    },
+    {
+      "id": "mandioca",
+      "file": "custom/mandioca.svg",
+      "group": "legume",
+      "keywords": [
+        "mandioca",
+        "aipim",
+        "macaxeira"
+      ]
+    },
+    {
+      "id": "quiabo",
+      "file": "custom/quiabo.svg",
+      "group": "legume",
+      "keywords": [
+        "quiabo"
+      ]
+    },
+    {
+      "id": "jilo",
+      "file": "custom/jilo.svg",
+      "group": "legume",
+      "keywords": [
+        "jilo"
+      ]
+    },
+    {
+      "id": "maxixe",
+      "file": "custom/maxixe.svg",
+      "group": "legume",
+      "keywords": [
+        "maxixe"
+      ]
+    },
+    {
+      "id": "abobrinha",
+      "file": "custom/abobrinha.svg",
+      "group": "legume",
+      "keywords": [
+        "abobrinha",
+        "abobora italiana"
+      ]
+    },
+    {
+      "id": "beterraba",
+      "file": "custom/beterraba.svg",
+      "group": "legume",
+      "keywords": [
+        "beterraba"
+      ]
+    },
+    {
+      "id": "inhame",
+      "file": "custom/inhame.svg",
+      "group": "legume",
+      "keywords": [
+        "inhame",
+        "cara"
+      ]
+    },
+    {
+      "id": "batata-doce",
+      "file": "custom/batata-doce.svg",
+      "group": "legume",
+      "keywords": [
+        "batata doce",
+        "batata-doce"
+      ]
+    },
+    {
+      "id": "mandioquinha",
+      "file": "custom/mandioquinha.svg",
+      "group": "legume",
+      "keywords": [
+        "mandioquinha",
+        "batata baroa",
+        "baroa",
+        "batata salsa"
+      ]
+    },
+    {
+      "id": "vagem",
+      "file": "custom/vagem.svg",
+      "group": "legume",
+      "keywords": [
+        "vagem",
+        "vajem"
+      ]
+    },
+    {
+      "id": "ervilha",
+      "file": "custom/ervilha.svg",
+      "group": "legume",
+      "keywords": [
+        "ervilha"
+      ]
+    },
+    {
+      "id": "abobora-cabotia",
+      "file": "custom/abobora-cabotia.svg",
+      "group": "legume",
+      "keywords": [
+        "cabotia",
+        "cabotian",
+        "abobora japonesa",
+        "kabocha"
+      ]
+    },
+    {
+      "id": "abobora-moranga",
+      "file": "custom/abobora-moranga.svg",
+      "group": "legume",
+      "keywords": [
+        "moranga",
+        "abobora"
+      ]
+    },
+    {
+      "id": "gengibre",
+      "file": "custom/gengibre.svg",
+      "group": "legume",
+      "keywords": [
+        "gengibre"
+      ]
+    },
+    {
+      "id": "rabanete",
+      "file": "custom/rabanete.svg",
+      "group": "legume",
+      "keywords": [
+        "rabanete"
+      ]
+    },
+    {
+      "id": "cogumelo",
+      "file": "custom/cogumelo.svg",
+      "group": "legume",
+      "keywords": [
+        "cogumelo",
+        "champignon",
+        "shimeji",
+        "shitake",
+        "shiitake",
+        "paris"
+      ]
+    },
+    {
+      "id": "couve",
+      "file": "custom/couve.svg",
+      "group": "verdura",
+      "keywords": [
+        "couve"
+      ]
+    },
+    {
+      "id": "alface",
+      "file": "custom/alface.svg",
+      "group": "verdura",
+      "keywords": [
+        "alface"
+      ]
+    },
+    {
+      "id": "rucula",
+      "file": "custom/rucula.svg",
+      "group": "verdura",
+      "keywords": [
+        "rucula"
+      ]
+    },
+    {
+      "id": "agriao",
+      "file": "custom/agriao.svg",
+      "group": "verdura",
+      "keywords": [
+        "agriao"
+      ]
+    },
+    {
+      "id": "espinafre",
+      "file": "custom/espinafre.svg",
+      "group": "verdura",
+      "keywords": [
+        "espinafre"
+      ]
+    },
+    {
+      "id": "repolho",
+      "file": "custom/repolho.svg",
+      "group": "verdura",
+      "keywords": [
+        "repolho"
+      ]
+    },
+    {
+      "id": "repolho-roxo",
+      "file": "custom/repolho-roxo.svg",
+      "group": "verdura",
+      "keywords": [
+        "repolho roxo"
+      ]
+    },
+    {
+      "id": "couve-flor",
+      "file": "custom/couve-flor.svg",
+      "group": "verdura",
+      "keywords": [
+        "couve flor",
+        "couve-flor",
+        "couveflor"
+      ]
+    },
+    {
+      "id": "acelga",
+      "file": "custom/acelga.svg",
+      "group": "verdura",
+      "keywords": [
+        "acelga"
+      ]
+    },
+    {
+      "id": "salsinha",
+      "file": "custom/salsinha.svg",
+      "group": "tempero",
+      "keywords": [
+        "salsinha",
+        "salsa"
+      ]
+    },
+    {
+      "id": "cebolinha",
+      "file": "custom/cebolinha.svg",
+      "group": "tempero",
+      "keywords": [
+        "cebolinha"
+      ]
+    },
+    {
+      "id": "cheiro-verde",
+      "file": "custom/cheiro-verde.svg",
+      "group": "tempero",
+      "keywords": [
+        "cheiro verde",
+        "cheiro-verde"
+      ]
+    },
+    {
+      "id": "coentro",
+      "file": "custom/coentro.svg",
+      "group": "tempero",
+      "keywords": [
+        "coentro"
+      ]
+    },
+    {
+      "id": "manjericao",
+      "file": "custom/manjericao.svg",
+      "group": "tempero",
+      "keywords": [
+        "manjericao",
+        "alfavaca"
+      ]
+    },
+    {
+      "id": "hortela",
+      "file": "custom/hortela.svg",
+      "group": "tempero",
+      "keywords": [
+        "hortela",
+        "menta"
+      ]
+    },
+    {
+      "id": "alecrim",
+      "file": "custom/alecrim.svg",
+      "group": "tempero",
+      "keywords": [
+        "alecrim"
+      ]
+    },
+    {
+      "id": "cebola-roxa",
+      "file": "custom/cebola-roxa.svg",
+      "group": "tempero",
+      "keywords": [
+        "cebola roxa"
+      ]
+    },
+    {
+      "id": "ovos-cartela",
+      "file": "custom/ovos-cartela.svg",
+      "group": "granja",
+      "keywords": [
+        "ovos",
+        "ovo",
+        "cartela",
+        "duzia de ovos"
+      ]
+    },
+    {
+      "id": "tamara",
+      "file": "custom/tamara.svg",
+      "group": "fruta",
+      "keywords": [
+        "tamara",
+        "tamaras"
+      ]
+    },
+    {
+      "id": "caja",
+      "file": "custom/caja.svg",
+      "group": "fruta",
+      "keywords": [
+        "caja",
+        "taperaba"
+      ]
+    },
+    {
+      "id": "lichia",
+      "file": "custom/lichia.svg",
+      "group": "fruta",
+      "keywords": [
+        "lichia",
+        "lichias",
+        "lichi"
+      ]
+    },
+    {
+      "id": "chicoria",
+      "file": "custom/chicoria.svg",
+      "group": "verdura",
+      "keywords": [
+        "chicoria",
+        "escarola",
+        "almeirao"
+      ]
+    },
+    {
+      "id": "louro",
+      "file": "custom/louro.svg",
+      "group": "tempero",
+      "keywords": [
+        "louro"
+      ]
+    },
+    {
+      "id": "pimentas",
+      "file": "custom/pimentas.svg",
+      "group": "tempero",
+      "keywords": [
+        "pimentas",
+        "pimenta",
+        "pimenta dedo de moca",
+        "pimenta de cheiro",
+        "pimenta biquinho",
+        "malagueta"
+      ]
+    },
+    {
+      "id": "suco-garrafa",
+      "file": "custom/suco-garrafa.svg",
+      "group": "pronto",
+      "keywords": [
+        "suco",
+        "sucos",
+        "refresco",
+        "cha",
+        "agua de coco"
+      ]
+    },
+    {
+      "id": "salada-de-frutas",
+      "file": "custom/salada-de-frutas.svg",
+      "group": "pronto",
+      "keywords": [
+        "salada de frutas",
+        "salada de fruta"
+      ]
+    },
+    {
+      "id": "legumes-picados",
+      "file": "custom/legumes-picados.svg",
+      "group": "pronto",
+      "keywords": [
+        "legumes picados",
+        "picados",
+        "sopa pronta",
+        "mix de legumes"
+      ]
+    },
+    {
+      "id": "acucar",
+      "file": "custom/acucar.svg",
+      "group": "mercearia",
+      "keywords": [
+        "acucar"
+      ]
+    },
+    {
+      "id": "farinha",
+      "file": "custom/farinha.svg",
+      "group": "mercearia",
+      "keywords": [
+        "farinha",
+        "farofa",
+        "fuba",
+        "flocao",
+        "aveia",
+        "polvilho",
+        "tapioca",
+        "mistura p bolo",
+        "mistura para bolo"
+      ]
+    },
+    {
+      "id": "sabao-em-po",
+      "file": "custom/sabao-em-po.svg",
+      "group": "limpeza",
+      "keywords": [
+        "sabao po",
+        "sabao em po",
+        "lava roupas"
+      ]
+    },
+    {
+      "id": "inseticida",
+      "file": "custom/inseticida.svg",
+      "group": "limpeza",
+      "keywords": [
+        "baygon",
+        "inseticida",
+        "sbp",
+        "raid",
+        "repelente"
+      ]
+    },
+    {
+      "id": "oleo",
+      "file": "custom/oleo.svg",
+      "group": "mercearia",
+      "keywords": [
+        "oleo",
+        "azeite",
+        "vinagre"
+      ]
+    },
+    {
+      "id": "banana",
+      "file": "custom/banana.svg",
+      "group": "fruta",
+      "keywords": [
+        "banana",
+        "bananas"
+      ]
+    },
+    {
+      "id": "maca",
+      "file": "custom/maca.svg",
+      "group": "fruta",
+      "keywords": [
+        "maca",
+        "macas"
+      ]
+    },
+    {
+      "id": "maca-verde",
+      "file": "custom/maca-verde.svg",
+      "group": "fruta",
+      "keywords": [
+        "maca verde",
+        "granny smith"
+      ]
+    },
+    {
+      "id": "pera",
+      "file": "custom/pera.svg",
+      "group": "fruta",
+      "keywords": [
+        "pera",
+        "peras"
+      ]
+    },
+    {
+      "id": "uva",
+      "file": "custom/uva.svg",
+      "group": "fruta",
+      "keywords": [
+        "uva",
+        "uvas"
+      ]
+    },
+    {
+      "id": "laranja",
+      "file": "custom/laranja.svg",
+      "group": "fruta",
+      "keywords": [
+        "laranja",
+        "laranjas"
+      ]
+    },
+    {
+      "id": "mexerica",
+      "file": "custom/mexerica.svg",
+      "group": "fruta",
+      "keywords": [
+        "mexerica",
+        "tangerina",
+        "ponkan",
+        "bergamota",
+        "murcote",
+        "murcott"
+      ]
+    },
+    {
+      "id": "limao-siciliano",
+      "file": "custom/limao-siciliano.svg",
+      "group": "fruta",
+      "keywords": [
+        "limao siciliano",
+        "siciliano"
+      ]
+    },
+    {
+      "id": "melancia",
+      "file": "custom/melancia.svg",
+      "group": "fruta",
+      "keywords": [
+        "melancia"
+      ]
+    },
+    {
+      "id": "melao",
+      "file": "custom/melao.svg",
+      "group": "fruta",
+      "keywords": [
+        "melao",
+        "pele de sapo"
+      ]
+    },
+    {
+      "id": "abacaxi",
+      "file": "custom/abacaxi.svg",
+      "group": "fruta",
+      "keywords": [
+        "abacaxi"
+      ]
+    },
+    {
+      "id": "morango",
+      "file": "custom/morango.svg",
+      "group": "fruta",
+      "keywords": [
+        "morango",
+        "morangos"
+      ]
+    },
+    {
+      "id": "manga",
+      "file": "custom/manga.svg",
+      "group": "fruta",
+      "keywords": [
+        "manga",
+        "mangas",
+        "palmer",
+        "tommy"
+      ]
+    },
+    {
+      "id": "abacate",
+      "file": "custom/abacate.svg",
+      "group": "fruta",
+      "keywords": [
+        "abacate",
+        "avocado"
+      ]
+    },
+    {
+      "id": "kiwi",
+      "file": "custom/kiwi.svg",
+      "group": "fruta",
+      "keywords": [
+        "kiwi"
+      ]
+    },
+    {
+      "id": "coco",
+      "file": "custom/coco.svg",
+      "group": "fruta",
+      "keywords": [
+        "coco",
+        "coco seco",
+        "coco verde"
+      ]
+    },
+    {
+      "id": "pessego",
+      "file": "custom/pessego.svg",
+      "group": "fruta",
+      "keywords": [
+        "pessego",
+        "nectarina"
+      ]
+    },
+    {
+      "id": "cereja",
+      "file": "custom/cereja.svg",
+      "group": "fruta",
+      "keywords": [
+        "cereja",
+        "cerejas"
+      ]
+    },
+    {
+      "id": "mirtilo",
+      "file": "custom/mirtilo.svg",
+      "group": "fruta",
+      "keywords": [
+        "mirtilo",
+        "blueberry"
+      ]
+    },
+    {
+      "id": "tomate",
+      "file": "custom/tomate.svg",
+      "group": "legume",
+      "keywords": [
+        "tomate",
+        "tomates"
+      ]
+    },
+    {
+      "id": "tomate-cereja",
+      "file": "custom/tomate-cereja.svg",
+      "group": "legume",
+      "keywords": [
+        "tomatinho",
+        "tomate cereja",
+        "tomate grape",
+        "sweet grape"
+      ]
+    },
+    {
+      "id": "batata",
+      "file": "custom/batata.svg",
+      "group": "legume",
+      "keywords": [
+        "batata",
+        "batatas",
+        "asterix",
+        "batata inglesa"
+      ]
+    },
+    {
+      "id": "cenoura",
+      "file": "custom/cenoura.svg",
+      "group": "legume",
+      "keywords": [
+        "cenoura",
+        "cenouras"
+      ]
+    },
+    {
+      "id": "cebola",
+      "file": "custom/cebola.svg",
+      "group": "legume",
+      "keywords": [
+        "cebola",
+        "cebolas"
+      ]
+    },
+    {
+      "id": "alho",
+      "file": "custom/alho.svg",
+      "group": "legume",
+      "keywords": [
+        "alho"
+      ]
+    },
+    {
+      "id": "berinjela",
+      "file": "custom/berinjela.svg",
+      "group": "legume",
+      "keywords": [
+        "berinjela"
+      ]
+    },
+    {
+      "id": "pepino",
+      "file": "custom/pepino.svg",
+      "group": "legume",
+      "keywords": [
+        "pepino"
+      ]
+    },
+    {
+      "id": "pimentao",
+      "file": "custom/pimentao.svg",
+      "group": "legume",
+      "keywords": [
+        "pimentao",
+        "pimentao verde"
+      ]
+    },
+    {
+      "id": "pimentao-colorido",
+      "file": "custom/pimentao-colorido.svg",
+      "group": "legume",
+      "keywords": [
+        "pimentao vermelho",
+        "pimentao amarelo",
+        "pimentao colorido"
+      ]
+    },
+    {
+      "id": "milho",
+      "file": "custom/milho.svg",
+      "group": "legume",
+      "keywords": [
+        "milho",
+        "espiga"
+      ]
+    },
+    {
+      "id": "brocolis",
+      "file": "custom/brocolis.svg",
+      "group": "verdura",
+      "keywords": [
+        "brocolis"
+      ]
+    },
+    {
+      "id": "mel",
+      "file": "custom/mel.svg",
+      "group": "granja",
+      "keywords": [
+        "mel"
+      ]
+    },
+    {
+      "id": "cafe",
+      "file": "custom/cafe.svg",
+      "group": "mercearia",
+      "keywords": [
+        "cafe"
+      ]
+    },
+    {
+      "id": "arroz",
+      "file": "custom/arroz.svg",
+      "group": "mercearia",
+      "keywords": [
+        "arroz"
+      ]
+    },
+    {
+      "id": "feijao",
+      "file": "custom/feijao.svg",
+      "group": "mercearia",
+      "keywords": [
+        "feijao",
+        "lentilha",
+        "grao de bico"
+      ]
+    },
+    {
+      "id": "macarrao",
+      "file": "custom/macarrao.svg",
+      "group": "mercearia",
+      "keywords": [
+        "macarrao",
+        "miojos",
+        "espaguete",
+        "parafuso",
+        "penne",
+        "massa",
+        "miojo",
+        "lamen"
+      ]
+    },
+    {
+      "id": "molho",
+      "file": "custom/molho.svg",
+      "group": "mercearia",
+      "keywords": [
+        "molho",
+        "extrato",
+        "catchup",
+        "ketchup",
+        "mostarda"
+      ]
+    },
+    {
+      "id": "maionese",
+      "file": "custom/maionese.svg",
+      "group": "mercearia",
+      "keywords": [
+        "maionese"
+      ]
+    },
+    {
+      "id": "enlatado",
+      "file": "custom/enlatado.svg",
+      "group": "mercearia",
+      "keywords": [
+        "lata",
+        "enlatado",
+        "sardinha",
+        "atum",
+        "milho em lata",
+        "ervilha p sopa",
+        "azeitona"
+      ]
+    },
+    {
+      "id": "biscoito",
+      "file": "custom/biscoito.svg",
+      "group": "mercearia",
+      "keywords": [
+        "biscoito",
+        "rosquinha",
+        "bolacha",
+        "cookies",
+        "cookie",
+        "torrada",
+        "wafer"
+      ]
+    },
+    {
+      "id": "chocolate",
+      "file": "custom/chocolate.svg",
+      "group": "mercearia",
+      "keywords": [
+        "chocolate",
+        "bombom",
+        "nescau",
+        "achocolatado",
+        "toddy"
+      ]
+    },
+    {
+      "id": "salgadinho",
+      "file": "custom/salgadinho.svg",
+      "group": "mercearia",
+      "keywords": [
+        "salgadinho",
+        "batata palha",
+        "chips",
+        "torcida"
+      ]
+    },
+    {
+      "id": "pao",
+      "file": "custom/pao.svg",
+      "group": "padaria",
+      "keywords": [
+        "pao",
+        "paes",
+        "bisnaguinha",
+        "bisnaga",
+        "pao de forma"
+      ]
+    },
+    {
+      "id": "leite",
+      "file": "custom/leite.svg",
+      "group": "laticinio",
+      "keywords": [
+        "leite",
+        "leite em po",
+        "leite condensado",
+        "creme de leite",
+        "leite de coco"
+      ]
+    },
+    {
+      "id": "queijo",
+      "file": "custom/queijo.svg",
+      "group": "laticinio",
+      "keywords": [
+        "queijo",
+        "parmesao",
+        "mussarela",
+        "polenguinho"
+      ]
+    },
+    {
+      "id": "manteiga",
+      "file": "custom/manteiga.svg",
+      "group": "laticinio",
+      "keywords": [
+        "manteiga",
+        "margarina",
+        "requeijao"
+      ]
+    },
+    {
+      "id": "sal",
+      "file": "custom/sal.svg",
+      "group": "mercearia",
+      "keywords": [
+        "sal",
+        "sal grosso",
+        "condimentos",
+        "caldo",
+        "sazon",
+        "canela",
+        "fermento",
+        "gelatina",
+        "tempero pronto"
+      ]
+    },
+    {
+      "id": "refrigerante",
+      "file": "custom/refrigerante.svg",
+      "group": "bebida",
+      "keywords": [
+        "refrigerante",
+        "refri",
+        "coca",
+        "guarana",
+        "sprite",
+        "schweppes",
+        "tonica",
+        "gatorade",
+        "h2o",
+        "h20",
+        "del vale",
+        "guaracamp"
+      ]
+    },
+    {
+      "id": "agua",
+      "file": "custom/agua.svg",
+      "group": "bebida",
+      "keywords": [
+        "agua",
+        "aguas",
+        "agua com gas",
+        "agua sem gas"
+      ]
+    },
+    {
+      "id": "papel-higienico",
+      "file": "custom/papel-higienico.svg",
+      "group": "limpeza",
+      "keywords": [
+        "papel higienico",
+        "papel toalha",
+        "guardanapo"
+      ]
+    },
+    {
+      "id": "detergente",
+      "file": "custom/detergente.svg",
+      "group": "limpeza",
+      "keywords": [
+        "detergente",
+        "multiuso",
+        "desinfetante",
+        "agua sanitaria",
+        "alcool",
+        "amaciante"
+      ]
+    },
+    {
+      "id": "esponja",
+      "file": "custom/esponja.svg",
+      "group": "limpeza",
+      "keywords": [
+        "esponja",
+        "bombril",
+        "la de aco"
+      ]
+    },
+    {
+      "id": "sabonete",
+      "file": "custom/sabonete.svg",
+      "group": "higiene",
+      "keywords": [
+        "sabonete",
+        "shampoo",
+        "desodorante"
+      ]
+    },
+    {
+      "id": "pasta-de-dente",
+      "file": "custom/pasta-de-dente.svg",
+      "group": "higiene",
+      "keywords": [
+        "pasta de dente",
+        "creme dental",
+        "escova de dente"
+      ]
+    },
+    {
+      "id": "fosforo",
+      "file": "custom/fosforo.svg",
+      "group": "mercearia",
+      "keywords": [
+        "fosforo",
+        "fosforos"
+      ]
+    },
+    {
+      "id": "pipoca",
+      "file": "custom/pipoca.svg",
+      "group": "mercearia",
+      "keywords": [
+        "pipoca",
+        "milho de pipoca"
+      ]
+    },
+    {
+      "id": "salsicha",
+      "file": "custom/salsicha.svg",
+      "group": "mercearia",
+      "keywords": [
+        "salsicha",
+        "linguica"
+      ]
+    },
+    {
+      "id": "cat-frutas",
+      "file": "custom/cat-frutas.svg",
+      "group": "categoria",
+      "keywords": [
+        "frutas",
+        "fruta"
+      ]
+    },
+    {
+      "id": "cat-legumes",
+      "file": "custom/cat-legumes.svg",
+      "group": "categoria",
+      "keywords": [
+        "legumes",
+        "legume",
+        "raizes",
+        "tuberculos"
+      ]
+    },
+    {
+      "id": "cat-verduras",
+      "file": "custom/cat-verduras.svg",
+      "group": "categoria",
+      "keywords": [
+        "verduras",
+        "verdura",
+        "folhas",
+        "folhosas",
+        "hortalicas"
+      ]
+    },
+    {
+      "id": "cat-temperos",
+      "file": "custom/cat-temperos.svg",
+      "group": "categoria",
+      "keywords": [
+        "temperos",
+        "tempero",
+        "ervas"
+      ]
+    },
+    {
+      "id": "cat-granja",
+      "file": "custom/cat-granja.svg",
+      "group": "categoria",
+      "keywords": [
+        "granja",
+        "ovos"
+      ]
+    },
+    {
+      "id": "cat-mercearia",
+      "file": "custom/cat-mercearia.svg",
+      "group": "categoria",
+      "keywords": [
+        "mercearia",
+        "secos",
+        "graos"
+      ]
+    },
+    {
+      "id": "cat-mercadinho",
+      "file": "custom/cat-mercadinho.svg",
+      "group": "categoria",
+      "keywords": [
+        "mercadinho",
+        "mercado",
+        "mercadao",
+        "armazem",
+        "emporio"
+      ]
+    },
+    {
+      "id": "cat-laticinios",
+      "file": "custom/cat-laticinios.svg",
+      "group": "categoria",
+      "keywords": [
+        "laticinios",
+        "frios",
+        "leite",
+        "queijo"
+      ]
+    },
+    {
+      "id": "cat-padaria",
+      "file": "custom/cat-padaria.svg",
+      "group": "categoria",
+      "keywords": [
+        "padaria",
+        "paes",
+        "pao"
+      ]
+    },
+    {
+      "id": "cat-bebidas",
+      "file": "custom/cat-bebidas.svg",
+      "group": "categoria",
+      "keywords": [
+        "bebidas",
+        "sucos",
+        "suco"
+      ]
+    },
+    {
+      "id": "cat-limpeza",
+      "file": "custom/cat-limpeza.svg",
+      "group": "categoria",
+      "keywords": [
+        "limpeza",
+        "higiene"
+      ]
+    },
+    {
+      "id": "cat-congelados",
+      "file": "custom/cat-congelados.svg",
+      "group": "categoria",
+      "keywords": [
+        "congelados",
+        "geladeira",
+        "gelados",
+        "polpas"
+      ]
+    },
+    {
+      "id": "cat-acougue",
+      "file": "custom/cat-acougue.svg",
+      "group": "categoria",
+      "keywords": [
+        "acougue",
+        "carnes",
+        "carne",
+        "frango",
+        "peixe"
+      ]
+    },
+    {
+      "id": "cat-promocao",
+      "file": "custom/cat-promocao.svg",
+      "group": "categoria",
+      "keywords": [
+        "promocao",
+        "promocoes",
+        "oferta",
+        "ofertas",
+        "destaque"
+      ]
+    },
+    {
+      "id": "cat-organicos",
+      "file": "custom/cat-organicos.svg",
+      "group": "categoria",
+      "keywords": [
+        "organicos",
+        "organico"
+      ]
+    },
+    {
+      "id": "cat-combo",
+      "file": "custom/cat-combo.svg",
+      "group": "categoria",
+      "keywords": [
+        "combo",
+        "kit",
+        "cesta"
+      ]
+    },
+    {
+      "id": "cat-outros",
+      "file": "custom/cat-outros.svg",
+      "group": "categoria",
+      "keywords": [
+        "outros",
+        "diversos",
+        "geral"
+      ]
+    }
+  ]
+}

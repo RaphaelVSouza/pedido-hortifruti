@@ -95,7 +95,9 @@ O carrinho (`hortifruti_cart_v1`) é indexado por `productId = categoryKey + '|'
 
 ## Ícones
 
-`ITEM_ICON_RULES` mapeia palavras-chave (sem acento, minúsculas) para emoji, com 50 regras. **A primeira regra que casa vence**, então a ordem importa. O match é por palavra inteira (`matchesKeyword`, aceita plural com `s`/`es`; hífen e pontuação viram espaço), logo `sal` não casa em `salada` nem `cha` em `chantilly`. Variantes que não são plural (`pao` vs `paozinho`) precisam de keyword própria. Sem match, usa `getCategoryIcon`. O emoji vira um PNG 3D de `cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode` (`emojiToExternalIconUrl`), então os ícones exigem internet.
+Ícones próprios no site, emojis nativos na mensagem do WhatsApp, sem CDN (ADR-012):
+- **No site:** SOMENTE ícones flat próprios locais em `icons/custom/<id>.svg`, sem emoji e sem CDN. Baseados em `icons/catalog.json` (137 SVGs locais, incluindo 17 categorias `cat-*` e fallback `cat-outros.svg`). O match é por palavra inteira com plural (`matchesKeyword`), **palavra-chave mais longa primeiro** (`repolho roxo` antes de `repolho`, `batata doce` antes de `batata`, `maca verde` antes de `maca`, `agua de coco` antes de `agua`). As tags `<img>` dos cards e abas usam `alt=""`.
+- **Na mensagem do WhatsApp:** SOMENTE emojis nativos conforme `icons/whatsapp-emoji.json` (apenas emojis até Unicode 14 para suporte a aparelhos antigos). Cabeçalho de categoria sempre tem emoji (`🍉 *FRUTAS*`, fallback `📦`). Item só tem emoji se casar; se não casar, sai sem emoji. A lógica é exposta por funções puras em `HortiParser` (`getWhatsAppCategoryEmoji` e `getWhatsAppItemEmoji`).
 
 ## Mensagem de pedido
 
@@ -122,7 +124,7 @@ Mudança, aprovação, riscos e incidentes seguem `docs/GOVERNANCA.md`. Regra cu
 
 ## Armadilhas conhecidas
 
-- O texto importado não é confiável. `renderItems` monta o DOM com `createElement`/`textContent`; não volte a usar `innerHTML` com dados do parser. Há também uma CSP via `<meta>` em `index.html` (`script-src 'self'`, `style-src 'self'`, `img-src` só `self` e `cdn.jsdelivr.net`): não adicione `<script>`/`<style>` inline, atributos `on*` nem `style="..."` no HTML. Atribuir `el.style.x` por JS é permitido.
+- O texto importado não é confiável. `renderItems` monta o DOM com `createElement`/`textContent`; não volte a usar `innerHTML` com dados do parser. Há também uma CSP via `<meta>` em `index.html` (`script-src 'self'`, `style-src 'self'`, `img-src 'self'`): não adicione `<script>`/`<style>` inline, atributos `on*` nem `style="..."` no HTML. Atribuir `el.style.x` por JS é permitido.
 - O carrinho (`hortifruti_cart_v1`) é indexado por `productId` (`categoryKey + '|' + itemKey`): itens de mesmo nome em categorias diferentes não colidem, mas dois itens de mesma `itemKey` na mesma categoria compartilham o mesmo `productId`.
 - Leia objetos do `localStorage` sempre via `readStoredObject(key, fallback)`: ele tolera valor ausente, corrompido ou de tipo errado. Não use `JSON.parse(localStorage.getItem(...))` direto. A quantidade restaurada do carrinho só é aceita se for número finito >= 0.
 - Mexer no CSS exige conferir 360px; houve vários commits de correção de overflow nessa largura.

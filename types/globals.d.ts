@@ -188,6 +188,8 @@ interface HortiParserAPI {
   productId(category: string | null | undefined, name: string, packQty?: number | null): string;
   levenshtein(a: string, b: string): number;
   buildWhatsAppUrl(phone: string | null | undefined, message: string): string;
+  getWhatsAppCategoryEmoji(category: string | null | undefined): string;
+  getWhatsAppItemEmoji(name: string | null | undefined): string;
   _internals: {
     UNIT: string;
     CANDIDATE_RE: RegExp;

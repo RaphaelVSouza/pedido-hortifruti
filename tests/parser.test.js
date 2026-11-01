@@ -593,5 +593,58 @@ Caju (bdj) ----> 9 conto`;
   console.log((!errs.length ? "OK  " : "FAIL ") + "T - buildWhatsAppUrl com sanitização de telefone e caracteres especiais (ADR-011)");
 }
 
-console.log(`\n${CORPUS.length + 4 + 8 - fail}/${CORPUS.length + 4 + 8} cenários OK, ${total} itens verificados`);
+
+// Scenario U: emojis WhatsApp e segurança dos SVGs (ADR-012)
+{
+  const errs = [];
+
+  // 1. Escolha de emoji do WhatsApp
+  const tests = [
+    { fn: () => P.getWhatsAppItemEmoji('Maçã verde'), expected: '🍏', desc: 'Maçã verde -> 🍏' },
+    { fn: () => P.getWhatsAppItemEmoji('Maçã gala'), expected: '🍎', desc: 'Maçã gala -> 🍎' },
+    { fn: () => P.getWhatsAppItemEmoji('Chuchu'), expected: '', desc: 'Chuchu -> ""' },
+    { fn: () => P.getWhatsAppCategoryEmoji('LEGUMES'), expected: '🥕', desc: 'cabeçalho LEGUMES -> 🥕' },
+    { fn: () => P.getWhatsAppCategoryEmoji('FRUTAS'), expected: '🍉', desc: 'cabeçalho FRUTAS -> 🍉' },
+    { fn: () => P.getWhatsAppCategoryEmoji('Desconhecido'), expected: '📦', desc: 'cabeçalho desconhecido -> 📦' },
+  ];
+
+  for (const t of tests) {
+    const got = t.fn();
+    if (got !== t.expected) {
+      errs.push(`${t.desc}: esperado ${JSON.stringify(t.expected)}, obtido ${JSON.stringify(got)}`);
+    }
+  }
+
+  // 2. Segurança dos SVGs
+  const svgDir = path.join(__dirname, '..', 'icons', 'custom');
+  if (!fs.existsSync(svgDir)) {
+    errs.push(`diretório de SVGs não encontrado: ${svgDir}`);
+  } else {
+    const svgFiles = fs.readdirSync(svgDir).filter(f => f.endsWith('.svg'));
+    if (svgFiles.length !== 137) {
+      errs.push(`esperado 137 SVGs em icons/custom/, encontrados ${svgFiles.length}`);
+    }
+    for (const f of svgFiles) {
+      const p = path.join(svgDir, f);
+      const stat = fs.statSync(p);
+      if (stat.size > 8192) {
+        errs.push(`${f} excede 8 KB (${stat.size} bytes)`);
+      }
+      const content = fs.readFileSync(p, 'utf8').toLowerCase();
+      if (content.includes('<script')) errs.push(`${f} contém <script>`);
+      if (/on[a-z]+=/i.test(content)) errs.push(`${f} contém manipulador on*=`);
+      if (content.includes('href')) errs.push(`${f} contém href`);
+      if (content.includes('<foreignobject')) errs.push(`${f} contém <foreignObject>`);
+      if (content.includes('url(')) errs.push(`${f} contém url(`);
+    }
+  }
+
+  if (errs.length) {
+    fail++;
+    console.log('  FAIL U:', errs.join('; '));
+  }
+  console.log((!errs.length ? 'OK  ' : 'FAIL ') + 'U - emojis WhatsApp e segurança dos 137 SVGs locais (ADR-012)');
+}
+
+console.log(`\n${CORPUS.length + 5 + 8 - fail}/${CORPUS.length + 5 + 8} cenários OK, ${total} itens verificados`);
 process.exitCode = fail ? 1 : 0;

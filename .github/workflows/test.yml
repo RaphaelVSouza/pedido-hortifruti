@@ -23,5 +23,8 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Typecheck (tsc)
+        run: npx tsc -p jsconfig.json
+
       - name: Run tests
         run: npm test

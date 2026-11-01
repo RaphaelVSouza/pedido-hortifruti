@@ -19,7 +19,8 @@ python3 -m http.server 8080
 Testes automatizados:
 
 ```bash
-npm test            # roda parser + e2e
+npm test            # roda typecheck + parser + e2e
+npm run typecheck   # checagem estática de tipos (tsc -p jsconfig.json)
 npm run test:parser # apenas testes do parser
 npm run test:e2e    # apenas testes de navegador Playwright (360px, sem rede)
 ```
@@ -42,6 +43,8 @@ Existe CI de testes no GitHub Actions (`.github/workflows/test.yml`). Continua s
 | `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
 | `tests/e2e/` | Testes de navegador com Playwright (Chromium, 360px: estado, fluxo, persistência, XSS, CSP) |
 | `playwright.config.js` | Configuração do Playwright para os testes de navegador |
+| `jsconfig.json` | Configuração do TypeScript para checagem estática de JS (checkJs, strict, noEmit) |
+| `types/globals.d.ts` | Declarações globais de tipos (window.HortiParser, DOM e modelos) |
 | `.github/workflows/test.yml` | Workflow de CI do GitHub Actions (testes de parser e e2e) |
 | `style.css` | Estilos, variáveis CSS em `:root`, responsivo (breakpoints 1080/900/760/480/360px) |
 | `favicon.svg` | Ícone |
@@ -106,6 +109,7 @@ Mudança, aprovação, riscos e incidentes seguem `docs/GOVERNANCA.md`. Regra cu
 ## Convenções
 
 - Sem módulos ES e sem bundler. A UI fica em `script.js`, dentro do `DOMContentLoaded`; o parser é o único arquivo à parte (`parser.js`, carregado antes por `<script>`) para poder ser testado em Node.
+- Tipagem estática com `// @ts-check` + JSDoc em `parser.js` e `script.js`, validada via `tsc -p jsconfig.json`.
 - Seções delimitadas por comentários numerados (`// 1. Storage Helpers`, `// 2. Parser Logic`, `// 3. Rendering & UI Management`, `// 4. Main Actions`, `// 5. Initial Hydration`).
 - pt-BR em textos de interface, comentários e nomes de domínio (`produto`, `preco`, `quantidade`, `selecionado`, `categoria`).
 - Tema via variáveis CSS em `:root` (`--primary: #16a34a`, `--accent: #2563eb`). Altere cores só ali.

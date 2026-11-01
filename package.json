@@ -4,9 +4,10 @@
   "description": "",
   "main": "script.js",
   "scripts": {
+    "typecheck": "tsc -p jsconfig.json",
     "test:parser": "node tests/parser.test.js",
     "test:e2e": "playwright test",
-    "test": "npm run test:parser && npm run test:e2e"
+    "test": "npm run typecheck && npm run test:parser && npm run test:e2e"
   },
   "repository": {
     "type": "git",

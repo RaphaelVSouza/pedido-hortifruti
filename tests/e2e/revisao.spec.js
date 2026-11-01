@@ -83,7 +83,7 @@ test('ADR-009: templates corrompidos em localStorage não quebram o app', async 
   await importar(page, 'Banana prata R$ 4,99kg\nMaçã R$ 5,99kg');
   await expect(page.locator('.item-row')).toHaveCount(2);
   await page.locator('.item-row .item-check').first().check();
-  await expect(page.locator('#totalValue')).toHaveText('R$ 9,99');
+  await expect(page.locator('#totalValue')).toHaveText('≈ R$ 9,99');
 });
 
 test('ADR-009: gerenciador de templates do fornecedor lista e remove templates', async ({ page }) => {

@@ -32,7 +32,7 @@ test.describe('Fluxo completo do pedido', () => {
     expect(message).toContain('Banana prata');
     expect(message).toContain('Abacate (combo 3 un)');
     expect(message).toContain('3 un');
-    expect(message).toContain('Total Geral');
+    expect(message).toContain('Total estimado');
     expect(message).toContain('R$ 27,99');
   });
 });

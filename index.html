@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://cdn.jsdelivr.net; base-uri 'none'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://cdn.jsdelivr.net; connect-src 'self'; base-uri 'none'; form-action 'none'">
     <title>Hortifruti - Automatizador de Pedidos</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
@@ -127,12 +127,13 @@
 
 
                 <div class="summary-details">
-                    <p><span>Subtotal</span><strong id="subtotalValue">R$ 0,00</strong></p>
+                    <p><span id="subtotalLabel">Subtotal</span><strong id="subtotalValue">R$ 0,00</strong></p>
                     <p><span>Taxa de Entrega</span><strong id="deliveryFee"></strong></p>
                     <div class="total-row">
-                        <span>Total</span>
+                        <span id="totalLabel">Total</span>
                         <strong id="totalValue"></strong>
                     </div>
+                    <p id="estimatedNote" class="estimated-note hidden">(itens por unidade são pesados na separação)</p>
                 </div>
 
                 <div class="output-preview">

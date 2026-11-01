@@ -39,7 +39,8 @@ Existe CI de testes no GitHub Actions (`.github/workflows/test.yml`). Continua s
 |---|---|
 | `index.html` | Marcação das 3 etapas (Importar, Selecionar, Resumo) |
 | `parser.js` | Parser de listas (UMD: `window.HortiParser` no navegador, `require` no Node). Sem acesso ao DOM |
-| `script.js` | Estado, renderização e mensagem (~680 linhas), dentro de um único `DOMContentLoaded` |
+| `data/unit-weights.json` | Tabela de peso médio por unidade (IBGE POF 2008-2009) para itens vendidos por kg (ADR-016) |
+| `script.js` | Estado, renderização e mensagem, dentro de um único `DOMContentLoaded` |
 | `tests/parser.test.js` | Testes por corpus do parser (`node tests/parser.test.js`) |
 | `tests/e2e/` | Testes de navegador com Playwright (Chromium, 360px: estado, fluxo, persistência, XSS, CSP) |
 | `playwright.config.js` | Configuração do Playwright para os testes de navegador |
@@ -61,7 +62,7 @@ textarea / clipboard → parseProducts() (usa HortiParser.parse) → allProducts
 2. `renderItems()` recria a lista de itens por completo a cada mudança (sem virtual DOM).
 3. `updateTotals()` calcula subtotal e total e chama `generateMessage()`, que preenche o textarea `#finalMessage`.
 
-Modelo de um produto: `{ id, itemKey, nome, preco, precoAnterior, unidade, promocao, conferir, categoria, quantidade, selecionado }` (`id = productId(categoria, nome, packQty)` = `categoryKey + '|' + itemKey`).
+Modelo de um produto: `{ id, itemKey, nome, preco, precoAnterior, unidade, promocao, conferir, categoria, quantidade, selecionado, modo, unitWeight }` (`id = productId(categoria, nome, packQty)` = `categoryKey + '|' + itemKey`).
 
 ## Persistência (`localStorage`)
 
@@ -69,7 +70,8 @@ Modelo de um produto: `{ id, itemKey, nome, preco, precoAnterior, unidade, promo
 |---|---|
 | `hortifruti_prefs` | `{ endereco, pagamento }` (preferências globais) |
 | `hortifruti_suppliers_v1` | `{ activeId, profiles: { [id]: { id, name, whatsapp, deliveryFee, paymentMethods, boldIsPromo } } }` |
-| `hortifruti_cart_v1_<id>` | mapa `productId → { qty, name, unit, price, category }` por fornecedor (migra automaticamente de `hortifruti_cart_v1` ou `hortifruti_cart` se presente) |
+| `hortifruti_cart_v1_<id>` | mapa `productId → { qty, name, unit, price, category, mode? }` por fornecedor (`mode: 'unit'` quando pedido por unidade em item por kg; migra automaticamente de `hortifruti_cart_v1` ou `hortifruti_cart` se presente) |
+| `hortifruti_unit_modes_v1_<id>` | mapa `itemKey → 'unit'` com a escolha de modo por unidade por fornecedor (ADR-016) |
 | `hortifruti_raw_text_<id>` | último texto colado por fornecedor (migra de `hortifruti_raw_text`) |
 | `hortifruti_last_update_ts_<id>` | ISO timestamp da última importação por fornecedor |
 | `hortifruti_last_update_source_<id>` | `manual` ou `clipboard` por fornecedor |
@@ -98,8 +100,8 @@ O carrinho (`hortifruti_cart_v1`) é indexado por `productId = categoryKey + '|'
 ## Mensagem de pedido
 
 - Taxa de entrega e formas de pagamento vêm do perfil do fornecedor ativo (`hortifruti_suppliers_v1`, padrão `default` = "Meu hortifruti" com `deliveryFee: 5.00`, `paymentMethods: ['PIX', 'Cartão de Crédito']` e `boldIsPromo: true`). `#deliveryFee`, `#totalValue` e `<select id="pagamento">` são renderizados dinamicamente a partir do perfil ativo.
-- Formato: saudação, blocos `*CATEGORIA*` com `- nome, QTDunidade (R$ total)`, taxa, `*Total Geral*`, endereço e pagamento. A saudação segue a hora local (`getGreeting`: Bom dia < 12h, Boa tarde < 18h, Boa noite).
-- Só entram no pedido itens marcados **e** com quantidade > 0 (`getCartItems`). Ao sair do campo de quantidade, valor vazio, inválido ou abaixo do mínimo desmarca o item (kg: mínimo 0,1; demais unidades: inteiros ≥ 1, com arredondamento); durante a digitação nada é desmarcado. Nome, categoria e endereço passam por `toSingleLine` (remove quebras e caracteres de controle).
+- Formato: saudação, blocos `*CATEGORIA*` com `- nome, QTDunidade (R$ total)` (ou `- nome, QTD <unitLabel> (≈ X g · ≈ R$ total)` no modo por unidade em item vendido por kg), taxa, `*Total Geral*` (ou `*Total estimado: ≈ R$ X (itens por unidade são pesados na separação)*` quando houver item estimado), endereço e pagamento. A saudação segue a hora local (`getGreeting`: Bom dia < 12h, Boa tarde < 18h, Boa noite).
+- Só entram no pedido itens marcados **e** com quantidade > 0 (`getCartItems`). Ao sair do campo de quantidade, valor vazio, inválido ou abaixo do mínimo desmarca o item (kg no modo kg: passo 0,25 e mínimo 0,25; modo unidade e demais unidades: inteiros ≥ 1, com arredondamento); durante a digitação nada é desmarcado. Nome, categoria e endereço passam por `toSingleLine` (remove quebras e caracteres de controle).
 - O botão "Limpar dados salvos" (`#clearDataBtn`) apaga por prefixo toda chave que começa com `hortifruti_` ou `hortifruti.` (chaves de outros apps ficam) e reinicia a interface.
 - O app não contém chave PIX (removida no commit `8467424`). Não a reintroduza no código.
 

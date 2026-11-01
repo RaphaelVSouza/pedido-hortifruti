@@ -60,7 +60,7 @@ test('Bug 3: quantidade inválida desmarca ao sair do campo (blur/change), não 
   await qtys.nth(1).fill('1.6');
   await qtys.nth(1).press('Tab');
   expect((await cart(page))['geral|morango'].qty).toBe(2);
-  await expect(qtys.nth(0)).toHaveAttribute('step', '0.1');
+  await expect(qtys.nth(0)).toHaveAttribute('step', '0.25');
   await expect(qtys.nth(1)).toHaveAttribute('step', '1');
 });
 
@@ -262,4 +262,88 @@ test('ADR-010: validação do formulário de fornecedor (taxa >= 0, WhatsApp 12-
 
   const noOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
   expect(noOverflow).toBe(true);
+});
+
+test('ADR-016: alho a R$ 24,99/kg, 2 cabeças com 50 g cada (valor fictício de teste) exibe estimativa e total estimado', async ({ page }) => {
+  await page.route('**/data/unit-weights.json', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      version: 1,
+      items: [
+        {
+          keywords: ['alho'],
+          unitLabel: 'cabeça',
+          unitPlural: 'cabeças',
+          grams: 50,
+          min: 50,
+          max: 50,
+          source: 'IBGE POF 2008-2009, medidas referidas, código 6706201 (valor fictício de teste 50g)'
+        }
+      ]
+    })
+  }));
+  await page.goto('/');
+
+  await importar(page, 'LEGUMES\nAlho R$ 24,99kg\nCenoura R$ 3,98kg');
+  const alhoRow = page.locator('.item-row').filter({ hasText: 'Alho' });
+  const cenouraRow = page.locator('.item-row').filter({ hasText: 'Cenoura' });
+
+  await expect(alhoRow.locator('.unit-mode-selector')).toBeVisible();
+  await expect(cenouraRow.locator('.unit-mode-selector')).toHaveCount(0);
+
+  await alhoRow.locator('.item-check').check();
+  await alhoRow.locator('.unit-mode-btn[data-mode="unit"]').click();
+  await alhoRow.locator('.item-qty').fill('2');
+  await alhoRow.locator('.item-qty').press('Tab');
+
+  await expect(alhoRow.locator('.unit-estimate')).toHaveText('2 cabeças ≈ 100 g · ≈ R$ 2,50');
+  await expect(page.locator('#subtotalLabel')).toHaveText('Subtotal estimado');
+  await expect(page.locator('#subtotalValue')).toHaveText('≈ R$ 2,50');
+  await expect(page.locator('#totalLabel')).toHaveText('Total estimado');
+  await expect(page.locator('#totalValue')).toHaveText('≈ R$ 7,50');
+  await expect(page.locator('#estimatedNote')).not.toHaveClass(/hidden/);
+
+  await cenouraRow.locator('.item-check').check();
+  await cenouraRow.locator('.item-qty').fill('0.5');
+  await cenouraRow.locator('.item-qty').press('Tab');
+
+  const msg = await page.locator('#finalMessage').inputValue();
+  expect(msg).toContain('- Alho, 2 cabeças (≈ 100 g · ≈ R$ 2,50)');
+  expect(msg).toContain('- Cenoura, 0,5kg (R$ 1,99)');
+  expect(msg).toContain('*Total estimado: ≈ R$ 9,49 (itens por unidade são pesados na separação)*');
+});
+
+test('ADR-016: item sem entrada na tabela não mostra seletor, recarregar preserva modo escolhido e cabe em 360px sem overflow', async ({ page }) => {
+  await importar(page, 'FRUTAS\nBanana prata R$ 4,99kg\nPitaya R$ 19,90kg\nMorango bandeja R$ 7,99');
+
+  const bananaRow = page.locator('.item-row').filter({ hasText: 'Banana prata' });
+  const pitayaRow = page.locator('.item-row').filter({ hasText: 'Pitaya' });
+  const morangoRow = page.locator('.item-row').filter({ hasText: 'Morango' });
+
+  await expect(bananaRow.locator('.unit-mode-selector')).toBeVisible();
+  await expect(pitayaRow.locator('.unit-mode-selector')).toHaveCount(0);
+  await expect(morangoRow.locator('.unit-mode-selector')).toHaveCount(0);
+
+  await bananaRow.locator('.item-check').check();
+  await bananaRow.locator('.unit-mode-btn[data-mode="unit"]').click();
+  await bananaRow.locator('.item-qty').fill('6');
+  await bananaRow.locator('.item-qty').press('Tab');
+
+  await expect(bananaRow.locator('.unit-estimate')).toContainText('6 unidades ≈ 450 g');
+
+  const noOverflowBefore = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
+  expect(noOverflowBefore).toBe(true);
+
+  await page.reload();
+
+  const bananaAfter = page.locator('.item-row').filter({ hasText: 'Banana prata' });
+  await expect(bananaAfter.locator('.item-check')).toBeChecked();
+  await expect(bananaAfter.locator('.unit-mode-btn[data-mode="unit"]')).toHaveClass(/active/);
+  await expect(bananaAfter.locator('.item-qty')).toHaveValue('6');
+  await expect(bananaAfter.locator('.unit-estimate')).toContainText('6 unidades ≈ 450 g');
+  await expect(page.locator('#totalLabel')).toHaveText('Total estimado');
+
+  const noOverflowAfter = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
+  expect(noOverflowAfter).toBe(true);
 });

@@ -113,6 +113,21 @@ interface AnalyzedSegment {
   viaTemplate?: boolean;
 }
 
+interface UnitWeightEntry {
+  keywords: string[];
+  unitLabel: string;
+  unitPlural: string;
+  grams: number;
+  min: number;
+  max: number;
+  source: string;
+}
+
+interface UnitWeightsData {
+  version: number;
+  items: UnitWeightEntry[];
+}
+
 interface Product {
   id: string;
   itemKey?: string;
@@ -128,6 +143,8 @@ interface Product {
   quantidade: number;
   selecionado: boolean;
   indisponivel?: boolean;
+  modo?: 'kg' | 'unit';
+  unitWeight?: UnitWeightEntry | null;
 }
 
 interface CartV1Entry {
@@ -137,6 +154,7 @@ interface CartV1Entry {
   price: number;
   category: string;
   packQty?: number | null;
+  mode?: 'kg' | 'unit';
 }
 
 type CartV1 = Record<string, CartV1Entry>;
@@ -177,6 +195,7 @@ interface HortiParserAPI {
 
 interface Window {
   HortiParser: HortiParserAPI;
+  HORTI_UNIT_WEIGHTS?: UnitWeightEntry[];
 }
 
 interface Document {
@@ -187,7 +206,7 @@ interface Document {
     elementId: 'processBtn' | 'clipboardBtn' | 'clearDataBtn' | 'copyBtn' | 'deselectAllBtn' | 'filterSelectedBtn' | 'editSupplierBtn' | 'newSupplierBtn' | 'saveSupplierBtn' | 'cancelSupplierBtn' | 'deleteSupplierBtn'
   ): HTMLButtonElement;
   getElementById(
-    elementId: 'updateStatus' | 'selectionSection' | 'summarySection' | 'itemsList' | 'subtotalValue' | 'deliveryFee' | 'totalValue' | 'tabsContainer' | 'promo-date' | 'supplierConfigPanel' | 'supplierFormTitle' | 'supplierFormError'
+    elementId: 'updateStatus' | 'selectionSection' | 'summarySection' | 'itemsList' | 'subtotalLabel' | 'subtotalValue' | 'deliveryFee' | 'totalLabel' | 'totalValue' | 'estimatedNote' | 'tabsContainer' | 'promo-date' | 'supplierConfigPanel' | 'supplierFormTitle' | 'supplierFormError'
   ): HTMLElement;
   createElement(
     tagName: 'input',

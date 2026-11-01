@@ -1,0 +1,900 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "keywords": [
+        "banana da terra",
+        "banana pacova",
+        "pacova"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 100,
+      "min": 100,
+      "max": 100,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6801017 (PACOVA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "batata doce"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 355,
+      "min": 355,
+      "max": 355,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6400401 (BATATA DOCE, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "batata baroa",
+        "cenoura amarela",
+        "mandioquinha"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 45,
+      "min": 45,
+      "max": 45,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6400304 (CENOURA AMARELA (BATATA BAROA), UNIDADE PEQUENA)"
+    },
+    {
+      "keywords": [
+        "batata inglesa",
+        "batata",
+        "batata lavada",
+        "batata asterix",
+        "batatinha"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 140,
+      "min": 70,
+      "max": 140,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6400101 (BATATA INGLESA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "couve flor"
+      ],
+      "unitLabel": "ramo",
+      "unitPlural": "ramos",
+      "grams": 60,
+      "min": 60,
+      "max": 60,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6700601 (COUVE FLOR, RAMO)"
+    },
+    {
+      "keywords": [
+        "laranjinha japonesa",
+        "kinkan"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 18,
+      "min": 18,
+      "max": 18,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6802407 (LARANJINHA JAPONESA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "erva doce",
+        "funcho"
+      ],
+      "unitLabel": "ramo",
+      "unitPlural": "ramos",
+      "grams": 28.6,
+      "min": 28.6,
+      "max": 28.6,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6702801 (ERVA DOCE, RAMO)"
+    },
+    {
+      "keywords": [
+        "fruta de conde",
+        "pinha",
+        "ata"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 60,
+      "min": 45,
+      "max": 60,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803802 (PINHA (FRUTA DE CONDE), UNIDADE)"
+    },
+    {
+      "keywords": [
+        "caja manga",
+        "cajarana"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 55,
+      "min": 40,
+      "max": 55,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804601 (CAJA MANGA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "coco da bahia",
+        "coco"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 40,
+      "min": 40,
+      "max": 40,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6600101 (COCO DA BAHIA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "castanha portuguesa"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 4,
+      "min": 4,
+      "max": 4,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6600301 (CASTANHA PORTUGUESA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "castanha do para"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 4,
+      "min": 4,
+      "max": 4,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6600701 (CASTANHA DO PARA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "castanha de caju"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 2.5,
+      "min": 2.5,
+      "max": 2.5,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6600801 (CASTANHA DE CAJU, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "milho verde",
+        "milho"
+      ],
+      "unitLabel": "espiga",
+      "unitPlural": "espigas",
+      "grams": 100,
+      "min": 50,
+      "max": 100,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 8501402 (MILHO COZIDO, ESPIGA)"
+    },
+    {
+      "keywords": [
+        "banana",
+        "banana prata",
+        "banana nanica",
+        "banana dagua",
+        "banana ouro",
+        "banana maca",
+        "banana caturra"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 75,
+      "min": 56.3,
+      "max": 75,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6801101 (BANANA (OURO, PRATA, D´AGUA, DA TERRA, ETC), UNIDADE)"
+    },
+    {
+      "keywords": [
+        "cenoura"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 120,
+      "min": 55,
+      "max": 120,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6401201 (CENOURA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "beterraba"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 140,
+      "min": 140,
+      "max": 140,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6401101 (BETERRABA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "inhame",
+        "cara"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 125,
+      "min": 125,
+      "max": 125,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6400501 (INHAME, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "rabanete"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 25,
+      "min": 25,
+      "max": 25,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6401001 (RABANETE, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "alface"
+      ],
+      "unitLabel": "pé",
+      "unitPlural": "pés",
+      "grams": 200,
+      "min": 130,
+      "max": 200,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6700101 (ALFACE, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "cebolinha"
+      ],
+      "unitLabel": "ramo",
+      "unitPlural": "ramos",
+      "grams": 6.2,
+      "min": 6.2,
+      "max": 6.2,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6701101 (CEBOLINHA, RAMO)"
+    },
+    {
+      "keywords": [
+        "agriao"
+      ],
+      "unitLabel": "maço",
+      "unitPlural": "maços",
+      "grams": 5,
+      "min": 5,
+      "max": 5,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6701301 (AGRIAO, MACO)"
+    },
+    {
+      "keywords": [
+        "rucula"
+      ],
+      "unitLabel": "ramo",
+      "unitPlural": "ramos",
+      "grams": 6,
+      "min": 6,
+      "max": 6,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6702001 (RUCULA, RAMO)"
+    },
+    {
+      "keywords": [
+        "alcachofra"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 140,
+      "min": 140,
+      "max": 140,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6702301 (ALCACHOFRA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pepino"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 100,
+      "min": 75,
+      "max": 100,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6704001 (PEPINO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "chuchu"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 230,
+      "min": 230,
+      "max": 230,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6704101 (CHUCHU, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "jilo"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 26,
+      "min": 26,
+      "max": 26,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6704201 (JILO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pimentao"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 55,
+      "min": 38,
+      "max": 55,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6704501 (PIMENTAO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "quiabo"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 18,
+      "min": 18,
+      "max": 18,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6705001 (QUIABO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "tomate",
+        "tomatinho"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 100,
+      "min": 50,
+      "max": 100,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6705101 (TOMATE, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "berinjela"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 200,
+      "min": 200,
+      "max": 200,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6705401 (BERINJELA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "cebola"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 70,
+      "min": 30,
+      "max": 70,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6705701 (CEBOLA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "alho"
+      ],
+      "unitLabel": "cabeça",
+      "unitPlural": "cabeças",
+      "grams": 4.4,
+      "min": 4.4,
+      "max": 4.4,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6706201 (ALHO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "laranja"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 180,
+      "min": 90,
+      "max": 180,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6801801 (LARANJA (PERA, SELETA, LIMA, DA TERRA, ETC), UNIDADE)"
+    },
+    {
+      "keywords": [
+        "lima"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 180,
+      "min": 180,
+      "max": 180,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6801901 (LIMA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "limao"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 84,
+      "min": 84,
+      "max": 84,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6802001 (LIMAO (COMUM, GALEGO, ETC), UNIDADE)"
+    },
+    {
+      "keywords": [
+        "tangerina",
+        "mexerica",
+        "bergamota",
+        "mimosa",
+        "ponkan",
+        "pocan",
+        "murcote",
+        "tanja",
+        "maricota"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 135,
+      "min": 100,
+      "max": 135,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6802201 (TANGERINA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "abacaxi"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 750,
+      "min": 480,
+      "max": 750,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6802601 (ABACAXI, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "abacate",
+        "avocado"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 430,
+      "min": 370,
+      "max": 430,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6802701 (ABACATE, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "caqui"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 110,
+      "min": 85,
+      "max": 110,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6802801 (CAQUI, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "figo"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 55,
+      "min": 55,
+      "max": 55,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6802901 (FIGO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "maca"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 150,
+      "min": 90,
+      "max": 150,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803001 (MACA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "mamao",
+        "papaia"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 310,
+      "min": 270,
+      "max": 310,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803101 (MAMAO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "manga"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 140,
+      "min": 60,
+      "max": 140,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803201 (MANGA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "maracuja"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 45,
+      "min": 45,
+      "max": 45,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803301 (MARACUJA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "melao"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 660,
+      "min": 660,
+      "max": 660,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803501 (MELAO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pera"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 130,
+      "min": 97.5,
+      "max": 130,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803601 (PERA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pessego"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 60,
+      "min": 32,
+      "max": 60,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803701 (PESSEGO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "uva"
+      ],
+      "unitLabel": "cacho",
+      "unitPlural": "cachos",
+      "grams": 170,
+      "min": 170,
+      "max": 170,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6803901 (UVA, CACHO)"
+    },
+    {
+      "keywords": [
+        "jenipapo"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 60,
+      "min": 60,
+      "max": 60,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804001 (JENIPAPO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "goiaba"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 170,
+      "min": 50,
+      "max": 170,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804201 (GOIABA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "ameixa"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 42,
+      "min": 34,
+      "max": 42,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804301 (AMEIXA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "caju"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 90,
+      "min": 80,
+      "max": 90,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804401 (CAJU, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "cereja"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 6.8,
+      "min": 6.8,
+      "max": 6.8,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804501 (CEREJA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "tapereba",
+        "caja"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 5.7,
+      "min": 5.7,
+      "max": 5.7,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804701 (TAPEREBA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "carambola"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 75,
+      "min": 75,
+      "max": 75,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804801 (CARAMBOLA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "jaboticaba"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 5,
+      "min": 5,
+      "max": 5,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6804901 (JABOTICABA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "graviola"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 227,
+      "min": 227,
+      "max": 227,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6805001 (GRAVIOLA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "morango"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 12,
+      "min": 7,
+      "max": 12,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6805201 (MORANGO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "jambo"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 40,
+      "min": 40,
+      "max": 40,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6805301 (JAMBO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "atemoia"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 227,
+      "min": 227,
+      "max": 227,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6805401 (ATEMOIA (FRUTA), UNIDADE)"
+    },
+    {
+      "keywords": [
+        "nespera"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 27,
+      "min": 27,
+      "max": 27,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6805801 (NESPERA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "sapoti"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 50,
+      "min": 50,
+      "max": 50,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6806001 (SAPOTI, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "tamarindo"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 8.06,
+      "min": 8.06,
+      "max": 8.06,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6806201 (TAMARINDO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "cacau"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 91.2,
+      "min": 91.2,
+      "max": 91.2,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6806301 (CACAU, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pitomba"
+      ],
+      "unitLabel": "cacho",
+      "unitPlural": "cachos",
+      "grams": 60,
+      "min": 60,
+      "max": 60,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6806401 (PITOMBA, CACHO)"
+    },
+    {
+      "keywords": [
+        "bacuri"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 40,
+      "min": 40,
+      "max": 40,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6806501 (BACURI, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pitanga"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 10,
+      "min": 10,
+      "max": 10,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6806801 (PITANGA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "ciriguela",
+        "seriguela"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 10,
+      "min": 5.6,
+      "max": 10,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6806901 (CIRIGUELA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "umbu",
+        "imbu"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 33.33,
+      "min": 33.33,
+      "max": 33.33,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6807101 (UMBU, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "nectarina"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 60,
+      "min": 60,
+      "max": 60,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6807401 (NECTARINA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "roma"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 70,
+      "min": 70,
+      "max": 70,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6807601 (ROMA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "acerola"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 12,
+      "min": 12,
+      "max": 12,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6807701 (ACEROLA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "kiwi"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 94,
+      "min": 57,
+      "max": 94,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6807801 (KIWI, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "amora"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 4,
+      "min": 4,
+      "max": 4,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6809901 (AMORA, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pinhao"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 4,
+      "min": 4,
+      "max": 4,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6600401 (PINHAO, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "noz",
+        "nozes"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 5,
+      "min": 5,
+      "max": 5,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6601501 (NOZ, UNIDADE)"
+    },
+    {
+      "keywords": [
+        "pupunha"
+      ],
+      "unitLabel": "unidade",
+      "unitPlural": "unidades",
+      "grams": 22.5,
+      "min": 16.9,
+      "max": 22.5,
+      "source": "IBGE POF 2008-2009, medidas referidas, código 6601805 (PUPUNHA, UNIDADE)"
+    }
+  ]
+}

@@ -549,5 +549,49 @@ Caju (bdj) ----> 9 conto`;
   console.log(`${!errs.length ? 'OK  ' : 'FAIL'} S - resiliência a templates corrompidos e aprendizado com unit externa (ADR-009)`);
 }
 
-console.log(`\n${CORPUS.length + 3 + 8 - fail}/${CORPUS.length + 3 + 8} cenários OK, ${total} itens verificados`);
+// Scenario T: buildWhatsAppUrl (ADR-011)
+{
+  const errs = [];
+  // P já importado no topo
+
+  // 1. Telefone vazio ou sem digitos
+  if (P.buildWhatsAppUrl("", "Ola") !== "") errs.push("telefone vazio deve retornar string vazia");
+  if (P.buildWhatsAppUrl("   ", "Ola") !== "") errs.push("telefone com espacos deve retornar string vazia");
+  if (P.buildWhatsAppUrl("( ) -", "Ola") !== "") errs.push("telefone sem digitos deve retornar string vazia");
+  if (P.buildWhatsAppUrl(null, "Ola") !== "") errs.push("telefone null deve retornar string vazia");
+  if (P.buildWhatsAppUrl(undefined, "Ola") !== "") errs.push("telefone undefined deve retornar string vazia");
+
+  // 2. Sanitizacao de telefone com formatacao
+  const url1 = P.buildWhatsAppUrl("+55 (11) 98765-4321", "Oi");
+  if (url1 !== "https://wa.me/5511987654321?text=Oi") {
+    errs.push("telefone formatado esperado https://wa.me/5511987654321?text=Oi, obtido " + url1);
+  }
+
+  // 3. Acentos, emojis, quebras de linha, &, # e * (negrito WhatsApp)
+  const msgSpecial = "Olá João! Pedido:\n- Maçã Fuji 🍎\n- Abacate 🥑\n*Total*: R$ 10,00 & #combo";
+  const url2 = P.buildWhatsAppUrl("5511999998888", msgSpecial);
+  const expectedPrefix = "https://wa.me/5511999998888?text=";
+  if (!url2.startsWith(expectedPrefix)) {
+    errs.push("prefixo invalido: " + url2);
+  } else {
+    const query = url2.slice(expectedPrefix.length);
+    if (decodeURIComponent(query) !== msgSpecial) {
+      errs.push("mensagem decodificada nao confere com original");
+    }
+    if (!query.includes(encodeURIComponent("Maçã"))) errs.push("acentuacao Maca nao codificada corretamente");
+    if (!query.includes(encodeURIComponent("🍎")) || !query.includes(encodeURIComponent("🥑"))) errs.push("emojis nao codificados");
+    if (!query.includes("%0A")) errs.push("quebra de linha %0A ausente");
+    if (!query.includes("%26")) errs.push("& (%26) ausente");
+    if (!query.includes("%23")) errs.push("# (%23) ausente");
+    if (!query.includes("*")) errs.push("* ausente");
+  }
+
+  if (errs.length) {
+    fail++;
+    console.log("  FAIL T:", errs.join("; "));
+  }
+  console.log((!errs.length ? "OK  " : "FAIL ") + "T - buildWhatsAppUrl com sanitização de telefone e caracteres especiais (ADR-011)");
+}
+
+console.log(`\n${CORPUS.length + 4 + 8 - fail}/${CORPUS.length + 4 + 8} cenários OK, ${total} itens verificados`);
 process.exitCode = fail ? 1 : 0;

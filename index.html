@@ -177,7 +177,11 @@
                 <div class="output-preview">
                     <label for="finalMessage">Mensagem para WhatsApp</label>
                     <textarea id="finalMessage" readonly></textarea>
-                    <button id="copyBtn">🛒 Copiar Pedido</button>
+                    <p id="whatsappNotice" class="whatsapp-notice hidden" role="status">⚠️ Mensagem longa. Ela pode ser cortada no WhatsApp Web/app — se isso acontecer, use o botão "Copiar Pedido".</p>
+                    <div class="output-actions">
+                        <a id="whatsappBtn" class="whatsapp-btn disabled" target="_blank" rel="noopener noreferrer" role="button" aria-disabled="true" tabindex="-1">💬 Enviar no WhatsApp</a>
+                        <button id="copyBtn">🛒 Copiar Pedido</button>
+                    </div>
                 </div>
             </aside>
         </div>

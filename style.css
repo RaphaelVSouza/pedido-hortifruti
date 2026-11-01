@@ -308,6 +308,60 @@ button:focus-visible {
     background: var(--accent-dark);
 }
 
+.output-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
+.whatsapp-btn {
+    width: 100%;
+    color: #fff;
+    background: #25d366;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.98rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.whatsapp-btn:hover:not(.disabled) {
+    background: #1ebc57;
+    transform: translateY(-1px);
+}
+
+.whatsapp-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.25);
+}
+
+.whatsapp-btn.disabled,
+.whatsapp-btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: auto;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.whatsapp-notice {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #fff8dc;
+    border: 1px solid #f2df9a;
+    color: #7a5602;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
 .controls {
     display: flex;
     align-items: center;
@@ -1338,6 +1392,7 @@ button:focus-visible {
     }
 
     #processBtn,
+    .whatsapp-btn,
     #copyBtn {
         padding: 12px 16px;
         font-size: 0.92rem;
@@ -1447,6 +1502,7 @@ button:focus-visible {
     }
 
     #processBtn,
+    .whatsapp-btn,
     #copyBtn {
         padding: 11px 14px;
         font-size: 0.88rem;
@@ -1676,6 +1732,22 @@ button:focus-visible {
     .output-preview {
         gap: 6px;
         width: 100%;
+    }
+
+    .output-actions {
+        gap: 6px;
+        width: 100%;
+    }
+
+    .whatsapp-btn {
+        padding: 10px;
+        font-size: 0.8rem;
+        width: 100%;
+    }
+
+    .whatsapp-notice {
+        font-size: 0.75rem;
+        padding: 6px 8px;
     }
 
     /* Additional 360px specific fixes */

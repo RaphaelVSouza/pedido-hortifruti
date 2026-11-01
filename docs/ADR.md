@@ -85,7 +85,7 @@ Ajuste pendente: o caso M mede tempo absoluto e varia entre execuções (56–94
 
 ## ADR-005 — Correção de bugs de estado
 
-**Status:** Parcial. Bugs 1 e 3 e a limpeza por prefixo estão implementados, com testes em `tests/e2e/estado.test.js`. O bug 2 continua como teste `SKIP` até o ADR-008.
+**Status:** Aceito, implementado (Bugs 1, 2 e 3 e limpeza por prefixo implementados, com testes em `tests/e2e/estado.spec.js`).
 
 ### Contexto
 O inventário encontrou três bugs reproduzíveis.
@@ -155,7 +155,7 @@ Não existe CI de testes, só o GitGuardian. Os testes de XSS e CSP citados no P
 
 ## ADR-008 — Identidade de item e carrinho v1
 
-**Status:** Proposto
+**Status:** Aceito, implementado
 
 ### Contexto
 O carrinho é `hortifruti_cart = { nome: quantidade }`, sem versão. A chave é o nome exibido, que inclui o sufixo de combo (`"Abacate (combo 3 un)"`). Problemas: grafia nova do fornecedor perde a seleção; nomes iguais em categorias diferentes colidem; itens ausentes na lista nova são descartados em silêncio por `saveCart()` (`script.js:523`).

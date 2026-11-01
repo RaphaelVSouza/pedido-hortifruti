@@ -26,7 +26,7 @@ test.describe('Persistência e resiliência de dados', () => {
     await expect(page.locator('#pagamento')).toHaveValue('Cartão de Crédito');
   });
 
-  test('recupera graciosamente quando localStorage possui JSON inválido em hortifruti_cart', async ({ page }) => {
+  test('recupera graciosamente quando localStorage possui JSON inválido em hortifruti_cart_v1 ou hortifruti_cart', async ({ page }) => {
     await page.route('https://cdn.jsdelivr.net/**', (route) => route.abort());
     await page.goto('/');
 
@@ -39,6 +39,7 @@ test.describe('Persistência e resiliência de dados', () => {
     await page.click('#processBtn');
 
     await page.evaluate(() => {
+      localStorage.setItem('hortifruti_cart_v1', '{invalido-json: true');
       localStorage.setItem('hortifruti_cart', '{invalido-json: true');
     });
 

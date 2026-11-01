@@ -508,6 +508,47 @@ button:focus-visible {
     font-weight: 700;
 }
 
+.item-row.unavailable-item {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    opacity: 0.85;
+}
+
+.item-row.unavailable-item:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.unavailable-badge {
+    flex-shrink: 0;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.remove-unavailable-btn {
+    width: 86px;
+    padding: 7px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+}
+
+.remove-unavailable-btn:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+}
+
 .delivery-payment-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -726,7 +767,8 @@ button:focus-visible {
         font-size: 0.82rem;
     }
 
-    .item-qty {
+    .item-qty,
+    .remove-unavailable-btn {
         grid-area: qty;
         justify-self: end;
         width: 72px;
@@ -856,7 +898,8 @@ button:focus-visible {
         font-size: 0.78rem;
     }
 
-    .item-qty {
+    .item-qty,
+    .remove-unavailable-btn {
         width: 64px;
         padding: 5px;
         font-size: 0.85rem;
@@ -1069,11 +1112,18 @@ button:focus-visible {
         min-width: 0;
     }
 
-    .item-qty {
+    .item-qty,
+    .remove-unavailable-btn {
         width: 55px;
         padding: 4px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         flex-shrink: 0;
+    }
+
+    .unavailable-badge {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+        white-space: normal;
     }
 
     .tabs-container {

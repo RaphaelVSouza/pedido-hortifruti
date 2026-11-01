@@ -61,19 +61,19 @@ textarea / clipboard → parseProducts() (usa HortiParser.parse) → allProducts
 2. `renderItems()` recria a lista de itens por completo a cada mudança (sem virtual DOM).
 3. `updateTotals()` calcula subtotal e total e chama `generateMessage()`, que preenche o textarea `#finalMessage`.
 
-Modelo de um produto: `{ id, nome, preco, precoAnterior, unidade, promocao, conferir, categoria, quantidade, selecionado }`.
+Modelo de um produto: `{ id, itemKey, nome, preco, precoAnterior, unidade, promocao, conferir, categoria, quantidade, selecionado }` (`id = productId(categoria, nome, packQty)` = `categoryKey + '|' + itemKey`).
 
 ## Persistência (`localStorage`)
 
 | Chave | Conteúdo |
 |---|---|
 | `hortifruti_prefs` | `{ endereco, pagamento }` |
-| `hortifruti_cart` | mapa `nome do produto → quantidade` (somente itens selecionados; regravado a cada `processContent`, descartando nomes que não estão na lista atual) |
+| `hortifruti_cart_v1` | mapa `productId → { qty, name, unit, price, category }` (itens selecionados e itens indisponíveis na lista atual; migra automaticamente da chave legada `hortifruti_cart` se presente) |
 | `hortifruti_raw_text` | último texto colado |
 | `hortifruti_last_update_ts` | ISO timestamp da última importação |
 | `hortifruti_last_update_source` | `manual` ou `clipboard` |
 
-O carrinho é indexado pelo **nome** do produto. Mudar a grafia no texto do fornecedor desfaz a seleção, e nomes duplicados colidem.
+O carrinho (`hortifruti_cart_v1`) é indexado por `productId = categoryKey + '|' + itemKey` (exportados por `parser.js`: `itemKey`, `categoryKey`, `productId`, `levenshtein`). No reprocessamento: (1) match exato por `productId`; (2) match único por `itemKey` em outra categoria; (3) Levenshtein ≤ 2 em `itemKey` (≥ 6 caracteres) fica registrado em `pendingSpellingSuggestions` sem aplicar automaticamente; (4) itens ausentes permanecem no carrinho como "indisponível nesta lista" (fora do total e da mensagem, com botão de remover).
 
 ## Parser (`parser.js`)
 
@@ -119,6 +119,6 @@ Mudança, aprovação, riscos e incidentes seguem `docs/GOVERNANCA.md`. Regra cu
 ## Armadilhas conhecidas
 
 - O texto importado não é confiável. `renderItems` monta o DOM com `createElement`/`textContent`; não volte a usar `innerHTML` com dados do parser. Há também uma CSP via `<meta>` em `index.html` (`script-src 'self'`, `style-src 'self'`, `img-src` só `self` e `cdn.jsdelivr.net`): não adicione `<script>`/`<style>` inline, atributos `on*` nem `style="..."` no HTML. Atribuir `el.style.x` por JS é permitido.
-- O carrinho é indexado pelo nome: nomes duplicados em categorias diferentes colidem.
+- O carrinho (`hortifruti_cart_v1`) é indexado por `productId` (`categoryKey + '|' + itemKey`): itens de mesmo nome em categorias diferentes não colidem, mas dois itens de mesma `itemKey` na mesma categoria compartilham o mesmo `productId`.
 - Leia objetos do `localStorage` sempre via `readStoredObject(key, fallback)`: ele tolera valor ausente, corrompido ou de tipo errado. Não use `JSON.parse(localStorage.getItem(...))` direto. A quantidade restaurada do carrinho só é aceita se for número finito >= 0.
 - Mexer no CSS exige conferir 360px; houve vários commits de correção de overflow nessa largura.

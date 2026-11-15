@@ -1,7 +1,7 @@
 {
   "name": "pedido-hortifruti",
   "version": "1.0.0",
-  "description": "",
+  "description": "PWA offline que converte a lista promocional de um fornecedor de hortifruti em um pedido formatado para WhatsApp.",
   "main": "script.js",
   "scripts": {
     "typecheck": "tsc -p jsconfig.json",
@@ -13,12 +13,22 @@
     "type": "git",
     "url": "git+https://github.com/RaphaelVSouza/pedido-hortifruti.git"
   },
-  "keywords": [],
+  "keywords": [
+    "pwa",
+    "offline-first",
+    "vanilla-js",
+    "whatsapp",
+    "parser",
+    "playwright",
+    "jsdoc"
+  ],
+  "author": "Raphael Vieira",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/RaphaelVSouza/pedido-hortifruti/issues"
   },
-  "homepage": "https://github.com/RaphaelVSouza/pedido-hortifruti#readme",
+  "homepage": "https://raphaelvsouza.github.io/pedido-hortifruti/",
   "devDependencies": {
     "@playwright/test": "^1.49.0",
     "typescript": "^5.6.0"

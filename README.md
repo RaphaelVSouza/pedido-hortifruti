@@ -6,6 +6,8 @@ Aplicação web estática em JavaScript puro: sem dependências, sem build, sem 
 
 **Demo:** https://raphaelvsouza.github.io/pedido-hortifruti/ (instalável como PWA e funciona offline).
 
+![Tela inicial do Hortifruti Digital: fluxo em 3 passos](docs/screenshot-demo.jpg)
+
 ## Como funciona
 
 1. **Importar:** cole o texto recebido do fornecedor, ou use "Ler da área de transferência".

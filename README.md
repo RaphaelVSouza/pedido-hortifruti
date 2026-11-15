@@ -95,3 +95,7 @@ Todos os dados ficam no `localStorage` do navegador. O app não tem backend nem 
 - Preço inteiro sem `R$` (`Alface 3`) só é aceito quando a lista toda é escrita assim; itens lidos com pouca certeza aparecem com o selo "⚠ conferir".
 - O carrinho é associado ao nome do produto: se o fornecedor alterar a grafia, a seleção é perdida.
 - Itens do carrinho ausentes na lista nova permanecem marcados como "indisponível nesta lista", fora do total e da mensagem, até você removê-los.
+
+## Licença
+
+[MIT](LICENSE).
